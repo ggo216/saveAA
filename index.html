@@ -1,6 +1,18 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#FAFAFB">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="가계부">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="icon" href="icon.svg">
 <title>가계부</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@500;700;800&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
@@ -65,12 +77,27 @@
 @keyframes toastIn{ from{opacity:0; transform:translate(-50%,8px);} to{opacity:1; transform:translate(-50%,0);} }
 @keyframes pulseSoft{ 0%,100%{opacity:1;} 50%{opacity:.45;} }
 @keyframes shake{ 10%,90%{transform:translateX(-1px);} 20%,80%{transform:translateX(2px);} 30%,50%,70%{transform:translateX(-4px);} 40%,60%{transform:translateX(4px);} }
+html{ touch-action: pan-y; overscroll-behavior-y: contain; }
 body{
   margin:0;
-  background:var(--bg);
+  background:
+    radial-gradient(1100px 560px at 12% -8%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 60%),
+    radial-gradient(800px 480px at 100% 0%, color-mix(in srgb, var(--income) 6%, transparent), transparent 55%),
+    var(--bg);
+  background-attachment:fixed;
   color:var(--ink);
-  font-family:'IBM Plex Sans KR','Noto Sans KR',sans-serif;
+  font-family:'Pretendard Variable','Pretendard','Noto Sans KR',sans-serif;
   -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: contain;
+  min-height:100vh;
+  min-height:100dvh;
+  transition:background-color .2s ease;
+}
+button, .navlink, .tx-row, .cat-chip, .asset-row, .cal-cell, .tpl-chip, .accent-swatch, .color-opt, .icon-opt, .cat-opt{
+  -webkit-tap-highlight-color: transparent;
+  user-select:none;
+  -webkit-user-select:none;
 }
 #main{animation:viewIn .28s cubic-bezier(.22,.75,.32,1);}
 .brand-mark, .hero-badge, .btn-primary, .fab, .accent-swatch, .navlink.active{
@@ -83,14 +110,15 @@ body{
   transform:scale(0.96);
 }
 h1,h2,h3,.num-hero{
-  font-family:'Gothic A1', sans-serif;
+  font-family:'Pretendard Variable','Pretendard','Noto Sans KR',sans-serif;
   font-weight:800;
   text-wrap:balance;
-  letter-spacing:-0.2px;
+  letter-spacing:-0.3px;
 }
 button{font-family:inherit;}
 svg{display:block;}
 ::selection{background:color-mix(in srgb, var(--accent) 30%, transparent);}
+:focus-visible{outline:2px solid color-mix(in srgb, var(--accent) 65%, transparent);outline-offset:2px;border-radius:4px;}
 
 .app{
   max-width:1080px;
@@ -122,7 +150,7 @@ svg{display:block;}
   color:#fff;
   flex-shrink:0;
 }
-.brand-name{font-family:'Gothic A1',sans-serif;font-size:18px;font-weight:800;}
+.brand-name{font-family:'Pretendard Variable','Pretendard',sans-serif;font-size:18px;font-weight:800;}
 .brand-sync{font-size:11px;color:var(--ink-faint);display:flex;align-items:center;gap:5px;margin-top:2px;}
 .dot{width:6px;height:6px;border-radius:50%;background:var(--income);flex-shrink:0;}
 .dot.offline{background:var(--ink-faint);}
@@ -138,6 +166,7 @@ svg{display:block;}
   border:none;background:transparent;
   text-align:left;
   transition:background .15s ease, color .15s ease;
+  position:relative;
 }
 .navlink .ic{width:19px;height:19px;flex-shrink:0;display:flex;}
 .navlink:hover{background:var(--surface-2);}
@@ -145,6 +174,11 @@ svg{display:block;}
   background:color-mix(in srgb, var(--accent) 12%, var(--surface));
   color:var(--accent);
   font-weight:700;
+}
+.navlink.active::before{
+  content:'';position:absolute;left:-10px;top:50%;transform:translateY(-50%);
+  width:3px;height:18px;border-radius:0 3px 3px 0;
+  background:var(--accent);
 }
 
 main{flex:1;min-width:0;}
@@ -165,6 +199,13 @@ main{flex:1;min-width:0;}
 .month-nav button{
   width:26px;height:26px;border-radius:50%;border:none;background:transparent;
   color:var(--ink-soft);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  position:relative;
+}
+/* visual size stays compact; the tappable area is quietly widened to ~44px
+   (Apple/Google's minimum touch target) so small icon buttons are easy to
+   hit accurately on a phone. */
+.month-nav button::before, .tx-dup::before, .sheet-close::before{
+  content:'';position:absolute;inset:-9px;
 }
 .month-nav button svg{width:15px;height:15px;}
 .month-nav button:hover{background:var(--surface-2);color:var(--ink);}
@@ -180,18 +221,27 @@ main{flex:1;min-width:0;}
 .section-gap{display:flex;flex-direction:column;gap:14px;}
 
 .hero{
-  display:flex;align-items:center;gap:16px;
+  display:flex;align-items:center;gap:18px;
+  background:linear-gradient(135deg, color-mix(in srgb, var(--accent) 7%, var(--surface)), var(--surface) 65%);
+  position:relative;overflow:hidden;
+}
+.hero::after{
+  content:'';position:absolute;top:-40%;right:-15%;width:220px;height:220px;border-radius:50%;
+  background:radial-gradient(circle, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%);
+  pointer-events:none;
 }
 .hero-badge{
-  width:46px;height:46px;border-radius:13px;flex-shrink:0;
-  background:color-mix(in srgb, var(--accent) 14%, var(--surface));
+  width:48px;height:48px;border-radius:14px;flex-shrink:0;
+  background:linear-gradient(150deg, color-mix(in srgb, var(--accent) 22%, var(--surface)), color-mix(in srgb, var(--accent) 10%, var(--surface)));
   color:var(--accent);
   display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 14px -6px color-mix(in srgb, var(--accent) 45%, transparent);
+  position:relative;z-index:1;
 }
 .hero-badge svg{width:24px;height:24px;}
-.hero-label{font-size:13px;color:var(--ink-soft);font-weight:500;}
-.num-hero{font-size:32px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-0.5px;}
-.hero-sub{font-size:12.5px;color:var(--ink-faint);margin-top:2px;}
+.hero-label{font-size:13px;color:var(--ink-soft);font-weight:500;position:relative;z-index:1;}
+.num-hero{font-size:33px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-0.6px;position:relative;z-index:1;}
+.hero-sub{font-size:12.5px;color:var(--ink-faint);margin-top:2px;position:relative;z-index:1;}
 
 .insight-row{display:flex;gap:8px;flex-wrap:wrap;}
 .insight-chip{
@@ -206,9 +256,13 @@ main{flex:1;min-width:0;}
   grid-template-columns:repeat(3,1fr);
   gap:12px;
 }
-.tile{display:flex;flex-direction:column;gap:7px;padding:16px;}
-.tile-label{font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:6px;font-weight:500;}
-.tile-label .ic{width:16px;height:16px;display:flex;flex-shrink:0;}
+.tile{display:flex;flex-direction:column;gap:10px;padding:16px;}
+.tile-label{font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:8px;font-weight:500;}
+.tile-label .ic{
+  width:26px;height:26px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  background:color-mix(in srgb, currentColor 14%, var(--surface));
+}
+.tile-label .ic svg{width:14px;height:14px;}
 .tile-num{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;}
 .tile-num.income{color:var(--income);}
 .tile-num.expense{color:var(--expense);}
@@ -217,12 +271,22 @@ main{flex:1;min-width:0;}
 
 .two-col{display:grid;grid-template-columns:1.1fr 0.9fr;gap:14px;}
 .card h3{margin:0 0 14px;font-size:14.5px;color:var(--ink);font-weight:700;}
-.card h3 .sub{font-family:'IBM Plex Sans KR';font-weight:400;font-size:12px;color:var(--ink-faint);}
+.card h3 .sub{font-family:'Pretendard Variable','Pretendard',sans-serif;font-weight:400;font-size:12px;color:var(--ink-faint);}
 
-.legend-list{display:flex;flex-direction:column;gap:9px;margin-top:12px;}
-.legend-row{display:flex;align-items:center;gap:9px;font-size:13px;}
-.swatch{width:9px;height:9px;border-radius:3px;flex-shrink:0;}
+.legend-list{display:flex;flex-direction:column;gap:2px;margin-top:12px;}
+.legend-row{
+  display:flex;align-items:center;gap:9px;font-size:13px;
+  cursor:pointer;padding:5px 6px;margin:0 -6px;border-radius:8px;
+  border:1px solid transparent;
+  transition:background-color .15s ease, border-color .15s ease, opacity .15s ease;
+}
+.legend-row:hover{background:var(--surface-2);}
+.legend-row.active{background:var(--surface-2);border-color:var(--border);}
+.legend-row.dim{opacity:.4;}
+.swatch{width:10px;height:10px;border-radius:3px;flex-shrink:0;transition:transform .15s ease;}
+.legend-row.active .swatch{transform:scale(1.25);}
 .legend-name{flex:1;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.legend-row.active .legend-name{color:var(--ink);font-weight:700;}
 .legend-amt{font-variant-numeric:tabular-nums;font-weight:700;font-size:12.5px;}
 .legend-pct{font-size:11.5px;color:var(--ink-faint);width:32px;text-align:right;font-variant-numeric:tabular-nums;}
 
@@ -241,15 +305,16 @@ main{flex:1;min-width:0;}
 .fab{
   position:fixed;right:26px;bottom:26px;
   width:52px;height:52px;border-radius:50%;
-  background:var(--accent);color:var(--accent-ink);
+  background:linear-gradient(150deg, color-mix(in srgb, var(--accent) 100%, white 10%), color-mix(in srgb, var(--accent) 100%, black 12%));
+  color:var(--accent-ink);
   border:none;cursor:pointer;
   box-shadow:0 12px 24px -10px color-mix(in srgb, var(--accent) 60%, transparent);
   display:flex;align-items:center;justify-content:center;
   z-index:40;
-  transition:transform .15s ease;
+  transition:transform .15s ease, box-shadow .15s ease;
 }
+.fab:hover{transform:translateY(-2px);box-shadow:0 16px 28px -10px color-mix(in srgb, var(--accent) 70%, transparent);}
 .fab svg{width:24px;height:24px;}
-.fab:hover{transform:translateY(-2px);}
 
 .tpl-card{padding:16px 18px;}
 .tpl-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
@@ -258,7 +323,7 @@ main{flex:1;min-width:0;}
   border-radius:100px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;
   display:flex;align-items:center;justify-content:center;flex-shrink:0;
 }
-.tpl-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch;}
+.tpl-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch;touch-action:pan-x;}
 .tpl-row::-webkit-scrollbar{height:0;}
 .tpl-chip{
   display:flex;align-items:center;gap:7px;flex-shrink:0;
@@ -317,6 +382,7 @@ main{flex:1;min-width:0;}
 .tx-dup{
   width:28px;height:28px;border-radius:8px;border:none;background:transparent;
   color:var(--ink-faint);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  position:relative;
 }
 .tx-dup:hover{background:var(--surface);color:var(--accent);}
 .tx-dup svg{width:14px;height:14px;}
@@ -399,15 +465,15 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
 .overlay.center .sheet{border-radius:18px; animation:sheetInCenter .2s cubic-bezier(.22,.85,.32,1);}
 .overlay.closing .sheet{animation:sheetOut .16s ease forwards;}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
-.sheet-title{font-size:16.5px;font-weight:800;font-family:'Gothic A1',sans-serif;}
-.sheet-close{background:none;border:none;color:var(--ink-faint);cursor:pointer;width:28px;height:28px;display:flex;align-items:center;justify-content:center;}
+.sheet-title{font-size:16.5px;font-weight:800;font-family:'Pretendard Variable','Pretendard',sans-serif;}
+.sheet-close{background:none;border:none;color:var(--ink-faint);cursor:pointer;width:28px;height:28px;display:flex;align-items:center;justify-content:center;position:relative;}
 .sheet-close svg{width:18px;height:18px;}
 
 .form-group{margin-bottom:15px;}
 .form-label{font-size:12px;color:var(--ink-soft);font-weight:700;margin-bottom:6px;display:block;}
 .form-input, select.form-input{
   width:100%;padding:11px 13px;border-radius:var(--radius-sm);border:1px solid var(--border);
-  background:var(--surface-2);color:var(--ink);font-size:14px;font-family:inherit;
+  background:var(--surface-2);color:var(--ink);font-size:16px;font-family:inherit;
 }
 .form-input:focus{outline:2px solid color-mix(in srgb, var(--accent) 50%, transparent);outline-offset:1px;}
 .type-toggle{display:flex;gap:8px;}
@@ -483,7 +549,7 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
   width:52px;height:52px;border-radius:16px;margin:0 auto 18px;
   background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;
 }
-.auth-title{font-family:'Gothic A1',sans-serif;font-weight:800;font-size:21px;}
+.auth-title{font-family:'Pretendard Variable','Pretendard',sans-serif;font-weight:800;font-size:21px;}
 .auth-desc{font-size:12.5px;color:var(--ink-faint);margin:8px 0 26px;line-height:1.5;}
 .auth-error{color:var(--expense);font-size:12px;margin-top:12px;min-height:14px;}
 
@@ -503,6 +569,7 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
   .navlink{flex-direction:column;gap:3px;padding:6px 8px;font-size:10.5px;flex:1;text-align:center;align-items:center;}
   .navlink .ic{width:20px;height:20px;}
   .navlink.active{background:transparent;color:var(--accent);}
+  .navlink.active::before{left:50%;top:-9px;transform:translateX(-50%);width:16px;height:3px;border-radius:3px 3px 0 0;}
   .tiles{grid-template-columns:1fr 1fr;}
   .tiles .tile:last-child{grid-column:1 / -1;}
   .page-title{font-size:19px;}
@@ -513,6 +580,8 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
   .cal-amt{font-size:9px;}
 }
 </style>
+</head>
+<body>
 
 <div id="authScreen" class="auth-screen">
   <div class="auth-card">
@@ -542,7 +611,7 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
   <main id="main"></main>
 </div>
 
-<button class="fab" id="fab" title="거래 추가"></button>
+<button class="fab" id="fab" title="거래 추가" aria-label="거래 추가"></button>
 <div id="modalRoot"></div>
 
 <script>
@@ -656,6 +725,13 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const fbAuth = firebase.auth();
 const fbDb = firebase.firestore();
+// lets the app show cached data instantly and queue writes while offline —
+// real value on mobile (subway, elevator, spotty signal). Safe to ignore if
+// it can't be enabled (private browsing, unsupported browser, multiple tabs
+// without synchronizeTabs support): the app just falls back to online-only.
+fbDb.enablePersistence({ synchronizeTabs: true }).catch(err=>{
+  console.warn('Firestore offline persistence unavailable:', err.code);
+});
 
 const Store = { unsubs: [] };
 let currentUid = null;
@@ -673,8 +749,10 @@ function teardownStore(){
   seededCategories = false;
 }
 
+let loadStartedAt = null;
 function initStoreForUser(uid){
   currentUid = uid;
+  loadStartedAt = Date.now();
   wireCollection(userCol(uid,'categories'), 'categories');
   wireCollection(userCol(uid,'transactions'), 'transactions');
   wireCollection(userCol(uid,'assets'), 'assets');
@@ -683,12 +761,18 @@ function initStoreForUser(uid){
     if(snap.exists && snap.data().accent){ state.settings.accent = snap.data().accent; }
     applyAccent(state.settings.accent);
     state.ready = true;
-    render();
+    scheduleRender();
     updateSyncIndicator();
   }, err=>console.error(err));
   Store.unsubs.push(unsub);
   updateSyncIndicator();
-  setTimeout(()=>{ if(!state.ready){ state.ready = true; render(); } }, 4000);
+  // Never fabricate an empty dashboard just because a mobile connection is
+  // slow — that reads as "my data disappeared". Instead, after a while,
+  // re-render the SAME loading view with a network hint + manual retry.
+  setTimeout(function checkSlow(){
+    if(state.ready) return;
+    scheduleRender();
+  }, 8000);
 }
 
 function wireCollection(colRef, key){
@@ -701,7 +785,7 @@ function wireCollection(colRef, key){
       batch.commit();
     }
     state.ready = true;
-    render();
+    scheduleRender();
   }, err=>console.error(err));
   Store.unsubs.push(unsub);
 }
@@ -739,21 +823,35 @@ fbAuth.onAuthStateChanged(user=>{
   if(user){
     showAuthScreen(false);
     initStoreForUser(user.uid);
-    render();
+    scheduleRender();
   } else {
     currentUid = null;
     showAuthScreen(true);
   }
 });
+function isMobileUA(){
+  return /iphone|ipad|ipod|android/i.test(navigator.userAgent);
+}
 function wireAuthUI(){
   $('#googleLoginBtn').onclick = ()=>{
     $('#authError').textContent = '';
     const provider = new firebase.auth.GoogleAuthProvider();
-    fbAuth.signInWithPopup(provider).catch(()=>{
-      $('#authError').textContent = '로그인에 실패했어요. 다시 시도해주세요.';
-    });
+    // mobile browsers frequently block/mishandle popup auth (Safari, in-app
+    // webviews) — send them through a full-page redirect instead.
+    if(isMobileUA()){
+      fbAuth.signInWithRedirect(provider).catch(()=>{
+        $('#authError').textContent = '로그인에 실패했어요. 다시 시도해주세요.';
+      });
+    } else {
+      fbAuth.signInWithPopup(provider).catch(()=>{
+        $('#authError').textContent = '로그인에 실패했어요. 다시 시도해주세요.';
+      });
+    }
   };
 }
+fbAuth.getRedirectResult().catch(()=>{
+  $('#authError').textContent = '로그인에 실패했어요. 다시 시도해주세요.';
+});
 
 /* ---------- accent theming ---------- */
 function applyAccent(hex){
@@ -864,11 +962,26 @@ function paintStaticIcons(){
 }
 
 /* ---------- render root ---------- */
+// Firestore snapshots (up to 5 collections/docs) and quick user actions can
+// each ask for a re-render within the same tick; coalesce them into one paint
+// per frame so the dashboard/charts don't flicker-rebuild multiple times.
+let renderScheduled = false;
+function scheduleRender(){
+  if(renderScheduled) return;
+  renderScheduled = true;
+  requestAnimationFrame(()=>{ renderScheduled = false; render(); });
+}
 function render(){
   $$('.navlink').forEach(b=> b.classList.toggle('active', b.dataset.tab===state.tab));
   const main = $('#main');
   if(!state.ready){
-    main.innerHTML = `<div class="card empty" style="margin-top:40px"><div class="e-ic" style="animation:pulseSoft 1.4s ease-in-out infinite">${icon('wallet',{size:30})}</div><div>불러오는 중이에요…</div></div>`;
+    const slow = loadStartedAt && (Date.now() - loadStartedAt > 7000);
+    main.innerHTML = `<div class="card empty" style="margin-top:40px">
+      <div class="e-ic" style="animation:pulseSoft 1.4s ease-in-out infinite">${icon('wallet',{size:30})}</div>
+      <div>${slow ? '네트워크 연결이 느려요. 잠시만 기다려주세요…' : '불러오는 중이에요…'}</div>
+      ${slow ? `<button class="btn btn-ghost btn-sm" id="retryLoadBtn">새로고침</button>` : ''}
+    </div>`;
+    if(slow) $('#retryLoadBtn').onclick = ()=> location.reload();
     replayViewAnim(main);
     return;
   }
@@ -900,16 +1013,36 @@ function toast(msg, opts){
   }, 1700);
 }
 
+// wraps an async click handler so a fat-finger double-tap (common on mobile)
+// can't fire the write twice, and a failed write (offline, permission, etc.)
+// surfaces as a toast instead of silently doing nothing.
+function guardedClick(btn, fn){
+  if(!btn) return;
+  btn.onclick = (e)=> runGuarded(btn, ()=>fn(e));
+}
+async function runGuarded(el, fn){
+  if(!el || el.disabled) return;
+  el.disabled = true;
+  try{
+    await fn();
+  }catch(err){
+    console.error(err);
+    toast('문제가 발생했어요. 다시 시도해주세요', {danger:true});
+  }finally{
+    el.disabled = false;
+  }
+}
+
 function monthNavHtml(){
   return `<div class="month-nav">
-    <button id="prevMonth">${icon('chevronLeft',{size:15})}</button>
+    <button id="prevMonth" aria-label="이전 달">${icon('chevronLeft',{size:15})}</button>
     <span class="month-label">${state.month.y}년 ${state.month.m}월</span>
-    <button id="nextMonth">${icon('chevronRight',{size:15})}</button>
+    <button id="nextMonth" aria-label="다음 달">${icon('chevronRight',{size:15})}</button>
   </div>`;
 }
 function wireMonthNav(){
-  $('#prevMonth').onclick = ()=>{ state.month.m--; if(state.month.m<1){state.month.m=12; state.month.y--;} state.selectedDay=null; render(); };
-  $('#nextMonth').onclick = ()=>{ state.month.m++; if(state.month.m>12){state.month.m=1; state.month.y++;} state.selectedDay=null; render(); };
+  $('#prevMonth').onclick = ()=>{ state.month.m--; if(state.month.m<1){state.month.m=12; state.month.y--;} state.selectedDay=null; scheduleRender(); };
+  $('#nextMonth').onclick = ()=>{ state.month.m++; if(state.month.m>12){state.month.m=1; state.month.y++;} state.selectedDay=null; scheduleRender(); };
 }
 function wonCompact(n){
   const neg = n<0; const abs = Math.abs(n);
@@ -918,6 +1051,19 @@ function wonCompact(n){
   else if(abs>=10000) s = (abs/10000).toFixed(abs%10000===0?0:1)+'만';
   else s = abs.toLocaleString('ko-KR');
   return (neg?'-':'')+s;
+}
+
+let lastNetWorth = null;
+function animateNumber(el, from, to, duration){
+  duration = duration || 500;
+  const start = performance.now();
+  function step(now){
+    const p = Math.min(1, (now-start)/duration);
+    const eased = 1 - Math.pow(1-p, 3);
+    el.textContent = won(from + (to-from)*eased);
+    if(p<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
 }
 
 /* ---------- dashboard ---------- */
@@ -988,6 +1134,9 @@ function renderDashboard(){
   renderDonut(txs, expense);
   renderAssetMini();
   renderTrend();
+  const heroEl = $('.num-hero');
+  if(lastNetWorth !== null && lastNetWorth !== nw){ animateNumber(heroEl, lastNetWorth, nw); }
+  lastNetWorth = nw;
 }
 
 function renderDonut(txs, expenseTotal){
@@ -999,12 +1148,12 @@ function renderDonut(txs, expenseTotal){
     wrap.innerHTML = `<div class="empty"><div class="e-ic">${icon('chart',{size:30})}</div><div>이번 달 지출 내역이 아직 없어요</div></div>`;
     return;
   }
-  wrap.innerHTML = `<div style="position:relative;height:170px;"><canvas id="donutCanvas"></canvas></div><div class="legend-list" id="donutLegend"></div>`;
+  wrap.innerHTML = `<div style="position:relative;height:186px;"><canvas id="donutCanvas"></canvas></div><div class="legend-list" id="donutLegend"></div>`;
   const legend = $('#donutLegend');
-  entries.forEach(e=>{
+  entries.forEach((e,i)=>{
     const pct = expenseTotal>0 ? Math.round((e.amt/expenseTotal)*100) : 0;
     legend.insertAdjacentHTML('beforeend', `
-      <div class="legend-row">
+      <div class="legend-row" data-idx="${i}">
         <span class="swatch" style="background:${e.cat.color}"></span>
         <span class="legend-name">${e.cat.name}</span>
         <span class="legend-pct">${pct}%</span>
@@ -1014,11 +1163,75 @@ function renderDonut(txs, expenseTotal){
   if(typeof Chart === 'undefined'){ $('#donutWrap').insertAdjacentHTML('beforeend', `<div class="empty" style="padding:14px"><div>차트를 불러오는 중이에요…</div></div>`); return; }
   const ctx = $('#donutCanvas').getContext('2d');
   if(chartDonut) chartDonut.destroy();
+
+  let activeDonutIndex = null;
+
+  // real content (name + % + amount) drawn INSIDE the donut hole, never on
+  // the slices themselves — so it never gets cramped or spills past a thin
+  // wedge. Shows the total by default, or the tapped category's detail.
+  const centerLabelPlugin = {
+    id:'centerLabel',
+    afterDatasetsDraw(chart){
+      const c = chart.ctx;
+      const {left,right,top,bottom} = chart.chartArea;
+      const cx = (left+right)/2, cy = (top+bottom)/2;
+      const inkColor = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#1B1F2A';
+      const softColor = getComputedStyle(document.documentElement).getPropertyValue('--ink-soft').trim() || '#6B7280';
+      c.save();
+      c.textAlign = 'center';
+      c.textBaseline = 'middle';
+      if(activeDonutIndex !== null && entries[activeDonutIndex]){
+        const e = entries[activeDonutIndex];
+        const pct = expenseTotal>0 ? Math.round((e.amt/expenseTotal)*100) : 0;
+        c.font = "600 11px 'Pretendard Variable','Pretendard',sans-serif";
+        c.fillStyle = softColor;
+        c.fillText(e.cat.name, cx, cy-16);
+        c.font = "800 19px 'Pretendard Variable','Pretendard',sans-serif";
+        c.fillStyle = e.cat.color;
+        c.fillText(pct+'%', cx, cy+5);
+        c.font = "600 10.5px 'Pretendard Variable','Pretendard',sans-serif";
+        c.fillStyle = softColor;
+        c.fillText(won(e.amt), cx, cy+24);
+      } else {
+        c.font = "600 11px 'Pretendard Variable','Pretendard',sans-serif";
+        c.fillStyle = softColor;
+        c.fillText('이번 달 지출', cx, cy-11);
+        c.font = "800 17px 'Pretendard Variable','Pretendard',sans-serif";
+        c.fillStyle = inkColor;
+        c.fillText(won(expenseTotal), cx, cy+11);
+      }
+      c.restore();
+    }
+  };
+
   chartDonut = new Chart(ctx, {
     type:'doughnut',
-    data:{ labels: entries.map(e=>e.cat.name), datasets:[{ data: entries.map(e=>e.amt), backgroundColor: entries.map(e=>e.cat.color), borderColor: getComputedStyle(document.body).getPropertyValue('--surface') || '#fff', borderWidth:3 }] },
-    options:{ responsive:true, maintainAspectRatio:false, cutout:'68%',
-      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: c => ` ${c.label}: ${won(c.parsed)}` } } } }
+    data:{ labels: entries.map(e=>e.cat.name), datasets:[{ data: entries.map(e=>e.amt), backgroundColor: entries.map(e=>e.cat.color), borderColor: getComputedStyle(document.body).getPropertyValue('--surface') || '#fff', borderWidth:3, hoverOffset:8 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'72%',
+      onClick:(evt, elements)=> setActiveDonutSlice(elements.length ? elements[0].index : null),
+      // the center label already shows name/%/amount for the tapped slice,
+      // so the default hover tooltip would just duplicate it — worse, it
+      // renders at a stale position when triggered via setActiveElements
+      // (no real cursor) and visually collides with the center text.
+      plugins:{ legend:{display:false}, tooltip:{ enabled:false } } },
+    plugins:[centerLabelPlugin]
+  });
+
+  function setActiveDonutSlice(i){
+    activeDonutIndex = i;
+    $$('.legend-row', legend).forEach(row=>{
+      const rowIdx = Number(row.dataset.idx);
+      row.classList.toggle('active', rowIdx===i);
+      row.classList.toggle('dim', i!==null && rowIdx!==i);
+    });
+    chartDonut.setActiveElements(i===null ? [] : [{datasetIndex:0, index:i}]);
+    chartDonut.update();
+  }
+  $$('.legend-row', legend).forEach(row=>{
+    row.onclick = ()=>{
+      const i = Number(row.dataset.idx);
+      setActiveDonutSlice(row.classList.contains('active') ? null : i);
+    };
   });
 }
 
@@ -1082,7 +1295,7 @@ function txRowHtml(t){
       ${subParts.length?`<div class="tx-memo">${subParts.join(' · ')}</div>`:''}
     </div>
     <div class="tx-amt ${t.type}">${t.type==='income'?'+':'-'}${won(Math.abs(Number(t.amount)))}</div>
-    <button class="tx-dup" data-dup="${t.id}" title="오늘 날짜로 복제">${icon('duplicate',{size:14})}</button>
+    <button class="tx-dup" data-dup="${t.id}" title="오늘 날짜로 복제" aria-label="오늘 날짜로 복제">${icon('duplicate',{size:14})}</button>
   </div>`;
 }
 function wireTxRows(container){
@@ -1090,15 +1303,15 @@ function wireTxRows(container){
     row.onclick = ()=> openTxModal(state.transactions.find(t=>t.id===row.dataset.id));
   });
   $$('.tx-dup', container).forEach(btn=>{
-    btn.onclick = async (e)=>{
+    guardedClick(btn, async (e)=>{
       e.stopPropagation();
       const src = state.transactions.find(t=>t.id===btn.dataset.dup);
       if(!src) return;
       const data = { type:src.type, date:todayStr(), categoryId:src.categoryId, amount:src.amount, memo:src.memo||'', assetId:src.assetId||null };
       await reconcileAssetForTx(null, data);
       await addDoc('transactions', data);
-      render(); toast('오늘 날짜로 복제했어요');
-    };
+      scheduleRender(); toast('오늘 날짜로 복제했어요');
+    });
   });
 }
 
@@ -1115,7 +1328,7 @@ function renderTransactions(){
           <h3 style="margin:0">자주 쓰는 거래</h3>
           ${state.templates.length===0?'<div class="settings-desc" style="margin-top:2px">반복되는 거래를 등록해두면 탭 한 번으로 바로 추가할 수 있어요</div>':''}
         </div>
-        <button class="tpl-edit-toggle" id="tplEditToggle">${state.templateEditMode ? '완료' : icon('pencil',{size:13})}</button>
+        <button class="tpl-edit-toggle" id="tplEditToggle" aria-label="${state.templateEditMode?'편집 완료':'템플릿 편집'}">${state.templateEditMode ? '완료' : icon('pencil',{size:13})}</button>
       </div>
       <div class="tpl-row" id="tplRow"></div>
     </div>
@@ -1127,14 +1340,14 @@ function renderTransactions(){
   `;
   wireMonthNav();
   renderTemplateRow();
-  $('#tplEditToggle').onclick = ()=>{ state.templateEditMode = !state.templateEditMode; render(); };
+  $('#tplEditToggle').onclick = ()=>{ state.templateEditMode = !state.templateEditMode; scheduleRender(); };
   $$('.tx-view-toggle button').forEach(b=> b.onclick = ()=>{
     state.txView = b.dataset.v;
     if(state.txView==='calendar' && !state.selectedDay){
       const t = todayStr();
       state.selectedDay = t.startsWith(monthKey(state.month.y, state.month.m)) ? t : null;
     }
-    render();
+    scheduleRender();
   });
   if(state.txView==='calendar') renderTxCalendar(); else renderTxList();
 }
@@ -1154,18 +1367,18 @@ function renderTemplateRow(){
   wrap.innerHTML = chips + `<button class="tpl-chip tpl-add" id="tplAddBtn">${icon('plus',{size:14})}<span>추가</span></button>`;
   $$('.tpl-chip[data-id]', wrap).forEach(chip=>{
     chip.onclick = (e)=>{
+      if(e.target.closest('.tpl-del')) return;
       const id = chip.dataset.id;
       if(edit){ openTemplateModal(templateById(id)); return; }
-      if(e.target.closest('.tpl-del')) return;
-      quickAddFromTemplate(templateById(id));
+      runGuarded(chip, ()=> quickAddFromTemplate(templateById(id)));
     };
   });
   $$('.tpl-del', wrap).forEach(del=>{
-    del.onclick = async (e)=>{
+    guardedClick(del, async (e)=>{
       e.stopPropagation();
       await deleteDoc('templates', del.dataset.del);
-      render(); toast('삭제했어요', {danger:true});
-    };
+      scheduleRender(); toast('삭제했어요', {danger:true});
+    });
   });
   $('#tplAddBtn').onclick = ()=> openTemplateModal(null);
 }
@@ -1175,7 +1388,7 @@ async function quickAddFromTemplate(tpl){
   const data = { type:tpl.type, date:todayStr(), categoryId:tpl.categoryId, amount:tpl.amount, memo:tpl.memo||'', assetId:tpl.assetId||null };
   await reconcileAssetForTx(null, data);
   await addDoc('transactions', data);
-  render(); toast(`${tpl.name} 추가했어요`);
+  scheduleRender(); toast(`${tpl.name} 추가했어요`);
 }
 
 function renderTxList(){
@@ -1342,7 +1555,7 @@ function renderSettings(){
       <div class="settings-row">
         <div>
           <div class="settings-label">계정</div>
-          <div class="settings-desc">${escapeHtml(fbAuth.currentUser?.displayName || fbAuth.currentUser?.email || '')}으로 로그인됨 · 모든 기기에서 자동 동기화</div>
+          <div class="settings-desc">${(()=>{ const name = fbAuth.currentUser?.displayName || fbAuth.currentUser?.email; return name ? `${escapeHtml(name)}으로 로그인됨` : '로그인됨'; })()} · 모든 기기에서 자동 동기화</div>
         </div>
         <button class="btn btn-ghost btn-sm" id="logoutBtn">로그아웃</button>
       </div>
@@ -1384,7 +1597,7 @@ function openTxModal(existing, prefill){
       <div class="sheet">
         <div class="sheet-head">
           <div class="sheet-title">${existing?'거래 수정':'거래 추가'}</div>
-          <button class="sheet-close" id="closeTx">${icon('close',{size:18})}</button>
+          <button class="sheet-close" id="closeTx" aria-label="닫기">${icon('close',{size:18})}</button>
         </div>
         <div class="form-group">
           <div class="type-toggle" id="typeToggle">
@@ -1441,12 +1654,12 @@ function openTxModal(existing, prefill){
   $$('#typeToggle button').forEach(b=> b.onclick = ()=>{ type=b.dataset.t; categoryId=null; $$('#typeToggle button').forEach(x=>x.className=''); b.className = type==='expense'?'sel-expense':'sel-income'; paintCatPick(); });
   $('#closeTx').onclick = closeModal;
   $('#ovTx').onclick = (e)=>{ if(e.target.id==='ovTx') closeModal(); };
-  if(existing) $('#txDelete').onclick = async ()=>{
+  if(existing) guardedClick($('#txDelete'), async ()=>{
     await reconcileAssetForTx(existing, null);
     await deleteDoc('transactions', existing.id);
-    closeModal(); render(); toast('삭제했어요', {danger:true});
-  };
-  $('#txSave').onclick = async ()=>{
+    closeModal(); scheduleRender(); toast('삭제했어요', {danger:true});
+  });
+  guardedClick($('#txSave'), async ()=>{
     const amount = Number($('#txAmount').value);
     const date = $('#txDate').value;
     if(!categoryId){ toast('카테고리를 선택해주세요', {danger:true}); shakeSheet(); return; }
@@ -1456,8 +1669,8 @@ function openTxModal(existing, prefill){
     const data = { type, date, categoryId, amount, memo: $('#txMemo').value.trim(), assetId };
     await reconcileAssetForTx(existing || null, data);
     if(existing) await updateDoc('transactions', existing.id, data); else await addDoc('transactions', data);
-    closeModal(); render(); toast(existing?'수정했어요':'추가했어요');
-  };
+    closeModal(); scheduleRender(); toast(existing?'수정했어요':'추가했어요');
+  });
 }
 
 function openCategoryModal(existing, forcedType){
@@ -1470,7 +1683,7 @@ function openCategoryModal(existing, forcedType){
       <div class="sheet">
         <div class="sheet-head">
           <div class="sheet-title">${existing?'카테고리 수정':'카테고리 추가'}</div>
-          <button class="sheet-close" id="closeCat">${icon('close',{size:18})}</button>
+          <button class="sheet-close" id="closeCat" aria-label="닫기">${icon('close',{size:18})}</button>
         </div>
         <div class="form-group">
           <div class="type-toggle" id="catTypeToggle">
@@ -1500,18 +1713,18 @@ function openCategoryModal(existing, forcedType){
   $$('#catTypeToggle button').forEach(b=> b.onclick=()=>{ type=b.dataset.t; $$('#catTypeToggle button').forEach(x=>x.className=''); b.className=type==='expense'?'sel-expense':'sel-income'; paintIcons(); });
   $('#closeCat').onclick = closeModal;
   $('#ovCat').onclick = (e)=>{ if(e.target.id==='ovCat') closeModal(); };
-  if(existing) $('#catDelete').onclick = async ()=>{
+  if(existing) guardedClick($('#catDelete'), async ()=>{
     const inUse = state.transactions.some(t=>t.categoryId===existing.id);
     if(inUse && !confirm('이 카테고리를 사용하는 내역이 있어요. 삭제할까요?')) return;
-    await deleteDoc('categories', existing.id); closeModal(); render(); toast('삭제했어요', {danger:true});
-  };
-  $('#catSave').onclick = async ()=>{
+    await deleteDoc('categories', existing.id); closeModal(); scheduleRender(); toast('삭제했어요', {danger:true});
+  });
+  guardedClick($('#catSave'), async ()=>{
     const name = $('#catName').value.trim();
     if(!name){ toast('이름을 입력해주세요', {danger:true}); shakeSheet(); return; }
     const data = { name, type, icon: iconKey, color };
     if(existing) await updateDoc('categories', existing.id, data); else await addDoc('categories', data);
-    closeModal(); render(); toast(existing?'수정했어요':'추가했어요');
-  };
+    closeModal(); scheduleRender(); toast(existing?'수정했어요':'추가했어요');
+  });
 }
 
 function openAssetModal(existing){
@@ -1523,7 +1736,7 @@ function openAssetModal(existing){
       <div class="sheet">
         <div class="sheet-head">
           <div class="sheet-title">${existing?'자산 수정':'자산 추가'}</div>
-          <button class="sheet-close" id="closeAsset">${icon('close',{size:18})}</button>
+          <button class="sheet-close" id="closeAsset" aria-label="닫기">${icon('close',{size:18})}</button>
         </div>
         <div class="form-group"><label class="form-label">이름</label><input class="form-input" id="assetName" placeholder="예: 주거래 통장" value="${existing?escapeHtml(existing.name):''}"></div>
         <div class="form-group"><label class="form-label">종류</label><select class="form-input" id="assetType"></select></div>
@@ -1543,12 +1756,12 @@ function openAssetModal(existing){
   paintColor();
   $('#closeAsset').onclick = closeModal;
   $('#ovAsset').onclick = (e)=>{ if(e.target.id==='ovAsset') closeModal(); };
-  if(existing) $('#assetDelete').onclick = async ()=>{
+  if(existing) guardedClick($('#assetDelete'), async ()=>{
     const inUse = state.transactions.some(t=>t.assetId===existing.id);
     if(inUse && !confirm('이 자산과 연결된 내역이 있어요. 삭제할까요?')) return;
-    await deleteDoc('assets', existing.id); closeModal(); render(); toast('삭제했어요', {danger:true});
-  };
-  $('#assetSave').onclick = async ()=>{
+    await deleteDoc('assets', existing.id); closeModal(); scheduleRender(); toast('삭제했어요', {danger:true});
+  });
+  guardedClick($('#assetSave'), async ()=>{
     const name = $('#assetName').value.trim();
     const amount = Number($('#assetAmount').value);
     const t = $('#assetType').value;
@@ -1556,8 +1769,8 @@ function openAssetModal(existing){
     if(isNaN(amount) || amount<0){ toast('금액을 확인해주세요', {danger:true}); shakeSheet(); return; }
     const data = { name, type:t, amount, color, icon: ASSET_ICONS[t] };
     if(existing) await updateDoc('assets', existing.id, data); else await addDoc('assets', data);
-    closeModal(); render(); toast(existing?'수정했어요':'추가했어요');
-  };
+    closeModal(); scheduleRender(); toast(existing?'수정했어요':'추가했어요');
+  });
 }
 
 function openTemplateModal(existing){
@@ -1569,7 +1782,7 @@ function openTemplateModal(existing){
       <div class="sheet">
         <div class="sheet-head">
           <div class="sheet-title">${existing?'템플릿 수정':'템플릿 추가'}</div>
-          <button class="sheet-close" id="closeTpl">${icon('close',{size:18})}</button>
+          <button class="sheet-close" id="closeTpl" aria-label="닫기">${icon('close',{size:18})}</button>
         </div>
         <div class="form-group"><label class="form-label">이름</label><input class="form-input" id="tplName" placeholder="예: 아메리카노, 월세" value="${existing?escapeHtml(existing.name):''}"></div>
         <div class="form-group">
@@ -1612,10 +1825,10 @@ function openTemplateModal(existing){
   $$('#tplTypeToggle button').forEach(b=> b.onclick = ()=>{ type=b.dataset.t; categoryId=null; $$('#tplTypeToggle button').forEach(x=>x.className=''); b.className = type==='expense'?'sel-expense':'sel-income'; paintCatPick(); });
   $('#closeTpl').onclick = closeModal;
   $('#ovTpl').onclick = (e)=>{ if(e.target.id==='ovTpl') closeModal(); };
-  if(existing) $('#tplDelete').onclick = async ()=>{
-    await deleteDoc('templates', existing.id); closeModal(); render(); toast('삭제했어요', {danger:true});
-  };
-  $('#tplSave').onclick = async ()=>{
+  if(existing) guardedClick($('#tplDelete'), async ()=>{
+    await deleteDoc('templates', existing.id); closeModal(); scheduleRender(); toast('삭제했어요', {danger:true});
+  });
+  guardedClick($('#tplSave'), async ()=>{
     const name = $('#tplName').value.trim();
     const amount = Number($('#tplAmount').value);
     if(!name){ toast('이름을 입력해주세요', {danger:true}); shakeSheet(); return; }
@@ -1624,14 +1837,16 @@ function openTemplateModal(existing){
     const assetId = $('#tplAsset').value || null;
     const data = { name, type, categoryId, amount, assetId };
     if(existing) await updateDoc('templates', existing.id, data); else await addDoc('templates', data);
-    closeModal(); render(); toast(existing?'수정했어요':'추가했어요');
-  };
+    closeModal(); scheduleRender(); toast(existing?'수정했어요':'추가했어요');
+  });
 }
 
 /* ---------- boot ---------- */
 paintStaticIcons();
 wireAuthUI();
-$$('.navlink').forEach(b=> b.onclick = ()=>{ state.tab = b.dataset.tab; render(); });
+$$('.navlink').forEach(b=> b.onclick = ()=>{ state.tab = b.dataset.tab; scheduleRender(); });
 $('#fab').onclick = ()=> openTxModal(null);
 applyAccent(state.settings.accent);
 </script>
+</body>
+</html>
