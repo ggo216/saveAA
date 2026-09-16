@@ -1217,6 +1217,19 @@ function computeAssetBalances(){
   });
   return map;
 }
+// ordering for asset-linking pickers (거래 추가's 자산/보내는 계좌/받는 계좌,
+// 템플릿의 자산): 현금 accounts first since that's what a transaction most
+// often actually moves, then everything else — within each group, the
+// account with the larger balance sorts first, since that's more likely to
+// be the one currently in use.
+function sortAssetsForPicker(list, balances){
+  balances = balances || computeAssetBalances();
+  return list.slice().sort((a,b)=>{
+    const aCash = a.type==='현금' ? 0 : 1, bCash = b.type==='현금' ? 0 : 1;
+    if(aCash!==bCash) return aCash-bCash;
+    return (balances.get(b.id)||0) - (balances.get(a.id)||0);
+  });
+}
 function netWorth(balances){
   balances = balances || computeAssetBalances();
   let assetsSum = 0, liabSum = 0;
@@ -2618,8 +2631,9 @@ function openTxModal(existing, prefill){
     $('#txAmountClear').onclick = ()=>{ $('#txAmount').value=''; };
   };
   const fillAssetSelect = ()=>{
-    const assets = state.assets.filter(a=>!ASSET_TYPES_LIAB.includes(a.type));
-    const liabs = state.assets.filter(a=>ASSET_TYPES_LIAB.includes(a.type));
+    const balances = computeAssetBalances();
+    const assets = sortAssetsForPicker(state.assets.filter(a=>!ASSET_TYPES_LIAB.includes(a.type)), balances);
+    const liabs = sortAssetsForPicker(state.assets.filter(a=>ASSET_TYPES_LIAB.includes(a.type)), balances);
     const buildMainOptions = ()=> [
       {value:'', label:'연결 안 함', color:null},
       ...assets.map(a=>({value:a.id, label:a.name, color:a.color})),
@@ -2860,8 +2874,9 @@ function openTemplateModal(existing){
     $$('#tplCatPick .cat-opt').forEach(el=> el.onclick=()=>{ categoryId=el.dataset.id; paintCatPick(); });
   };
   const fillAssetSelect = ()=>{
-    const assets = state.assets.filter(a=>!ASSET_TYPES_LIAB.includes(a.type));
-    const liabs = state.assets.filter(a=>ASSET_TYPES_LIAB.includes(a.type));
+    const balances = computeAssetBalances();
+    const assets = sortAssetsForPicker(state.assets.filter(a=>!ASSET_TYPES_LIAB.includes(a.type)), balances);
+    const liabs = sortAssetsForPicker(state.assets.filter(a=>ASSET_TYPES_LIAB.includes(a.type)), balances);
     const buildOptions = ()=> [
       {value:'', label:'연결 안 함', color:null},
       ...assets.map(a=>({value:a.id, label:a.name, color:a.color})),
