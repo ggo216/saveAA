@@ -1280,7 +1280,7 @@ function renderDashboard(){
           <div id="donutWrap"></div>
         </div>
         <div class="card">
-          <h3>자산 구성 <span class="sub">상위 5개</span></h3>
+          <h3>자산 구성</h3>
           <div id="assetMiniWrap"></div>
         </div>
       </div>
@@ -1444,7 +1444,7 @@ function renderAssetSummaryInto(wrapId, balances, limit){
       <span class="asset-mini-amt">${won(a.bal)}</span>
     </div>`).join('');
 }
-function renderAssetMini(balances){ renderAssetSummaryInto('assetMiniWrap', balances, 5); }
+function renderAssetMini(balances){ renderAssetSummaryInto('assetMiniWrap', balances); }
 // shown at the top of 내역 so the reader always has the same current asset
 // figures in view while looking at their transaction history, without
 // having to jump to the 자산 tab — every non-liability asset, not just top 5.
@@ -1452,11 +1452,15 @@ function renderTxAssetSummary(){
   const wrap = $('#txAssetSummaryWrap');
   if(!wrap) return;
   const balances = computeAssetBalances();
-  const list = state.assets.filter(a=>!ASSET_TYPES_LIAB.includes(a.type))
+  // only 현금 (cash) accounts here — 거래 추가 in 내역 links a transaction to
+  // whichever account it moved cash in/out of, so this summary is scoped to
+  // match that; 홈 대시보드's 자산 구성 widget is the place for the full
+  // asset picture across every type (투자/부동산/etc included).
+  const list = state.assets.filter(a=>a.type==='현금')
     .map(a=>({...a, bal: balances.get(a.id)||0}))
     .sort((a,b)=>b.bal-a.bal);
   if(list.length===0){
-    wrap.innerHTML = `<div class="settings-desc">등록된 자산이 없어요</div>`;
+    wrap.innerHTML = `<div class="settings-desc">등록된 현금 자산이 없어요</div>`;
     return;
   }
   // each row stretches to the full width of the column (asset-chip-row is a
