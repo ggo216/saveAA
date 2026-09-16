@@ -2408,7 +2408,16 @@ function closeModal(){
   setTimeout(()=>{ $('#modalRoot').innerHTML=''; }, 160);
 }
 document.addEventListener('keydown', (e)=>{
-  if(e.key==='Escape' && $('#modalRoot .overlay')) closeModal();
+  if(e.key!=='Escape') return;
+  // a popover (date/calculator/asset picker) sits on top of the sheet, not
+  // inside it — Escape should back out of just that first, the same way an
+  // outside click does, rather than jumping straight to closing the whole
+  // 거래 추가 sheet underneath it.
+  if(document.querySelector('.date-picker-pop, .calc-pop, .asset-picker-pop')){
+    closeDatePicker(); closeCalculator(); closeAssetPicker();
+    return;
+  }
+  if($('#modalRoot .overlay')) closeModal();
 });
 function shakeSheet(){
   const sheet = $('#modalRoot .sheet');
@@ -2503,12 +2512,17 @@ function openDatePicker(inputEl){
 // +-*/. before it's ever handed to Function(), so it can't evaluate
 // anything but arithmetic.
 let closeCalculatorOutsideHandler = null;
+let calcKeydownHandler = null;
 function closeCalculator(){
   const pop = document.querySelector('.calc-pop');
   if(pop) pop.remove();
   if(closeCalculatorOutsideHandler){
     document.removeEventListener('mousedown', closeCalculatorOutsideHandler);
     closeCalculatorOutsideHandler = null;
+  }
+  if(calcKeydownHandler){
+    document.removeEventListener('keydown', calcKeydownHandler);
+    calcKeydownHandler = null;
   }
 }
 function evalCalcExpr(expr){
@@ -2556,32 +2570,61 @@ function openCalculator(triggerBtn, amountInputEl){
     pop.style.top = Math.max(8,top)+'px';
   };
   const display = ()=>{ $('#calcDisplay').textContent = expr ? expr.replace(/\*/g,'×').replace(/\//g,'÷') : '0'; };
+  const applyToAmount = ()=>{
+    const result = evalCalcExpr(expr) ?? Number(expr);
+    if(!isNaN(result) && expr!==''){ setAmountValue(amountInputEl, Math.round(Math.abs(result))); }
+    closeCalculator();
+  };
+  // pressing = (or Enter) once computes, same as before; pressing it AGAIN
+  // right after — with nothing else typed in between — applies the result
+  // to the amount field and closes, so "12+8, Enter, Enter" is a full
+  // compute-and-commit without ever touching the mouse. Any other key
+  // resets this so a fresh calculation doesn't accidentally auto-apply.
+  let justComputed = false;
   $$('.calc-key', pop).forEach(btn=>{
     btn.onclick = ()=>{
       const k = btn.dataset.k;
-      if(k==='C'){ expr=''; }
-      else if(k==='back'){ expr = expr.slice(0,-1); }
-      else if(k==='='){
+      if(k==='='){
+        if(justComputed){ applyToAmount(); return; }
         const result = evalCalcExpr(expr);
-        if(result!==null) expr = String(Math.round(result*100)/100);
+        if(result!==null){ expr = String(Math.round(result*100)/100); justComputed = true; }
       } else {
-        expr += k;
+        justComputed = false;
+        if(k==='C'){ expr=''; }
+        else if(k==='back'){ expr = expr.slice(0,-1); }
+        else{ expr += k; }
       }
       display();
       position();
     };
   });
-  pop.querySelector('.calc-apply-btn').onclick = ()=>{
-    const result = evalCalcExpr(expr) ?? Number(expr);
-    if(!isNaN(result) && expr!==''){ setAmountValue(amountInputEl, Math.round(Math.abs(result))); }
-    closeCalculator();
-  };
+  pop.querySelector('.calc-apply-btn').onclick = applyToAmount;
   display();
   position();
   closeCalculatorOutsideHandler = (e)=>{
     if(!pop.contains(e.target) && e.target!==triggerBtn) closeCalculator();
   };
   setTimeout(()=> document.addEventListener('mousedown', closeCalculatorOutsideHandler), 0);
+  // physical/on-screen keyboard support — clicking each button was already
+  // there, this maps the same data-k values so typing "12+8" then Enter
+  // works exactly like tapping those keys one by one. Escape is handled by
+  // the app-wide Escape listener (it checks for an open popover first).
+  calcKeydownHandler = (e)=>{
+    let k = null;
+    if(/^[0-9]$/.test(e.key)) k = e.key;
+    else if(e.key==='.') k = '.';
+    else if(e.key==='+') k = '+';
+    else if(e.key==='-') k = '-';
+    else if(e.key==='*' || e.key.toLowerCase()==='x') k = '*';
+    else if(e.key==='/') k = '/';
+    else if(e.key==='Enter' || e.key==='=') k = '=';
+    else if(e.key==='Backspace' || e.key==='Delete') k = 'back';
+    else if(e.key.toLowerCase()==='c') k = 'C';
+    if(!k) return;
+    e.preventDefault();
+    pop.querySelector(`.calc-key[data-k="${k}"]`)?.click();
+  };
+  document.addEventListener('keydown', calcKeydownHandler);
 }
 
 // custom dropdown for asset pickers — a native <select>'s own popup can't
