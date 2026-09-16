@@ -436,6 +436,7 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
 .btn{
   border:none;border-radius:var(--radius-sm);padding:10px 16px;font-size:13.5px;font-weight:700;cursor:pointer;
   font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  white-space:nowrap;flex-shrink:0;
 }
 .btn:hover{filter:brightness(1.04);}
 .btn-primary{background:var(--accent);color:var(--accent-ink);}
@@ -900,6 +901,12 @@ function wireAuthUI(){
         $('#authError').textContent = '팝업이 차단됐어요. 브라우저 팝업 차단을 해제한 뒤 다시 시도해주세요.';
       } else if(err.code === 'auth/cancelled-popup-request' || err.code === 'auth/popup-closed-by-user'){
         // user closed it themselves — no error needed
+      } else if(err.code === 'auth/missing-initial-state' || /sessionStorage/i.test(err.message||'')){
+        // sessionStorage is blocked/partitioned — almost always because the
+        // page is loaded inside an in-app browser (카카오톡, 인스타그램, 네이버
+        // 앱 등) or Safari 프라이빗 브라우징, both of which restrict storage
+        // for popup-based sign-in. A regular Safari/Chrome tab fixes this.
+        $('#authError').textContent = '로그인 정보를 저장할 수 없어요. 카카오톡·인스타그램 등 앱 내 브라우저이거나 시크릿/프라이빗 모드일 수 있어요. Safari나 Chrome에서 직접 열어 다시 시도해주세요.';
       } else {
         $('#authError').textContent = '로그인에 실패했어요. 다시 시도해주세요.';
       }
@@ -1631,11 +1638,11 @@ function renderSettings(){
         </div>
       </div>
       <div class="settings-row">
-        <div>
+        <div style="flex:1;min-width:0;margin-right:12px;">
           <div class="settings-label">계정</div>
-          <div class="settings-desc">${(()=>{ const name = fbAuth.currentUser?.displayName || fbAuth.currentUser?.email; return name ? `${escapeHtml(name)}으로 로그인됨` : '로그인됨'; })()} · 모든 기기에서 자동 동기화</div>
+          <div class="settings-desc" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${(()=>{ const name = fbAuth.currentUser?.displayName || fbAuth.currentUser?.email; return name ? `${escapeHtml(name)}으로 로그인됨` : '로그인됨'; })()} · 모든 기기에서 자동 동기화</div>
         </div>
-        <button class="btn btn-ghost btn-sm" id="logoutBtn">로그아웃</button>
+        <button class="btn btn-ghost btn-sm" id="logoutBtn" style="flex-shrink:0;white-space:nowrap;">로그아웃</button>
       </div>
     </div>
   `;
