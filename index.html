@@ -532,6 +532,23 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
 .form-input:focus{outline:2px solid color-mix(in srgb, var(--accent) 50%, transparent);outline-offset:1px;}
 #txDate{cursor:pointer;caret-color:transparent;}
 
+.search-bar-wrap{
+  position:relative;display:flex;align-items:center;
+}
+.search-bar-wrap .search-ic{
+  position:absolute;left:13px;color:var(--ink-faint);display:flex;pointer-events:none;
+}
+.search-input{
+  width:100%;padding:10px 36px;border-radius:var(--radius-sm);border:1px solid var(--border);
+  background:var(--surface-2);color:var(--ink);font-size:14px;font-family:inherit;
+}
+.search-input:focus{outline:2px solid color-mix(in srgb, var(--accent) 50%, transparent);outline-offset:1px;}
+.search-clear-btn{
+  position:absolute;right:6px;width:26px;height:26px;border-radius:50%;border:none;background:transparent;
+  color:var(--ink-faint);cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+.search-clear-btn:hover{background:var(--surface);color:var(--ink);}
+
 .date-picker-pop{
   position:fixed;z-index:250;background:var(--surface);border:1px solid var(--border);
   border-radius:var(--radius-md);box-shadow:0 12px 32px -10px rgba(0,0,0,0.3);
@@ -805,6 +822,7 @@ const ICONS = {
   pencil: '<g transform="translate(0,0.56)"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></g>',
   swap: '<path d="M4 8h14"/><path d="M15 4l3 4-3 4"/><path d="M20 16H6"/><path d="M9 12l-3 4 3 4"/>',
   calculator: '<rect x="5" y="3" width="14" height="18" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><circle cx="8.5" cy="11.5" r="0.8" fill="currentColor" stroke="none"/><circle cx="12" cy="11.5" r="0.8" fill="currentColor" stroke="none"/><circle cx="15.5" cy="11.5" r="0.8" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15" r="0.8" fill="currentColor" stroke="none"/><circle cx="12" cy="15" r="0.8" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15" r="0.8" fill="currentColor" stroke="none"/><circle cx="8.5" cy="18.5" r="0.8" fill="currentColor" stroke="none"/><circle cx="12" cy="18.5" r="0.8" fill="currentColor" stroke="none"/><circle cx="15.5" cy="18.5" r="0.8" fill="currentColor" stroke="none"/>',
+  search: '<g transform="translate(0.5,0.5)"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="19" y1="19" x2="15.3" y2="15.3"/></g>',
 };
 function icon(name, opts){
   opts = opts || {};
@@ -883,6 +901,7 @@ const state = {
   txView: 'list', // list | calendar
   selectedDay: null,
   analyticsView: 'weekly', // weekly | monthly
+  txSearchQuery: '',
 };
 
 /* ---------- Firebase ---------- */
@@ -1346,6 +1365,29 @@ function wonCompact(n){
   else s = abs.toLocaleString('ko-KR');
   return (neg?'-':'')+s;
 }
+// live thousands-separator formatting for a 금액 <input type="text"> — plain
+// <input type="number"> rejects comma characters outright, so these fields
+// are text inputs with a numeric keyboard hint instead, formatted on every
+// keystroke. amountValue() strips the commas back out for reading; every
+// place that reads or writes one of these fields should go through
+// amountValue()/setAmountValue() rather than touching .value directly, so
+// the display never gets out of sync with the real number.
+function amountValue(inputEl){
+  return Number((inputEl.value||'').replace(/[^0-9]/g,'')) || 0;
+}
+function setAmountValue(inputEl, num){
+  inputEl.value = num ? Number(num).toLocaleString('ko-KR') : '';
+}
+function wireAmountInput(inputEl){
+  inputEl.setAttribute('inputmode','numeric');
+  inputEl.addEventListener('input', ()=>{
+    const cursorFromEnd = inputEl.value.length - inputEl.selectionStart;
+    const digits = inputEl.value.replace(/[^0-9]/g,'');
+    inputEl.value = digits ? Number(digits).toLocaleString('ko-KR') : '';
+    const newPos = Math.max(0, inputEl.value.length - cursorFromEnd);
+    inputEl.setSelectionRange(newPos, newPos);
+  });
+}
 
 let lastNetWorth = null, lastIncome = null, lastExpense = null, lastSavingsRate = null;
 function animateNumber(el, from, to, duration, fmt){
@@ -1757,11 +1799,16 @@ function renderTransactions(){
     <div class="topbar">
       <h1 class="page-title">내역</h1>
       <div style="display:flex;align-items:center;gap:10px;">
-        ${monthNavHtml()}
+        <span id="txMonthNavWrap">${monthNavHtml()}</span>
         <button class="btn btn-primary btn-sm" id="txAddBtn">${icon('plus',{size:14})}거래 추가</button>
       </div>
     </div>
-    <div class="two-col two-col-tx" style="margin-bottom:10px;">
+    <div class="search-bar-wrap" style="margin-bottom:10px;">
+      <span class="search-ic">${icon('search',{size:15})}</span>
+      <input type="text" class="search-input" id="txSearchInput" lang="ko" placeholder="메모, 카테고리, 자산, 금액으로 검색" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${escapeHtml(state.txSearchQuery||'')}">
+      <button type="button" class="search-clear-btn" id="txSearchClear" style="display:${state.txSearchQuery?'':'none'};" aria-label="검색어 지우기">${icon('close',{size:13})}</button>
+    </div>
+    <div class="two-col two-col-tx" id="txTwoColRow" style="margin-bottom:10px;">
       <div class="card" style="padding:10px 14px;">
         <div id="txAssetSummaryWrap"></div>
       </div>
@@ -1769,7 +1816,7 @@ function renderTransactions(){
         <div id="txCatChartWrap"></div>
       </div>
     </div>
-    <div class="tx-view-toggle" style="margin-bottom:10px;">
+    <div class="tx-view-toggle" id="txViewToggleRow" style="margin-bottom:10px;">
       <button data-v="list" class="${state.txView==='list'?'active':''}">목록</button>
       <button data-v="calendar" class="${state.txView==='calendar'?'active':''}">달력</button>
     </div>
@@ -1793,7 +1840,99 @@ function renderTransactions(){
     $$('.tx-view-toggle button').forEach(x=> x.classList.toggle('active', x===b));
     if(state.txView==='calendar') renderTxCalendar(); else renderTxList();
   });
-  if(state.txView==='calendar') renderTxCalendar(); else renderTxList();
+  // the search input is never rebuilt while the user types (only #txBody
+  // and the sections it toggles are) — replacing the input element itself
+  // on every keystroke would reset the cursor position/IME composition
+  // state, which is exactly the kind of input-field bug this session has
+  // been careful to avoid elsewhere (the memo field's autocorrect fix).
+  $('#txSearchInput').oninput = (e)=>{ state.txSearchQuery = e.target.value; updateTxSearchView(); };
+  $('#txSearchClear').onclick = ()=>{
+    state.txSearchQuery = '';
+    $('#txSearchInput').value = '';
+    updateTxSearchView();
+    $('#txSearchInput').focus();
+  };
+  updateTxSearchView();
+}
+// switches #txBody (and the month-scoped chrome around it) between the
+// normal month view and a flat, all-time search-results view — called on
+// every keystroke in the search box, so it must never touch the search
+// input element itself.
+function updateTxSearchView(){
+  const query = state.txSearchQuery || '';
+  const hasQuery = query.trim().length > 0;
+  const twoCol = $('#txTwoColRow');
+  const viewToggle = $('#txViewToggleRow');
+  const monthNav = $('#txMonthNavWrap');
+  const clearBtn = $('#txSearchClear');
+  if(twoCol) twoCol.style.display = hasQuery ? 'none' : '';
+  if(viewToggle) viewToggle.style.display = hasQuery ? 'none' : '';
+  if(monthNav) monthNav.style.display = hasQuery ? 'none' : '';
+  if(clearBtn) clearBtn.style.display = hasQuery ? '' : 'none';
+  if(hasQuery){
+    renderTxSearchResults(query);
+  } else if(state.txView==='calendar'){
+    renderTxCalendar();
+  } else {
+    renderTxList();
+  }
+}
+// does this transaction match a search term, across memo / category /
+// linked-asset name / transfer accounts / amount (digit substring, so
+// typing "500" finds ₩5,000 and ₩15,000 alike)?
+function txMatchesQuery(t, needle){
+  if(!needle) return true;
+  if(t.memo && t.memo.toLowerCase().includes(needle)) return true;
+  if(t.type==='transfer'){
+    if('계좌 이체'.includes(needle)) return true;
+    const fromA = t.fromAssetId ? assetById(t.fromAssetId) : null;
+    const toA = t.toAssetId ? assetById(t.toAssetId) : null;
+    if(fromA && fromA.name.toLowerCase().includes(needle)) return true;
+    if(toA && toA.name.toLowerCase().includes(needle)) return true;
+  } else {
+    const cat = catById(t.categoryId);
+    if(cat && cat.name.toLowerCase().includes(needle)) return true;
+    const asset = t.assetId ? assetById(t.assetId) : null;
+    if(asset && asset.name.toLowerCase().includes(needle)) return true;
+  }
+  const digits = needle.replace(/[^0-9]/g,'');
+  if(digits && String(Math.round(Number(t.amount))).includes(digits)) return true;
+  return false;
+}
+// a short/common query (e.g. a single digit) can match thousands of rows
+// out of a large transaction history; rendering all of them on every
+// keystroke is the actual cost (the filter itself is sub-5ms even at 5000
+// transactions — it's building/wiring thousands of DOM rows that gets
+// slow), so cap how many get rendered and tell the user to narrow the
+// search instead of silently freezing the input.
+const TX_SEARCH_RENDER_CAP = 200;
+function renderTxSearchResults(query){
+  const body = $('#txBody');
+  const needle = query.trim().toLowerCase();
+  const matches = state.transactions.filter(t=>txMatchesQuery(t, needle))
+    .sort((a,b)=> a.date===b.date ? (b.updatedAt||0)-(a.updatedAt||0) : b.date.localeCompare(a.date));
+  if(matches.length===0){
+    body.innerHTML = `<div class="card"><div class="empty"><div class="e-ic">${icon('search',{size:28})}</div><div>"${escapeHtml(query)}"에 대한 검색 결과가 없어요</div></div></div>`;
+    return;
+  }
+  const shown = matches.slice(0, TX_SEARCH_RENDER_CAP);
+  const groups = {};
+  shown.forEach(t=>{ (groups[t.date] ||= []).push(t); });
+  // spans potentially many months/years, unlike the normal month-scoped
+  // list, so each day label needs the year too — "9월 10일" alone would be
+  // ambiguous across a multi-year search result.
+  const moreNotice = matches.length > shown.length
+    ? `<div class="empty" style="padding:12px 16px;">검색 결과 ${matches.length.toLocaleString('ko-KR')}건 중 ${shown.length}건 표시 · 검색어를 더 구체적으로 입력해보세요</div>`
+    : '';
+  body.innerHTML = `<div class="card" id="txListCard">${Object.entries(groups).map(([date, items])=>{
+    const d = new Date(date+'T00:00:00');
+    const label = `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} (${'일월화수목금토'[d.getDay()]})`;
+    return `<div class="tx-day-group">
+      <div class="tx-day-label">${label}</div>
+      ${items.map(txRowHtml).join('')}
+    </div>`;
+  }).join('')}${moreNotice}</div>`;
+  wireTxRows($('#txListCard'));
 }
 
 // used from inside openTxModal's "자주 쓰는 거래" quick-pick row — templates
@@ -2085,9 +2224,9 @@ function renderAnalytics(){
       </div>
       <div class="card">
         <h3>저축 목표 계산기</h3>
-        <div class="form-group"><label class="form-label">목표 금액</label><input class="form-input" type="number" id="goalTarget" placeholder="예: 10000000"></div>
-        <div class="form-group"><label class="form-label">현재 보유액</label><input class="form-input" type="number" id="goalCurrent" value="${Math.max(0,Math.round(netWorth()))}"></div>
-        <div class="form-group"><label class="form-label">월 저축액</label><input class="form-input" type="number" id="goalMonthly" value="${Math.max(0,Math.round(computeAvgMonthlySavings()))}"></div>
+        <div class="form-group"><label class="form-label">목표 금액</label><input class="form-input" type="text" id="goalTarget" placeholder="예: 10,000,000"></div>
+        <div class="form-group"><label class="form-label">현재 보유액</label><input class="form-input" type="text" id="goalCurrent" value="${Math.max(0,Math.round(netWorth())).toLocaleString('ko-KR')}"></div>
+        <div class="form-group"><label class="form-label">월 저축액</label><input class="form-input" type="text" id="goalMonthly" value="${Math.max(0,Math.round(computeAvgMonthlySavings())).toLocaleString('ko-KR')}"></div>
         <div id="goalResult"></div>
       </div>
     </div>
@@ -2101,9 +2240,9 @@ function renderAnalytics(){
   renderCategoryChanges();
   renderWeekdayPattern();
   const updateGoal = ()=>{
-    const target = Number($('#goalTarget').value)||0;
-    const current = Number($('#goalCurrent').value)||0;
-    const monthly = Number($('#goalMonthly').value)||0;
+    const target = amountValue($('#goalTarget'));
+    const current = amountValue($('#goalCurrent'));
+    const monthly = amountValue($('#goalMonthly'));
     const wrap = $('#goalResult');
     if(target<=0){ wrap.innerHTML=''; return; }
     const remaining = target-current;
@@ -2134,9 +2273,10 @@ function renderAnalytics(){
         <div class="goal-progress-label"><span>${won(current)}</span><span>${progressPct}% 달성 · 목표 ${won(target)}</span></div>
       </div>`;
   };
-  $('#goalTarget').oninput = updateGoal;
-  $('#goalCurrent').oninput = updateGoal;
-  $('#goalMonthly').oninput = updateGoal;
+  [$('#goalTarget'), $('#goalCurrent'), $('#goalMonthly')].forEach(el=>{
+    wireAmountInput(el); // reformats with commas first
+    el.oninput = updateGoal; // then recompute the result from the clean value
+  });
   updateGoal();
 }
 function renderAnalyticsChart(){
@@ -2381,7 +2521,7 @@ function evalCalcExpr(expr){
 }
 function openCalculator(triggerBtn, amountInputEl){
   closeCalculator(); closeDatePicker(); closeAssetPicker();
-  let expr = amountInputEl.value && /^[0-9]+$/.test(amountInputEl.value) ? amountInputEl.value : '';
+  let expr = amountValue(amountInputEl) ? String(amountValue(amountInputEl)) : '';
   const pop = document.createElement('div');
   pop.className = 'calc-pop';
   pop.innerHTML = `
@@ -2433,7 +2573,7 @@ function openCalculator(triggerBtn, amountInputEl){
   });
   pop.querySelector('.calc-apply-btn').onclick = ()=>{
     const result = evalCalcExpr(expr) ?? Number(expr);
-    if(!isNaN(result) && expr!==''){ amountInputEl.value = Math.round(Math.abs(result)); }
+    if(!isNaN(result) && expr!==''){ setAmountValue(amountInputEl, Math.round(Math.abs(result))); }
     closeCalculator();
   };
   display();
@@ -2538,7 +2678,7 @@ function openTxModal(existing, prefill){
         <div class="form-group">
           <label class="form-label">금액</label>
           <div class="amount-row">
-            <input class="form-input" type="number" id="txAmount" placeholder="0" value="${existing?.amount||prefill?.amount||''}">
+            <input class="form-input" type="text" id="txAmount" placeholder="0" value="${(existing?.amount||prefill?.amount)?Number(existing?.amount||prefill?.amount).toLocaleString('ko-KR'):''}">
             <button type="button" class="calc-toggle-btn" id="txCalcBtn" aria-label="계산기">${icon('calculator',{size:17})}</button>
           </div>
           <div class="amount-presets" id="txAmountPresets"></div>
@@ -2560,7 +2700,7 @@ function openTxModal(existing, prefill){
             <input type="hidden" id="txToAsset" value="${existing?.toAssetId||prefill?.toAssetId||''}">
           </div>
         </div>
-        <div class="form-group"><label class="form-label">메모</label><input class="form-input" type="text" id="txMemo" placeholder="선택 사항" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${existing?escapeHtml(existing.memo||''):escapeHtml(prefill?.memo||'')}"></div>
+        <div class="form-group"><label class="form-label">메모</label><input class="form-input" type="text" id="txMemo" lang="ko" placeholder="선택 사항" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${existing?escapeHtml(existing.memo||''):escapeHtml(prefill?.memo||'')}"></div>
         <div class="sheet-actions">
           ${existing?'<button class="btn btn-danger" id="txDelete">삭제</button>':''}
           <button class="btn btn-primary" id="txSave">저장</button>
@@ -2578,7 +2718,7 @@ function openTxModal(existing, prefill){
           updateTypeVisibility();
           categoryId = tpl.categoryId;
           paintCatPick();
-          $('#txAmount').value = tpl.amount;
+          setAmountValue($('#txAmount'), tpl.amount);
           if(updateTxAssetDisplay) updateTxAssetDisplay(tpl.assetId || '');
           toast(`${tpl.name} 불러왔어요`);
         },
@@ -2610,7 +2750,7 @@ function openTxModal(existing, prefill){
     // transaction sheet reopens with them intact plus the new category
     // selected as soon as it's saved.
     $('#txAddCatOpt').onclick = ()=>{
-      const captured = { date: $('#txDate').value, amount: $('#txAmount').value, memo: $('#txMemo').value, assetId: $('#txAsset').value || null };
+      const captured = { date: $('#txDate').value, amount: amountValue($('#txAmount')), memo: $('#txMemo').value, assetId: $('#txAsset').value || null };
       const draftExisting = existing ? {...existing, ...captured} : null;
       // no closeModal() here — openCategoryModal replaces #modalRoot's
       // content directly and immediately; calling closeModal() first would
@@ -2625,8 +2765,7 @@ function openTxModal(existing, prefill){
   const paintPresets = ()=>{
     $('#txAmountPresets').innerHTML = AMOUNT_PRESETS.map(p=>`<button type="button" class="preset-chip" data-p="${p}">+${wonCompact(p)}</button>`).join('') + `<button type="button" class="preset-chip clear" id="txAmountClear">지우기</button>`;
     $$('#txAmountPresets .preset-chip[data-p]').forEach(b=> b.onclick=()=>{
-      const cur = Number($('#txAmount').value)||0;
-      $('#txAmount').value = cur + Number(b.dataset.p);
+      setAmountValue($('#txAmount'), amountValue($('#txAmount')) + Number(b.dataset.p));
     });
     $('#txAmountClear').onclick = ()=>{ $('#txAmount').value=''; };
   };
@@ -2662,6 +2801,7 @@ function openTxModal(existing, prefill){
   updateTypeVisibility();
   $('#txDate').onclick = ()=> openDatePicker($('#txDate'));
   $('#txCalcBtn').onclick = ()=> openCalculator($('#txCalcBtn'), $('#txAmount'));
+  wireAmountInput($('#txAmount'));
   $$('#typeToggle button').forEach(b=> b.onclick = ()=>{
     type=b.dataset.t; categoryId=null;
     $$('#typeToggle button').forEach(x=>x.className='');
@@ -2675,7 +2815,7 @@ function openTxModal(existing, prefill){
     closeModal(); scheduleRender(); toast('삭제했어요', {danger:true});
   });
   guardedClick($('#txSave'), async ()=>{
-    const amount = Number($('#txAmount').value);
+    const amount = amountValue($('#txAmount'));
     const date = $('#txDate').value;
     if(!amount || amount<=0){ toast('금액을 입력해주세요', {danger:true}); shakeSheet(); return; }
     if(!date){ toast('날짜를 선택해주세요', {danger:true}); shakeSheet(); return; }
@@ -2715,7 +2855,7 @@ function openCategoryModal(existing, forcedType, onSaved, lockType){
             <button type="button" data-t="income" class="${type==='income'?'sel-income':''}">수입</button>
           </div>
         </div>
-        <div class="form-group"><label class="form-label">이름</label><input class="form-input" id="catName" placeholder="예: 식비" value="${existing?escapeHtml(existing.name):''}"></div>
+        <div class="form-group"><label class="form-label">이름</label><input class="form-input" id="catName" lang="ko" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="예: 식비" value="${existing?escapeHtml(existing.name):''}"></div>
         <div class="form-group"><label class="form-label">아이콘</label><div class="icon-grid" id="catIconPicker"></div></div>
         <div class="form-group"><label class="form-label">색상</label><div class="color-grid" id="catColor"></div></div>
         <div class="sheet-actions">
@@ -2772,6 +2912,7 @@ function openAssetModal(existing){
   const root = $('#modalRoot');
   let type = existing?.type || '현금';
   let color = existing?.color || ACCENT_PRESETS[state.assets.length % ACCENT_PRESETS.length];
+  const existingBalance = existing ? (computeAssetBalances().get(existing.id)||0) : 0;
   root.innerHTML = `
     <div class="overlay" id="ovAsset">
       <div class="sheet">
@@ -2779,9 +2920,9 @@ function openAssetModal(existing){
           <div class="sheet-title">${existing?'자산 수정':'자산 추가'}</div>
           <button class="sheet-close" id="closeAsset" aria-label="닫기">${icon('close',{size:18})}</button>
         </div>
-        <div class="form-group"><label class="form-label">이름</label><input class="form-input" id="assetName" placeholder="예: 주거래 통장" value="${existing?escapeHtml(existing.name):''}"></div>
+        <div class="form-group"><label class="form-label">이름</label><input class="form-input" id="assetName" lang="ko" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="예: 주거래 통장" value="${existing?escapeHtml(existing.name):''}"></div>
         <div class="form-group"><label class="form-label">종류</label><select class="form-input" id="assetType"></select></div>
-        <div class="form-group"><label class="form-label">금액</label><input class="form-input" type="number" id="assetAmount" placeholder="0" value="${existing?(computeAssetBalances().get(existing.id)||''):''}"></div>
+        <div class="form-group"><label class="form-label">금액</label><input class="form-input" type="text" id="assetAmount" placeholder="0" value="${existingBalance?existingBalance.toLocaleString('ko-KR'):''}"></div>
         <div class="form-group"><label class="form-label">색상</label><div class="color-grid" id="assetColor"></div></div>
         <div class="sheet-actions">
           ${existing?'<button class="btn btn-danger" id="assetDelete">삭제</button>':''}
@@ -2795,6 +2936,7 @@ function openAssetModal(existing){
     $$('#assetColor .color-opt').forEach(el=> el.onclick=()=>{ color=el.dataset.c; paintColor(); });
   };
   paintColor();
+  wireAmountInput($('#assetAmount'));
   $('#closeAsset').onclick = closeModal;
   $('#ovAsset').onclick = (e)=>{ if(e.target.id==='ovAsset') closeModal(); };
   if(existing) guardedClick($('#assetDelete'), async ()=>{
@@ -2804,7 +2946,7 @@ function openAssetModal(existing){
   });
   guardedClick($('#assetSave'), async ()=>{
     const name = $('#assetName').value.trim();
-    const amount = Number($('#assetAmount').value);
+    const amount = amountValue($('#assetAmount'));
     const t = $('#assetType').value;
     if(!name){ toast('이름을 입력해주세요', {danger:true}); shakeSheet(); return; }
     if(isNaN(amount) || amount<0){ toast('금액을 확인해주세요', {danger:true}); shakeSheet(); return; }
@@ -2842,7 +2984,7 @@ function openTemplateModal(existing){
           <div class="sheet-title">${existing?'템플릿 수정':'템플릿 추가'}</div>
           <button class="sheet-close" id="closeTpl" aria-label="닫기">${icon('close',{size:18})}</button>
         </div>
-        <div class="form-group"><label class="form-label">이름</label><input class="form-input" id="tplName" placeholder="예: 아메리카노, 월세" value="${existing?escapeHtml(existing.name):''}"></div>
+        <div class="form-group"><label class="form-label">이름</label><input class="form-input" id="tplName" lang="ko" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="예: 아메리카노, 월세" value="${existing?escapeHtml(existing.name):''}"></div>
         <div class="form-group">
           <div class="type-toggle" id="tplTypeToggle">
             <button type="button" data-t="expense" class="${type==='expense'?'sel-expense':''}">지출</button>
@@ -2850,7 +2992,7 @@ function openTemplateModal(existing){
           </div>
         </div>
         <div class="form-group"><label class="form-label">카테고리</label><div class="cat-pick-grid" id="tplCatPick"></div></div>
-        <div class="form-group"><label class="form-label">금액</label><input class="form-input" type="number" id="tplAmount" placeholder="0" value="${existing?.amount||''}"></div>
+        <div class="form-group"><label class="form-label">금액</label><input class="form-input" type="text" id="tplAmount" placeholder="0" value="${existing?.amount?Number(existing.amount).toLocaleString('ko-KR'):''}"></div>
         <div class="form-group">
           <label class="form-label">자산</label>
           <div class="form-input asset-trigger" id="tplAssetTrigger" tabindex="0" role="button"><span class="at-label" id="tplAssetLabel">연결 안 함</span>${icon('chevronRight',{size:13})}</div>
@@ -2886,6 +3028,7 @@ function openTemplateModal(existing){
   };
   paintCatPick();
   fillAssetSelect();
+  wireAmountInput($('#tplAmount'));
   $$('#tplTypeToggle button').forEach(b=> b.onclick = ()=>{ type=b.dataset.t; categoryId=null; $$('#tplTypeToggle button').forEach(x=>x.className=''); b.className = type==='expense'?'sel-expense':'sel-income'; paintCatPick(); });
   $('#closeTpl').onclick = closeModal;
   $('#ovTpl').onclick = (e)=>{ if(e.target.id==='ovTpl') closeModal(); };
@@ -2894,7 +3037,7 @@ function openTemplateModal(existing){
   });
   guardedClick($('#tplSave'), async ()=>{
     const name = $('#tplName').value.trim();
-    const amount = Number($('#tplAmount').value);
+    const amount = amountValue($('#tplAmount'));
     if(!name){ toast('이름을 입력해주세요', {danger:true}); shakeSheet(); return; }
     if(!categoryId){ toast('카테고리를 선택해주세요', {danger:true}); shakeSheet(); return; }
     if(!amount || amount<=0){ toast('금액을 입력해주세요', {danger:true}); shakeSheet(); return; }
