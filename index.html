@@ -313,6 +313,7 @@ main{flex:1;min-width:0;}
 }
 .fab:hover{transform:translateY(-2px);box-shadow:0 16px 28px -10px color-mix(in srgb, var(--accent) 70%, transparent);}
 .fab svg{width:24px;height:24px;}
+#txAddBtn{display:none;}
 
 .tpl-card{padding:16px 18px;}
 .tpl-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
@@ -372,7 +373,7 @@ main{flex:1;min-width:0;}
 }
 .tx-ic svg{width:17px;height:17px;}
 .tx-mid{flex:1;min-width:0;}
-.tx-cat{font-size:13.5px;font-weight:700;}
+.tx-cat{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .tx-memo{font-size:12px;color:var(--ink-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .tx-amt{font-variant-numeric:tabular-nums;font-weight:700;font-size:14px;white-space:nowrap;}
 .tx-amt.income{color:var(--income);}
@@ -463,6 +464,15 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
 }
 .overlay.center .sheet{border-radius:18px; animation:sheetInCenter .2s cubic-bezier(.22,.85,.32,1);}
 .overlay.closing .sheet{animation:sheetOut .16s ease forwards;}
+/* on desktop there's no thumb-reach reason to anchor sheets to the bottom
+   edge — that's a mobile-only affordance. Every modal (not just the ones
+   explicitly marked .center) becomes a centered dialog on wider screens. */
+@media (min-width:721px){
+  .overlay{align-items:center;}
+  .overlay .sheet{border-radius:18px; box-shadow:0 20px 60px -10px rgba(0,0,0,0.3); animation:sheetInCenter .2s cubic-bezier(.22,.85,.32,1);}
+  .fab.tab-tx{display:none !important;}
+  #txAddBtn{display:inline-flex;}
+}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
 .sheet-title{font-size:16.5px;font-weight:800;font-family:'Pretendard Variable','Pretendard',sans-serif;}
 .sheet-close{background:none;border:none;color:var(--ink-faint);cursor:pointer;width:28px;height:28px;display:flex;align-items:center;justify-content:center;position:relative;}
@@ -481,6 +491,7 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
   background:var(--surface-2);color:var(--ink-soft);cursor:pointer;font-family:inherit;font-weight:700;font-size:13px;
 }
 .type-toggle button.sel-expense{background:color-mix(in srgb, var(--expense) 15%, var(--surface));color:var(--expense);border-color:transparent;}
+.type-toggle button.sel-transfer{background:color-mix(in srgb, var(--accent) 15%, var(--surface));color:var(--accent);border-color:transparent;}
 .type-toggle button.sel-income{background:color-mix(in srgb, var(--income) 15%, var(--surface));color:var(--income);border-color:transparent;}
 .cat-pick-grid{display:flex;flex-wrap:wrap;gap:7px;}
 .cat-opt{
@@ -661,6 +672,7 @@ const ICONS = {
   duplicate: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',
   flame: '<g transform="translate(0.5,-1)"><path d="M12 21c-3.3 0-6-2.4-6-5.8 0-2.7 1.7-4.4 2.8-6.3.3 1.3.9 2 1.7 2.5-.3-2.2.4-4 2.5-6.4.5 2.6 1.8 3.6 2.7 5.3.9 1.7 1.3 2.7 1.3 4.4 0 3.5-2.7 6.3-5 6.3z"/></g>',
   pencil: '<g transform="translate(0,0.56)"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></g>',
+  swap: '<path d="M4 8h14"/><path d="M15 4l3 4-3 4"/><path d="M20 16H6"/><path d="M9 12l-3 4 3 4"/>',
 };
 function icon(name, opts){
   opts = opts || {};
@@ -981,16 +993,26 @@ function netWorth(){
 }
 
 /* ---------- asset balance linkage ---------- */
-// how a transaction moves the linked asset's balance: expense drains an asset
-// account but adds to a liability (card/loan) balance; income does the reverse.
-function assetDelta(tx){
-  if(!tx || !tx.assetId) return 0;
-  const asset = assetById(tx.assetId);
-  if(!asset) return 0;
-  const isLiab = ASSET_TYPES_LIAB.includes(asset.type);
+// how a transaction moves each linked asset's balance, as {assetId: delta}.
+// expense drains an asset account but adds to a liability (card/loan)
+// balance; income does the reverse. A transfer moves the same amount out of
+// one asset and into another, with no income/expense effect on either.
+function assetDeltaMap(tx){
+  const map = {};
+  if(!tx) return map;
   const amt = Number(tx.amount)||0;
-  if(tx.type==='expense') return isLiab ? amt : -amt;
-  return isLiab ? -amt : amt;
+  if(tx.type==='transfer'){
+    if(tx.fromAssetId) map[tx.fromAssetId] = (map[tx.fromAssetId]||0) - amt;
+    if(tx.toAssetId) map[tx.toAssetId] = (map[tx.toAssetId]||0) + amt;
+    return map;
+  }
+  if(!tx.assetId) return map;
+  const asset = assetById(tx.assetId);
+  if(!asset) return map;
+  const isLiab = ASSET_TYPES_LIAB.includes(asset.type);
+  const delta = tx.type==='expense' ? (isLiab ? amt : -amt) : (isLiab ? -amt : amt);
+  map[tx.assetId] = delta;
+  return map;
 }
 async function adjustAssetBalance(assetId, delta){
   if(!assetId || !delta) return;
@@ -998,19 +1020,15 @@ async function adjustAssetBalance(assetId, delta){
   if(!asset) return;
   await updateDoc('assets', assetId, { amount: Number(asset.amount||0) + delta });
 }
-// reconcile an asset's balance when a transaction is added (oldTx=null),
-// edited (both set), or deleted (newTx=null).
+// reconcile every affected asset's balance when a transaction is added
+// (oldTx=null), edited (both set), or deleted (newTx=null).
 async function reconcileAssetForTx(oldTx, newTx){
-  const oldAssetId = oldTx?.assetId || null;
-  const newAssetId = newTx?.assetId || null;
-  const oldDelta = oldTx ? assetDelta(oldTx) : 0;
-  const newDelta = newTx ? assetDelta(newTx) : 0;
-  if(oldAssetId === newAssetId){
-    const net = newDelta - oldDelta;
-    if(net && oldAssetId) await adjustAssetBalance(oldAssetId, net);
-  } else {
-    if(oldDelta && oldAssetId) await adjustAssetBalance(oldAssetId, -oldDelta);
-    if(newDelta && newAssetId) await adjustAssetBalance(newAssetId, newDelta);
+  const oldMap = assetDeltaMap(oldTx);
+  const newMap = assetDeltaMap(newTx);
+  const ids = new Set([...Object.keys(oldMap), ...Object.keys(newMap)]);
+  for(const id of ids){
+    const net = (newMap[id]||0) - (oldMap[id]||0);
+    if(net) await adjustAssetBalance(id, net);
   }
 }
 
@@ -1051,6 +1069,11 @@ function render(){
   // here first was a redundant extra reflow before that replace.
   fns[state.tab]();
   $('#fab').style.display = (state.tab==='dashboard' || state.tab==='transactions') ? 'flex' : 'none';
+  // on desktop the 내역 tab has its own top-right "거래 추가" button (like
+  // 자산현황's), so the thumb-reach floating button is redundant there —
+  // this class lets a min-width media query hide it without touching the
+  // per-tab display logic above (which still governs mobile + dashboard).
+  $('#fab').classList.toggle('tab-tx', state.tab==='transactions');
   replayViewAnim(main);
 }
 function replayViewAnim(el){
@@ -1369,10 +1392,26 @@ function renderTrend(){
 
 /* ---------- transactions ---------- */
 function txRowHtml(t){
+  if(t.type==='transfer'){
+    const fromA = t.fromAssetId ? assetById(t.fromAssetId) : null;
+    const toA = t.toAssetId ? assetById(t.toAssetId) : null;
+    const fromName = fromA ? escapeHtml(fromA.name) : '삭제된 자산';
+    const toName = toA ? escapeHtml(toA.name) : '삭제된 자산';
+    const memoPart = t.memo ? ` · ${escapeHtml(t.memo)}` : '';
+    return `<div class="tx-row" data-id="${t.id}">
+      <span class="tx-ic" style="background:var(--surface-2);color:var(--ink-soft)">${icon('swap',{size:17})}</span>
+      <div class="tx-mid">
+        <div class="tx-cat">계좌 이체</div>
+        <div class="tx-memo">${fromName} → ${toName}${memoPart}</div>
+      </div>
+      <div class="tx-amt">${won(Math.abs(Number(t.amount)))}</div>
+      <button class="tx-dup" data-dup="${t.id}" title="오늘 날짜로 복제" aria-label="오늘 날짜로 복제">${icon('duplicate',{size:14})}</button>
+    </div>`;
+  }
   const c = catById(t.categoryId);
   const color = c ? c.color : '#9CA3AF';
   const a = t.assetId ? assetById(t.assetId) : null;
-  const subParts = [a ? a.name : null, t.memo ? escapeHtml(t.memo) : null].filter(Boolean);
+  const subParts = [a ? escapeHtml(a.name) : null, t.memo ? escapeHtml(t.memo) : null].filter(Boolean);
   return `<div class="tx-row" data-id="${t.id}">
     <span class="tx-ic" style="background:${color}1F;color:${color}">${icon(c?.icon||'sparkle',{size:17})}</span>
     <div class="tx-mid">
@@ -1392,7 +1431,9 @@ function wireTxRows(container){
       e.stopPropagation();
       const src = state.transactions.find(t=>t.id===btn.dataset.dup);
       if(!src) return;
-      const data = { type:src.type, date:todayStr(), categoryId:src.categoryId, amount:src.amount, memo:src.memo||'', assetId:src.assetId||null };
+      const data = src.type==='transfer'
+        ? { type:'transfer', date:todayStr(), amount:src.amount, memo:src.memo||'', fromAssetId:src.fromAssetId||null, toAssetId:src.toAssetId||null }
+        : { type:src.type, date:todayStr(), categoryId:src.categoryId, amount:src.amount, memo:src.memo||'', assetId:src.assetId||null };
       await reconcileAssetForTx(null, data);
       await addDoc('transactions', data);
       scheduleRender(); toast('오늘 날짜로 복제했어요');
@@ -1405,7 +1446,10 @@ function renderTransactions(){
   main.innerHTML = `
     <div class="topbar">
       <h1 class="page-title">내역</h1>
-      ${monthNavHtml()}
+      <div style="display:flex;align-items:center;gap:10px;">
+        ${monthNavHtml()}
+        <button class="btn btn-primary btn-sm" id="txAddBtn">${icon('plus',{size:14})}거래 추가</button>
+      </div>
     </div>
     <div class="card tpl-card" style="margin-bottom:14px;">
       <div class="tpl-head">
@@ -1424,6 +1468,7 @@ function renderTransactions(){
     <div id="txBody"></div>
   `;
   wireMonthNav();
+  $('#txAddBtn').onclick = ()=> openTxModal(null);
   renderTemplateRow();
   $('#tplEditToggle').onclick = ()=>{ state.templateEditMode = !state.templateEditMode; scheduleRender(); };
   $$('.tx-view-toggle button').forEach(b=> b.onclick = ()=>{
@@ -1688,16 +1733,21 @@ function openTxModal(existing, prefill){
           <div class="type-toggle" id="typeToggle">
             <button type="button" data-t="expense" class="${type==='expense'?'sel-expense':''}">지출</button>
             <button type="button" data-t="income" class="${type==='income'?'sel-income':''}">수입</button>
+            <button type="button" data-t="transfer" class="${type==='transfer'?'sel-transfer':''}">이체</button>
           </div>
         </div>
-        <div class="form-group"><label class="form-label">카테고리</label><div class="cat-pick-grid" id="txCatPick"></div></div>
+        <div class="form-group" id="txCatGroup"><label class="form-label">카테고리</label><div class="cat-pick-grid" id="txCatPick"></div></div>
         <div class="form-group"><label class="form-label">날짜</label><input class="form-input" type="date" id="txDate" value="${existing?.date||prefill?.date||todayStr()}"></div>
         <div class="form-group">
           <label class="form-label">금액</label>
           <input class="form-input" type="number" id="txAmount" placeholder="0" value="${existing?.amount||prefill?.amount||''}">
           <div class="amount-presets" id="txAmountPresets"></div>
         </div>
-        <div class="form-group"><label class="form-label">자산</label><select class="form-input" id="txAsset"></select></div>
+        <div class="form-group" id="txAssetGroup"><label class="form-label">자산</label><select class="form-input" id="txAsset"></select></div>
+        <div id="txTransferGroup" style="display:none">
+          <div class="form-group"><label class="form-label">보내는 계좌</label><select class="form-input" id="txFromAsset"></select></div>
+          <div class="form-group"><label class="form-label">받는 계좌</label><select class="form-input" id="txToAsset"></select></div>
+        </div>
         <div class="form-group"><label class="form-label">메모</label><input class="form-input" type="text" id="txMemo" placeholder="선택 사항" value="${existing?escapeHtml(existing.memo||''):escapeHtml(prefill?.memo||'')}"></div>
         <div class="sheet-actions">
           ${existing?'<button class="btn btn-danger" id="txDelete">삭제</button>':''}
@@ -1732,11 +1782,36 @@ function openTxModal(existing, prefill){
     if(assets.length) html += `<optgroup label="자산">${assets.map(opt).join('')}</optgroup>`;
     if(liabs.length) html += `<optgroup label="부채">${liabs.map(opt).join('')}</optgroup>`;
     $('#txAsset').innerHTML = html;
+    // transfers only move money between real asset accounts (not a
+    // card/loan liability balance) — keeping the two pickers scoped to
+    // ASSET_TYPES_ASSET avoids the ambiguity of what "paying down a card
+    // via transfer" should even mean.
+    const fromSel = existing?.fromAssetId || prefill?.fromAssetId || '';
+    const toSel = existing?.toAssetId || prefill?.toAssetId || '';
+    if(assets.length){
+      $('#txFromAsset').innerHTML = `<option value="">선택</option>` + assets.map(a=>`<option value="${a.id}" ${fromSel===a.id?'selected':''}>${escapeHtml(a.name)}</option>`).join('');
+      $('#txToAsset').innerHTML = `<option value="">선택</option>` + assets.map(a=>`<option value="${a.id}" ${toSel===a.id?'selected':''}>${escapeHtml(a.name)}</option>`).join('');
+    } else {
+      $('#txFromAsset').innerHTML = `<option value="">등록된 자산이 없어요</option>`;
+      $('#txToAsset').innerHTML = `<option value="">등록된 자산이 없어요</option>`;
+    }
+  };
+  const updateTypeVisibility = ()=>{
+    const isTransfer = type==='transfer';
+    $('#txCatGroup').style.display = isTransfer ? 'none' : '';
+    $('#txAssetGroup').style.display = isTransfer ? 'none' : '';
+    $('#txTransferGroup').style.display = isTransfer ? '' : 'none';
   };
   paintCatPick();
   paintPresets();
   fillAssetSelect();
-  $$('#typeToggle button').forEach(b=> b.onclick = ()=>{ type=b.dataset.t; categoryId=null; $$('#typeToggle button').forEach(x=>x.className=''); b.className = type==='expense'?'sel-expense':'sel-income'; paintCatPick(); });
+  updateTypeVisibility();
+  $$('#typeToggle button').forEach(b=> b.onclick = ()=>{
+    type=b.dataset.t; categoryId=null;
+    $$('#typeToggle button').forEach(x=>x.className='');
+    b.className = type==='expense'?'sel-expense':type==='income'?'sel-income':'sel-transfer';
+    paintCatPick(); updateTypeVisibility();
+  });
   $('#closeTx').onclick = closeModal;
   $('#ovTx').onclick = (e)=>{ if(e.target.id==='ovTx') closeModal(); };
   if(existing) guardedClick($('#txDelete'), async ()=>{
@@ -1747,11 +1822,21 @@ function openTxModal(existing, prefill){
   guardedClick($('#txSave'), async ()=>{
     const amount = Number($('#txAmount').value);
     const date = $('#txDate').value;
-    if(!categoryId){ toast('카테고리를 선택해주세요', {danger:true}); shakeSheet(); return; }
     if(!amount || amount<=0){ toast('금액을 입력해주세요', {danger:true}); shakeSheet(); return; }
     if(!date){ toast('날짜를 선택해주세요', {danger:true}); shakeSheet(); return; }
-    const assetId = $('#txAsset').value || null;
-    const data = { type, date, categoryId, amount, memo: $('#txMemo').value.trim(), assetId };
+    const memo = $('#txMemo').value.trim();
+    let data;
+    if(type==='transfer'){
+      const fromAssetId = $('#txFromAsset').value || null;
+      const toAssetId = $('#txToAsset').value || null;
+      if(!fromAssetId || !toAssetId){ toast('보내는 계좌와 받는 계좌를 선택해주세요', {danger:true}); shakeSheet(); return; }
+      if(fromAssetId===toAssetId){ toast('서로 다른 계좌를 선택해주세요', {danger:true}); shakeSheet(); return; }
+      data = { type:'transfer', date, amount, memo, fromAssetId, toAssetId, categoryId:null, assetId:null };
+    } else {
+      if(!categoryId){ toast('카테고리를 선택해주세요', {danger:true}); shakeSheet(); return; }
+      const assetId = $('#txAsset').value || null;
+      data = { type, date, categoryId, amount, memo, assetId, fromAssetId:null, toAssetId:null };
+    }
     await reconcileAssetForTx(existing || null, data);
     if(existing) await updateDoc('transactions', existing.id, data); else await addDoc('transactions', data);
     closeModal(); scheduleRender(); toast(existing?'수정했어요':'추가했어요');
@@ -1842,7 +1927,7 @@ function openAssetModal(existing){
   $('#closeAsset').onclick = closeModal;
   $('#ovAsset').onclick = (e)=>{ if(e.target.id==='ovAsset') closeModal(); };
   if(existing) guardedClick($('#assetDelete'), async ()=>{
-    const inUse = state.transactions.some(t=>t.assetId===existing.id);
+    const inUse = state.transactions.some(t=>t.assetId===existing.id || t.fromAssetId===existing.id || t.toAssetId===existing.id);
     if(inUse && !confirm('이 자산과 연결된 내역이 있어요. 삭제할까요?')) return;
     await deleteDoc('assets', existing.id); closeModal(); scheduleRender(); toast('삭제했어요', {danger:true});
   });
