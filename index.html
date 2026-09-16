@@ -596,7 +596,7 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
 }
 .calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
 .calc-key{
-  padding:10px 0;border-radius:9px;border:1px solid var(--border);background:var(--surface-2);
+  padding:13px 0;border-radius:9px;border:1px solid var(--border);background:var(--surface-2);
   color:var(--ink);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;
 }
 .calc-key:hover{background:color-mix(in srgb, var(--accent) 12%, var(--surface-2));}
@@ -2160,12 +2160,33 @@ function computeMonthlySeries(monthsBack){
   return {labels, data};
 }
 // the categories whose spend moved the most (up or down) vs the previous month
+// expense transactions within the Monday-start week that begins on
+// weekMonday — shared date-range logic with computeWeeklySeries so the two
+// never drift out of sync about what "this week" means.
+function txsInWeek(weekMonday){
+  const end = new Date(weekMonday.getFullYear(), weekMonday.getMonth(), weekMonday.getDate()+6);
+  const startStr = `${weekMonday.getFullYear()}-${pad2(weekMonday.getMonth()+1)}-${pad2(weekMonday.getDate())}`;
+  const endStr = `${end.getFullYear()}-${pad2(end.getMonth()+1)}-${pad2(end.getDate())}`;
+  return state.transactions.filter(t=>t.type==='expense' && t.date>=startStr && t.date<=endStr);
+}
+// top movers vs the previous period — the previous WEEK when the analytics
+// tab's 주별 toggle is active, otherwise the previous month, so this stays
+// in sync with whichever comparison the chart above it is showing.
 function computeCategoryChanges(){
-  const {y,m} = state.month;
-  const prevM = m===1?12:m-1, prevY = m===1?y-1:y;
+  let curTxs, prevTxs;
+  if(state.analyticsView==='weekly'){
+    const thisMonday = weekStart(new Date());
+    const lastMonday = new Date(thisMonday.getFullYear(), thisMonday.getMonth(), thisMonday.getDate()-7);
+    curTxs = txsInWeek(thisMonday);
+    prevTxs = txsInWeek(lastMonday);
+  } else {
+    const {y,m} = state.month;
+    const prevM = m===1?12:m-1, prevY = m===1?y-1:y;
+    curTxs = txForMonth(y,m).filter(t=>t.type==='expense');
+    prevTxs = txForMonth(prevY,prevM).filter(t=>t.type==='expense');
+  }
   const sumByCat = (txs)=>{ const o={}; txs.forEach(t=> o[t.categoryId]=(o[t.categoryId]||0)+Number(t.amount||0)); return o; };
-  const curMap = sumByCat(txForMonth(y,m).filter(t=>t.type==='expense'));
-  const prevMap = sumByCat(txForMonth(prevY,prevM).filter(t=>t.type==='expense'));
+  const curMap = sumByCat(curTxs), prevMap = sumByCat(prevTxs);
   const ids = new Set([...Object.keys(curMap), ...Object.keys(prevMap)]);
   return [...ids].map(cid=>{
     const cat = catById(cid);
@@ -2214,7 +2235,7 @@ function renderAnalytics(){
         <div style="position:relative;height:200px;"><canvas id="analyticsCanvas"></canvas></div>
       </div>
       <div class="card">
-        <h3>카테고리 변화 <span class="sub">지난달 대비</span></h3>
+        <h3>카테고리 변화 <span class="sub" id="catChangeSub">${state.analyticsView==='weekly'?'지난주 대비':'지난달 대비'}</span></h3>
         <div id="analyticsCatChangeWrap"></div>
       </div>
       <div class="card">
@@ -2236,6 +2257,9 @@ function renderAnalytics(){
     state.analyticsView = b.dataset.v;
     $$('#analyticsViewToggle button').forEach(x=> x.classList.toggle('active', x===b));
     renderAnalyticsChart();
+    const sub = $('#catChangeSub');
+    if(sub) sub.textContent = state.analyticsView==='weekly' ? '지난주 대비' : '지난달 대비';
+    renderCategoryChanges();
   });
   renderCategoryChanges();
   renderWeekdayPattern();
@@ -3097,7 +3121,7 @@ function openTemplateModal(existing){
 // fights with the desktop rail or with genuinely horizontal-scrolling
 // widgets, which all live inside modals rather than #main.
 (function initSwipeNav(){
-  const TAB_ORDER = ['dashboard','transactions','categories','assets','settings'];
+  const TAB_ORDER = ['dashboard','transactions','categories','assets','analytics','settings'];
   const main = $('#main');
   let startX = 0, startY = 0, tracking = false;
   main.addEventListener('touchstart', (e)=>{
