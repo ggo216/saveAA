@@ -280,6 +280,7 @@ main{flex:1;min-width:0;}
 .donut-layout.active .legend-list{flex:1;margin-top:0;max-height:150px;overflow-x:hidden;overflow-y:auto;}
 .donut-layout.active .legend-amt{display:none;}
 .donut-layout.active .legend-row{padding:4px 6px;font-size:12px;}
+.donut-tx-list-inner{margin-top:14px;padding-top:10px;border-top:1px solid var(--border);max-height:260px;overflow-y:auto;}
 .legend-row{
   display:flex;align-items:center;gap:9px;font-size:13px;
   cursor:pointer;padding:5px 6px;margin:0 -6px;border-radius:8px;
@@ -295,6 +296,36 @@ main{flex:1;min-width:0;}
 .legend-row.active .legend-name{color:var(--ink);font-weight:700;}
 .legend-amt{font-variant-numeric:tabular-nums;font-weight:700;font-size:12.5px;}
 .legend-pct{font-size:11.5px;color:var(--ink-faint);width:32px;text-align:right;font-variant-numeric:tabular-nums;}
+
+.cat-change-row{display:flex;align-items:center;gap:11px;padding:10px 4px;border-bottom:1px solid var(--border);}
+.cat-change-row:last-child{border-bottom:none;}
+.cat-change-row .cdot{width:30px;height:30px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.cat-change-row .cdot svg{width:14px;height:14px;}
+.cat-change-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;}
+.cat-change-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);font-weight:700;font-size:13px;}
+.cat-change-sub{font-size:11px;color:var(--ink-faint);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cat-change-badge{
+  font-weight:800;font-variant-numeric:tabular-nums;font-size:11.5px;white-space:nowrap;flex-shrink:0;
+  padding:5px 9px;border-radius:100px;
+}
+.cat-change-badge.up{color:var(--expense);background:color-mix(in srgb, var(--expense) 13%, transparent);}
+.cat-change-badge.down{color:var(--income);background:color-mix(in srgb, var(--income) 13%, transparent);}
+.cat-change-badge.flat{color:var(--ink-faint);background:var(--surface-2);}
+
+.analytics-stat-row{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 10px;margin-bottom:14px;}
+.analytics-stat-value{font-size:23px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-0.4px;}
+.analytics-stat-label{font-size:12px;color:var(--ink-soft);font-weight:600;}
+.analytics-stat-badge{
+  margin-left:auto;font-size:11.5px;font-weight:800;font-variant-numeric:tabular-nums;
+  padding:4px 9px;border-radius:100px;white-space:nowrap;
+}
+.analytics-stat-badge.up{color:var(--expense);background:color-mix(in srgb, var(--expense) 13%, transparent);}
+.analytics-stat-badge.down{color:var(--income);background:color-mix(in srgb, var(--income) 13%, transparent);}
+
+.goal-progress-wrap{margin-top:12px;}
+.goal-progress-bar{height:8px;border-radius:5px;background:var(--surface-2);overflow:hidden;}
+.goal-progress-bar > i{display:block;height:100%;border-radius:5px;background:var(--accent);transition:width .4s cubic-bezier(.22,.75,.32,1);}
+.goal-progress-label{display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:11px;color:var(--ink-faint);font-variant-numeric:tabular-nums;}
 
 .empty{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -396,26 +427,30 @@ main{flex:1;min-width:0;}
 .tx-amt.income{color:var(--income);}
 .tx-amt.expense{color:var(--expense);}
 
-.cat-group-title{font-size:12.5px;font-weight:700;color:var(--ink-soft);margin:20px 0 10px;display:flex;align-items:center;gap:7px;text-transform:uppercase;letter-spacing:.3px;}
+.cat-group-title{font-size:12.5px;font-weight:700;color:var(--ink-soft);margin:24px 0 12px;display:flex;align-items:center;gap:7px;text-transform:uppercase;letter-spacing:.3px;}
 .cat-group-title .ic{width:14px;height:14px;}
 .cat-group-title:first-child{margin-top:0;}
-.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px;}
+.cat-count{margin-left:auto;background:var(--surface-2);color:var(--ink-faint);font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:100px;letter-spacing:0;text-transform:none;}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
 .cat-chip{
-  display:flex;align-items:center;gap:9px;min-width:0;
-  padding:10px 12px;border-radius:var(--radius-sm);
+  display:flex;align-items:center;gap:11px;min-width:0;
+  padding:12px 14px;border-radius:14px;
   background:var(--surface-2);border:1px solid transparent;cursor:pointer;
-  font-size:13px;font-weight:500;
+  font-size:13.5px;font-weight:600;
+  transition:transform .12s cubic-bezier(.22,.75,.32,1), box-shadow .15s ease, border-color .15s ease, background-color .15s ease;
 }
-.cat-chip:hover{border-color:var(--border);}
-.cat-chip .cdot{width:26px;height:26px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
-.cat-chip .cdot svg{width:14px;height:14px;}
+.cat-chip:hover{border-color:var(--border);box-shadow:0 8px 20px -12px rgba(16,20,30,0.25);transform:translateY(-1.5px);}
+.cat-chip:active{transform:translateY(0) scale(.97);}
+.cat-chip .cdot{width:32px;height:32px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.cat-chip .cdot svg{width:16px;height:16px;}
 .cat-chip-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .add-cat-chip{
   display:flex;align-items:center;justify-content:center;gap:6px;
-  padding:10px 12px;border-radius:var(--radius-sm);
-  border:1.5px dashed var(--border);color:var(--ink-faint);cursor:pointer;font-size:13px;background:transparent;font-weight:500;
+  padding:12px 14px;border-radius:14px;
+  border:1.5px dashed var(--border);color:var(--ink-faint);cursor:pointer;font-size:13.5px;background:transparent;font-weight:600;
+  transition:border-color .15s ease, color .15s ease, background-color .15s ease;
 }
-.add-cat-chip:hover{border-color:var(--accent);color:var(--accent);}
+.add-cat-chip:hover{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb, var(--accent) 6%, transparent);}
 
 .asset-row{
   display:flex;align-items:center;gap:12px;padding:12px 6px;border-radius:var(--radius-sm);cursor:pointer;
@@ -495,6 +530,83 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
   background:var(--surface-2);color:var(--ink);font-size:16px;font-family:inherit;
 }
 .form-input:focus{outline:2px solid color-mix(in srgb, var(--accent) 50%, transparent);outline-offset:1px;}
+#txDate{cursor:pointer;caret-color:transparent;}
+
+.date-picker-pop{
+  position:fixed;z-index:250;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-md);box-shadow:0 12px 32px -10px rgba(0,0,0,0.3);
+  padding:12px;width:248px;
+  animation:sheetInCenter .15s cubic-bezier(.22,.85,.32,1);
+}
+.dp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.dp-label{font-size:13px;font-weight:800;}
+.dp-nav{width:26px;height:26px;border-radius:50%;border:none;background:transparent;color:var(--ink-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.dp-nav svg{width:14px;height:14px;}
+.dp-nav:hover{background:var(--surface-2);color:var(--ink);}
+.dp-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;}
+.dp-weekdays span{text-align:center;font-size:10.5px;color:var(--ink-faint);font-weight:700;}
+.dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.dp-cell{
+  aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;
+  font-size:12px;font-weight:600;color:var(--ink);cursor:pointer;font-variant-numeric:tabular-nums;
+}
+.dp-cell:hover{background:var(--surface-2);}
+.dp-cell.today{color:var(--accent);font-weight:800;}
+.dp-cell.selected{background:var(--accent);color:var(--accent-ink);}
+.dp-today-btn{
+  width:100%;margin-top:8px;padding:7px;border-radius:100px;border:1px solid var(--border);
+  background:var(--surface-2);color:var(--ink-soft);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;
+}
+.dp-today-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+.amount-row{display:flex;gap:6px;align-items:center;}
+.amount-row .form-input{flex:1;}
+.calc-toggle-btn{
+  width:42px;height:42px;flex-shrink:0;border-radius:var(--radius-sm);border:1px solid var(--border);
+  background:var(--surface-2);color:var(--ink-soft);cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+.calc-toggle-btn:hover{border-color:var(--accent);color:var(--accent);}
+.calc-toggle-btn svg{width:17px;height:17px;}
+.calc-pop{
+  position:fixed;z-index:250;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-md);box-shadow:0 12px 32px -10px rgba(0,0,0,0.3);
+  padding:12px;width:216px;
+  animation:sheetInCenter .15s cubic-bezier(.22,.85,.32,1);
+}
+.calc-display{
+  font-size:20px;font-weight:800;text-align:right;padding:8px 6px 12px;
+  color:var(--ink);font-variant-numeric:tabular-nums;word-break:break-all;
+}
+.calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.calc-key{
+  padding:10px 0;border-radius:9px;border:1px solid var(--border);background:var(--surface-2);
+  color:var(--ink);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;
+}
+.calc-key:hover{background:color-mix(in srgb, var(--accent) 12%, var(--surface-2));}
+.calc-key.calc-op{color:var(--accent);}
+.calc-key.calc-fn{color:var(--ink-soft);}
+.calc-key.calc-eq{background:var(--accent);color:var(--accent-ink);border-color:transparent;}
+.calc-key.calc-zero{grid-column:span 3;}
+.calc-apply-btn{
+  width:100%;margin-top:10px;padding:9px;border-radius:100px;border:none;
+  background:var(--accent);color:var(--accent-ink);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;
+}
+
+.asset-trigger{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;}
+.asset-trigger .at-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.asset-trigger svg{flex-shrink:0;color:var(--ink-faint);transform:rotate(90deg);}
+.asset-picker-pop{
+  position:fixed;z-index:250;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-md);box-shadow:0 12px 32px -10px rgba(0,0,0,0.3);
+  padding:6px;max-height:264px;overflow-y:auto;
+  animation:sheetInCenter .15s cubic-bezier(.22,.85,.32,1);
+}
+.ap-opt{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:13.5px;color:var(--ink);}
+.ap-opt:hover{background:var(--surface-2);}
+.ap-opt.sel{background:color-mix(in srgb, var(--accent) 12%, var(--surface));color:var(--accent);font-weight:700;}
+.ap-opt .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.ap-opt .ap-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
 .type-toggle{display:flex;gap:6px;}
 .type-toggle button{
   flex:1;padding:7px;border-radius:var(--radius-sm);border:1px solid var(--border);
@@ -637,6 +749,7 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
     <button class="navlink" data-tab="transactions"><span class="ic" data-icon="list"></span><span>내역</span></button>
     <button class="navlink" data-tab="categories"><span class="ic" data-icon="tag"></span><span>카테고리</span></button>
     <button class="navlink" data-tab="assets"><span class="ic" data-icon="wallet"></span><span>자산</span></button>
+    <button class="navlink" data-tab="analytics"><span class="ic" data-icon="chart"></span><span>분석</span></button>
     <button class="navlink" data-tab="settings"><span class="ic" data-icon="settings"></span><span>설정</span></button>
   </nav>
   <main id="main"></main>
@@ -691,6 +804,7 @@ const ICONS = {
   flame: '<g transform="translate(0.5,-1)"><path d="M12 21c-3.3 0-6-2.4-6-5.8 0-2.7 1.7-4.4 2.8-6.3.3 1.3.9 2 1.7 2.5-.3-2.2.4-4 2.5-6.4.5 2.6 1.8 3.6 2.7 5.3.9 1.7 1.3 2.7 1.3 4.4 0 3.5-2.7 6.3-5 6.3z"/></g>',
   pencil: '<g transform="translate(0,0.56)"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></g>',
   swap: '<path d="M4 8h14"/><path d="M15 4l3 4-3 4"/><path d="M20 16H6"/><path d="M9 12l-3 4 3 4"/>',
+  calculator: '<rect x="5" y="3" width="14" height="18" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><circle cx="8.5" cy="11.5" r="0.8" fill="currentColor" stroke="none"/><circle cx="12" cy="11.5" r="0.8" fill="currentColor" stroke="none"/><circle cx="15.5" cy="11.5" r="0.8" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15" r="0.8" fill="currentColor" stroke="none"/><circle cx="12" cy="15" r="0.8" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15" r="0.8" fill="currentColor" stroke="none"/><circle cx="8.5" cy="18.5" r="0.8" fill="currentColor" stroke="none"/><circle cx="12" cy="18.5" r="0.8" fill="currentColor" stroke="none"/><circle cx="15.5" cy="18.5" r="0.8" fill="currentColor" stroke="none"/>',
 };
 function icon(name, opts){
   opts = opts || {};
@@ -714,10 +828,31 @@ function hexLuminance(hex){
   const f = v => v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055,2.4);
   return 0.2126*f(r)+0.7152*f(g)+0.0722*f(b);
 }
-function inkFor(hex){ return hexLuminance(hex) > 0.55 ? '#1B1F2A' : '#ffffff'; }
+// picks whichever ink color (dark ink vs white) gives the HIGHER contrast
+// ratio against this accent, instead of a fixed luminance cutoff — a fixed
+// 0.55 threshold never actually fired for any of the 16 ACCENT_PRESETS (the
+// brightest, #E8A93A, only reaches 0.458), so every accent always got white
+// ink even where it reads poorly (#E8A93A white-on-accent measured at just
+// 2.07:1 contrast, far under WCAG's 3:1 floor for UI components/large text —
+// verified via the WCAG relative-luminance contrast formula). Contrast-ratio
+// comparison also holds up for any custom color from the 직접 고르기 picker,
+// which a fixed threshold tuned to one palette wouldn't.
+function inkFor(hex){
+  const bgLum = hexLuminance(hex);
+  const contrastWith = (fgHex) => {
+    const fgLum = hexLuminance(fgHex);
+    const lighter = Math.max(bgLum, fgLum), darker = Math.min(bgLum, fgLum);
+    return (lighter + 0.05) / (darker + 0.05);
+  };
+  return contrastWith('#1B1F2A') >= contrastWith('#ffffff') ? '#1B1F2A' : '#ffffff';
+}
 
 const CATEGORY_PALETTE = ['#8b5ec9','#009baa','#cf5976','#ca952b','#398bc6','#ce6c3b','#c059c0','#669438'];
-const ACCENT_PRESETS = ['#6C4FD9','#1FA7AD','#E8A93A','#2F6FE0','#D6456E','#1E8F5F','#DA6A2B','#4B5563'];
+const ACCENT_PRESETS = [
+  '#6C4FD9','#8B5CF6','#2F6FE0','#0EA5E9','#1FA7AD',
+  '#1E8F5F','#65A30D','#E8A93A','#DA6A2B','#D6456E',
+  '#DB2777','#E11D48','#7C3AED','#0F766E','#EA580C','#4B5563',
+];
 const EXPENSE_ICON_KEYS = ['bowl','coffee','bus','home','phone','bag','health','film','book','gift','sparkle','trendingUp','building','creditcard','ticket','tag'];
 const INCOME_ICON_KEYS = ['banknote','ticket','briefcase','gift','trendingUp','sparkle','wallet','tag'];
 const ASSET_ICONS = {'현금':'banknote','예금/적금':'bank','투자':'trendingUp','부동산':'building','기타자산':'gem','카드/대출':'creditcard','기타부채':'file'};
@@ -747,6 +882,7 @@ const state = {
   ready: false,
   txView: 'list', // list | calendar
   selectedDay: null,
+  analyticsView: 'weekly', // weekly | monthly
 };
 
 /* ---------- Firebase ---------- */
@@ -996,19 +1132,6 @@ function categoriesByUsage(type){
     .sort((a,b)=> (counts[b.c.id]||0) - (counts[a.c.id]||0) || a.i-b.i)
     .map(x=>x.c);
 }
-// consecutive days (ending today or yesterday) with at least one transaction
-function computeStreak(){
-  const dates = new Set(state.transactions.map(t=>t.date));
-  const fmt = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-  const cursor = new Date(); cursor.setHours(0,0,0,0);
-  if(!dates.has(fmt(cursor))){
-    cursor.setDate(cursor.getDate()-1);
-    if(!dates.has(fmt(cursor))) return 0;
-  }
-  let count = 0;
-  while(dates.has(fmt(cursor))){ count++; cursor.setDate(cursor.getDate()-1); }
-  return count;
-}
 // one-line spending insight comparing this month's expenses to last month's
 function computeSpendInsight(){
   const {y,m} = state.month;
@@ -1136,7 +1259,7 @@ function render(){
     replayViewAnim(main);
     return;
   }
-  const fns = { dashboard: renderDashboard, transactions: renderTransactions, categories: renderCategories, assets: renderAssets, settings: renderSettings };
+  const fns = { dashboard: renderDashboard, transactions: renderTransactions, categories: renderCategories, assets: renderAssets, analytics: renderAnalytics, settings: renderSettings };
   // each fn immediately does its own full main.innerHTML = `...` — clearing
   // here first was a redundant extra reflow before that replace.
   fns[state.tab]();
@@ -1238,7 +1361,6 @@ function renderDashboard(){
   const nw = netWorth(balances);
   const assetsSum = state.assets.filter(a=>!ASSET_TYPES_LIAB.includes(a.type)).reduce((s,a)=>s+(balances.get(a.id)||0),0);
   const liabSum = state.assets.filter(a=>ASSET_TYPES_LIAB.includes(a.type)).reduce((s,a)=>s+(balances.get(a.id)||0),0);
-  const streak = computeStreak();
   const insight = computeSpendInsight();
 
   main.innerHTML = `
@@ -1255,10 +1377,7 @@ function renderDashboard(){
           <div class="hero-sub">자산 ${won(assetsSum)} · 부채 ${won(liabSum)}</div>
         </div>
       </div>
-      ${(streak>0 || insight) ? `<div class="insight-row">
-        ${streak>0 ? `<div class="insight-chip"><span class="ic" style="color:#E8A93A">${icon('flame',{size:14})}</span>${streak}일 연속 기록 중</div>` : ''}
-        ${insight ? `<div class="insight-chip">${insight}</div>` : ''}
-      </div>` : ''}
+      ${insight ? `<div class="insight-row"><div class="insight-chip">${insight}</div></div>` : ''}
       <div class="tiles">
         <div class="card tile">
           <div class="tile-label"><span class="ic" style="color:var(--income)">${icon('arrowDownCircle',{size:16})}</span>이번 달 수입</div>
@@ -1318,7 +1437,7 @@ function renderDonut(txs, expenseTotal){
     wrap.innerHTML = `<div class="empty"><div class="e-ic">${icon('chart',{size:30})}</div><div>이번 달 지출 내역이 아직 없어요</div></div>`;
     return;
   }
-  wrap.innerHTML = `<div class="donut-layout" id="donutLayout"><div class="donut-chart-box"><canvas id="donutCanvas"></canvas></div><div class="legend-list" id="donutLegend"></div></div>`;
+  wrap.innerHTML = `<div class="donut-layout" id="donutLayout"><div class="donut-chart-box"><canvas id="donutCanvas"></canvas></div><div class="legend-list" id="donutLegend"></div></div><div id="donutTxList"></div>`;
   const legend = $('#donutLegend');
   // build the whole legend as one string and set innerHTML once, instead of
   // an insertAdjacentHTML per row — one reflow instead of one per category.
@@ -1415,6 +1534,18 @@ function renderDonut(txs, expenseTotal){
     // the CSS transition, but calling resize() right away avoids a stale
     // frame between the class toggle and the observer's next tick.
     chartDonut.resize();
+    paintDonutTxList(i);
+  }
+  // the actual transactions behind the tapped category, this month — the
+  // legend only ever showed the aggregate, not what's actually in it.
+  function paintDonutTxList(i){
+    const listWrap = $('#donutTxList');
+    if(i===null){ listWrap.innerHTML = ''; return; }
+    const e = entries[i];
+    const catTxs = txs.filter(t=>t.type==='expense' && t.categoryId===e.cat.id)
+      .sort((a,b)=> a.date===b.date ? (b.updatedAt||0)-(a.updatedAt||0) : b.date.localeCompare(a.date));
+    listWrap.innerHTML = `<div class="donut-tx-list-inner">${catTxs.map(txRowHtml).join('')}</div>`;
+    wireTxRows(listWrap);
   }
   $$('.legend-row', legend).forEach(row=>{
     row.onclick = ()=>{
@@ -1785,15 +1916,15 @@ function renderCategories(){
   main.innerHTML = `
     <div class="topbar"><h1 class="page-title">카테고리</h1></div>
     <div class="card">
-      <div class="cat-group-title"><span class="ic">${icon('arrowUpCircle',{size:14})}</span>지출 카테고리</div>
+      <div class="cat-group-title"><span class="ic">${icon('arrowUpCircle',{size:14})}</span>지출 카테고리<span class="cat-count">${expense.length}</span></div>
       <div class="cat-grid" id="catGridExpense"></div>
-      <div class="cat-group-title"><span class="ic">${icon('arrowDownCircle',{size:14})}</span>수입 카테고리</div>
+      <div class="cat-group-title"><span class="ic">${icon('arrowDownCircle',{size:14})}</span>수입 카테고리<span class="cat-count">${income.length}</span></div>
       <div class="cat-grid" id="catGridIncome"></div>
     </div>
   `;
   const buildGrid = (list, type) => list.map(c=>`
       <div class="cat-chip" data-id="${c.id}">
-        <span class="cdot" style="background:${c.color}22;color:${c.color}">${icon(c.icon||'sparkle',{size:14})}</span>
+        <span class="cdot" style="background:${c.color}22;color:${c.color}">${icon(c.icon||'sparkle',{size:15})}</span>
         <span class="cat-chip-name">${escapeHtml(c.name)}</span>
       </div>`).join('') + `<button class="add-cat-chip" data-type="${type}">${icon('plus',{size:14})} 추가</button>`;
   $('#catGridExpense').innerHTML = buildGrid(expense,'expense');
@@ -1842,6 +1973,243 @@ function renderAssets(){
   $$('.asset-row').forEach(r=> r.onclick = ()=> openAssetModal(state.assets.find(a=>a.id===r.dataset.id)));
 }
 
+/* ---------- analytics ---------- */
+let chartAnalytics = null;
+// Monday-start week boundary for a given date, at local midnight.
+function weekStart(d){
+  const day = d.getDay();
+  const diff = day===0 ? -6 : 1-day;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()+diff);
+}
+function computeWeeklySeries(weeksBack){
+  const todayMonday = weekStart(new Date());
+  const labels=[], data=[];
+  for(let i=weeksBack-1; i>=0; i--){
+    const start = new Date(todayMonday.getFullYear(), todayMonday.getMonth(), todayMonday.getDate()-7*i);
+    const end = new Date(start.getFullYear(), start.getMonth(), start.getDate()+6);
+    const startStr = `${start.getFullYear()}-${pad2(start.getMonth()+1)}-${pad2(start.getDate())}`;
+    const endStr = `${end.getFullYear()}-${pad2(end.getMonth()+1)}-${pad2(end.getDate())}`;
+    const sum = state.transactions.filter(t=>t.type==='expense' && t.date>=startStr && t.date<=endStr)
+      .reduce((s,t)=>s+Number(t.amount||0),0);
+    labels.push(`${start.getMonth()+1}/${start.getDate()}`);
+    data.push(sum);
+  }
+  return {labels, data};
+}
+function computeMonthlySeries(monthsBack){
+  const base = new Date();
+  const labels=[], data=[];
+  for(let i=monthsBack-1; i>=0; i--){
+    const d = new Date(base.getFullYear(), base.getMonth()-i, 1);
+    const y=d.getFullYear(), m=d.getMonth()+1;
+    labels.push(`${m}월`);
+    data.push(sumBy(txForMonth(y,m), 'expense'));
+  }
+  return {labels, data};
+}
+// the categories whose spend moved the most (up or down) vs the previous month
+function computeCategoryChanges(){
+  const {y,m} = state.month;
+  const prevM = m===1?12:m-1, prevY = m===1?y-1:y;
+  const sumByCat = (txs)=>{ const o={}; txs.forEach(t=> o[t.categoryId]=(o[t.categoryId]||0)+Number(t.amount||0)); return o; };
+  const curMap = sumByCat(txForMonth(y,m).filter(t=>t.type==='expense'));
+  const prevMap = sumByCat(txForMonth(prevY,prevM).filter(t=>t.type==='expense'));
+  const ids = new Set([...Object.keys(curMap), ...Object.keys(prevMap)]);
+  return [...ids].map(cid=>{
+    const cat = catById(cid);
+    if(!cat) return null;
+    const curAmt = curMap[cid]||0, prevAmt = prevMap[cid]||0;
+    return { cat, curAmt, prevAmt, delta: curAmt-prevAmt };
+  }).filter(Boolean).sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).slice(0,5);
+}
+// all-time expense total per weekday (0=일 .. 6=토) — all-time rather than
+// just this month so the pattern isn't noisy from a handful of data points.
+function computeWeekdayPattern(){
+  const sums = [0,0,0,0,0,0,0];
+  state.transactions.forEach(t=>{
+    if(t.type!=='expense') return;
+    const d = new Date(t.date+'T00:00:00');
+    sums[d.getDay()] += Number(t.amount||0);
+  });
+  return sums;
+}
+// average of (income − expense) over the last 6 months that actually have
+// any recorded activity — used only as a starting suggestion for the goal
+// calculator's 월 저축액 field, which the user can freely override.
+function computeAvgMonthlySavings(){
+  const base = new Date();
+  let total=0, count=0;
+  for(let i=1;i<=6;i++){
+    const d = new Date(base.getFullYear(), base.getMonth()-i, 1);
+    const txs = txForMonth(d.getFullYear(), d.getMonth()+1);
+    if(txs.length===0) continue;
+    total += sumBy(txs,'income') - sumBy(txs,'expense');
+    count++;
+  }
+  return count>0 ? total/count : 0;
+}
+function renderAnalytics(){
+  const main = $('#main');
+  main.innerHTML = `
+    <div class="topbar"><h1 class="page-title">분석</h1></div>
+    <div class="section-gap">
+      <div class="card">
+        <div class="analytics-stat-row" id="analyticsStatRow"></div>
+        <div class="tx-view-toggle" id="analyticsViewToggle" style="margin-bottom:14px;">
+          <button type="button" data-v="weekly" class="${state.analyticsView==='weekly'?'active':''}">주별</button>
+          <button type="button" data-v="monthly" class="${state.analyticsView==='monthly'?'active':''}">월별</button>
+        </div>
+        <div style="position:relative;height:200px;"><canvas id="analyticsCanvas"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>카테고리 변화 <span class="sub">지난달 대비</span></h3>
+        <div id="analyticsCatChangeWrap"></div>
+      </div>
+      <div class="card">
+        <h3>요일별 지출 패턴</h3>
+        <div class="settings-desc" id="analyticsWeekdaySummary" style="margin:2px 0 14px;"></div>
+        <div id="analyticsWeekdayWrap"></div>
+      </div>
+      <div class="card">
+        <h3>저축 목표 계산기</h3>
+        <div class="form-group"><label class="form-label">목표 금액</label><input class="form-input" type="number" id="goalTarget" placeholder="예: 10000000"></div>
+        <div class="form-group"><label class="form-label">현재 보유액</label><input class="form-input" type="number" id="goalCurrent" value="${Math.max(0,Math.round(netWorth()))}"></div>
+        <div class="form-group"><label class="form-label">월 저축액</label><input class="form-input" type="number" id="goalMonthly" value="${Math.max(0,Math.round(computeAvgMonthlySavings()))}"></div>
+        <div id="goalResult"></div>
+      </div>
+    </div>
+  `;
+  renderAnalyticsChart();
+  $$('#analyticsViewToggle button').forEach(b=> b.onclick = ()=>{
+    state.analyticsView = b.dataset.v;
+    $$('#analyticsViewToggle button').forEach(x=> x.classList.toggle('active', x===b));
+    renderAnalyticsChart();
+  });
+  renderCategoryChanges();
+  renderWeekdayPattern();
+  const updateGoal = ()=>{
+    const target = Number($('#goalTarget').value)||0;
+    const current = Number($('#goalCurrent').value)||0;
+    const monthly = Number($('#goalMonthly').value)||0;
+    const wrap = $('#goalResult');
+    if(target<=0){ wrap.innerHTML=''; return; }
+    const remaining = target-current;
+    if(remaining<=0){
+      wrap.innerHTML = `<div class="empty" style="padding:16px"><div class="e-ic">${icon('target',{size:26})}</div><div>이미 목표를 달성했어요</div></div>`;
+      return;
+    }
+    if(monthly<=0){
+      wrap.innerHTML = `<div class="settings-desc" style="margin-top:10px">월 저축액을 입력하면 예상 기간을 계산해드려요</div>`;
+      return;
+    }
+    const monthsNeeded = Math.ceil(remaining/monthly);
+    const years = Math.floor(monthsNeeded/12), months = monthsNeeded%12;
+    const periodStr = years>0 ? `${years}년${months>0?' '+months+'개월':''}` : `${months}개월`;
+    const targetDate = new Date(); targetDate.setMonth(targetDate.getMonth()+monthsNeeded);
+    const progressPct = target>0 ? Math.min(100, Math.max(0, Math.round(current/target*100))) : 0;
+    wrap.innerHTML = `
+      <div class="hero" style="margin-top:12px;padding:16px;border:1px solid var(--border);">
+        <div class="hero-badge">${icon('target',{size:22})}</div>
+        <div>
+          <div class="hero-label">목표까지 예상 기간</div>
+          <div class="num-hero" style="font-size:23px;">${periodStr}</div>
+          <div class="hero-sub">${targetDate.getFullYear()}년 ${targetDate.getMonth()+1}월경 달성 예상 · 매달 ${won(monthly)}</div>
+        </div>
+      </div>
+      <div class="goal-progress-wrap">
+        <div class="goal-progress-bar"><i style="width:${progressPct}%"></i></div>
+        <div class="goal-progress-label"><span>${won(current)}</span><span>${progressPct}% 달성 · 목표 ${won(target)}</span></div>
+      </div>`;
+  };
+  $('#goalTarget').oninput = updateGoal;
+  $('#goalCurrent').oninput = updateGoal;
+  $('#goalMonthly').oninput = updateGoal;
+  updateGoal();
+}
+function renderAnalyticsChart(){
+  const canvas = $('#analyticsCanvas');
+  if(!canvas) return;
+  const wrap = canvas.closest('div');
+  const isWeekly = state.analyticsView==='weekly';
+  const {labels, data} = isWeekly ? computeWeeklySeries(8) : computeMonthlySeries(6);
+  // this-period vs previous-period at-a-glance, using the same series data
+  // that's already being computed for the chart — no extra transaction scan.
+  const statWrap = $('#analyticsStatRow');
+  if(statWrap && data.length>=2){
+    const cur = data[data.length-1], prev = data[data.length-2];
+    const delta = cur-prev;
+    const up = delta>0;
+    const pctStr = prev>0 ? `${Math.round(Math.abs(delta)/prev*100)}%` : '';
+    statWrap.innerHTML = `
+      <div class="analytics-stat-value">${won(cur)}</div>
+      <div class="analytics-stat-label">${isWeekly?'이번 주':'이번 달'} 지출</div>
+      ${delta!==0 ? `<div class="analytics-stat-badge ${up?'up':'down'}">${up?'▲':'▼'}${pctStr?' '+pctStr:''} ${won(Math.abs(delta))}</div>` : ''}
+    `;
+  } else if(statWrap){
+    statWrap.innerHTML = '';
+  }
+  if(typeof Chart === 'undefined'){
+    wrap.insertAdjacentHTML('beforeend', `<div class="empty" style="padding:14px"><div>차트를 불러오는 중이에요…</div></div>`);
+    ensureChartJs().then(()=>{ if(state.tab==='analytics') scheduleRender(); });
+    return;
+  }
+  const ctx = canvas.getContext('2d');
+  if(chartAnalytics) chartAnalytics.destroy();
+  const inkSoft = getComputedStyle(document.documentElement).getPropertyValue('--ink-soft').trim() || '#6B7280';
+  const border = getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || '#E5E7EB';
+  const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#6C4FD9';
+  chartAnalytics = new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets:[{ data, backgroundColor: accent+'CC', borderRadius:6, maxBarThickness:28 }] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      scales:{ y:{ ticks:{ color:inkSoft, callback:v=>wonCompact(v) }, grid:{ color:border } }, x:{ ticks:{ color:inkSoft }, grid:{ display:false } } },
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>won(c.parsed.y) } } } }
+  });
+}
+function renderCategoryChanges(){
+  const wrap = $('#analyticsCatChangeWrap');
+  const rows = computeCategoryChanges();
+  if(rows.length===0){
+    wrap.innerHTML = `<div class="empty" style="padding:16px 6px"><div>비교할 지출 내역이 아직 없어요</div></div>`;
+    return;
+  }
+  wrap.innerHTML = rows.map(r=>{
+    const up = r.delta>0;
+    const arrow = r.delta===0 ? '' : (up?'▲':'▼');
+    const badgeCls = r.delta===0 ? 'flat' : (up?'up':'down');
+    return `<div class="cat-change-row">
+      <span class="cdot" style="background:${r.cat.color}22;color:${r.cat.color}">${icon(r.cat.icon||'sparkle',{size:14})}</span>
+      <div class="cat-change-mid">
+        <span class="cat-change-name">${escapeHtml(r.cat.name)}</span>
+        <span class="cat-change-sub">${won(r.prevAmt)} → ${won(r.curAmt)}</span>
+      </div>
+      <span class="cat-change-badge ${badgeCls}">${arrow} ${won(Math.abs(r.delta))}</span>
+    </div>`;
+  }).join('');
+}
+function renderWeekdayPattern(){
+  const wrap = $('#analyticsWeekdayWrap');
+  const sums = computeWeekdayPattern();
+  const labels = ['일','월','화','수','목','금','토'];
+  const max = Math.max(...sums, 1);
+  if(sums.every(s=>s===0)){
+    wrap.innerHTML = `<div class="empty" style="padding:16px 6px"><div>지출 내역이 아직 없어요</div></div>`;
+    if($('#analyticsWeekdaySummary')) $('#analyticsWeekdaySummary').textContent = '';
+    return;
+  }
+  const peakIdx = sums.indexOf(max);
+  if($('#analyticsWeekdaySummary')) $('#analyticsWeekdaySummary').textContent = `${labels[peakIdx]}요일에 가장 많이 썼어요`;
+  wrap.innerHTML = labels.map((lb,i)=>{
+    const isPeak = i===peakIdx && sums[i]>0;
+    return `
+    <div class="asset-mini-row">
+      <span class="asset-mini-name" style="flex:0 0 24px;${isPeak?'color:var(--accent);font-weight:800;':''}">${lb}</span>
+      <span class="asset-mini-bar"><i style="width:${Math.max(4,(sums[i]/max)*100)}%;background:${isPeak?'var(--accent)':'var(--ink-faint)'}"></i></span>
+      <span class="asset-mini-amt"${isPeak?' style="color:var(--accent);"':''}>${wonCompact(sums[i])}</span>
+    </div>`;
+  }).join('');
+}
+
 /* ---------- settings ---------- */
 function renderSettings(){
   const main = $('#main');
@@ -1878,6 +2246,9 @@ function renderSettings(){
 
 /* ---------- modals ---------- */
 function closeModal(){
+  closeDatePicker();
+  closeCalculator();
+  closeAssetPicker();
   const overlay = $('#modalRoot .overlay');
   if(!overlay){ $('#modalRoot').innerHTML=''; return; }
   overlay.classList.add('closing');
@@ -1892,6 +2263,234 @@ function shakeSheet(){
   sheet.style.animation = 'none';
   void sheet.offsetWidth;
   sheet.style.animation = 'shake .32s ease';
+}
+
+// custom calendar popover for date fields — native <input type="date">
+// only opens its picker when you hit the small calendar icon (clicking the
+// digits just edits a segment), and its popup styling can't be touched at
+// all since the browser/OS renders it outside the page. This is a plain
+// <input type="text" readonly> that opens this instead on any click.
+let closeDatePickerOutsideHandler = null;
+function closeDatePicker(){
+  const pop = document.querySelector('.date-picker-pop');
+  if(pop) pop.remove();
+  if(closeDatePickerOutsideHandler){
+    document.removeEventListener('mousedown', closeDatePickerOutsideHandler);
+    closeDatePickerOutsideHandler = null;
+  }
+}
+function openDatePicker(inputEl){
+  closeDatePicker(); closeCalculator(); closeAssetPicker();
+  const initial = inputEl.value ? new Date(inputEl.value+'T00:00:00') : new Date();
+  let viewY = initial.getFullYear(), viewM = initial.getMonth()+1;
+  const pop = document.createElement('div');
+  pop.className = 'date-picker-pop';
+  pop.innerHTML = `
+    <div class="dp-head">
+      <button type="button" class="dp-nav" data-dir="-1" aria-label="이전 달">${icon('chevronLeft',{size:14})}</button>
+      <span class="dp-label"></span>
+      <button type="button" class="dp-nav" data-dir="1" aria-label="다음 달">${icon('chevronRight',{size:14})}</button>
+    </div>
+    <div class="dp-weekdays">${'일월화수목금토'.split('').map(d=>`<span>${d}</span>`).join('')}</div>
+    <div class="dp-grid"></div>
+    <button type="button" class="dp-today-btn">오늘</button>`;
+  document.body.appendChild(pop);
+  const position = ()=>{
+    const r = inputEl.getBoundingClientRect();
+    pop.style.left = Math.max(8, Math.min(r.left, window.innerWidth-pop.offsetWidth-8))+'px';
+    let top = r.bottom+6;
+    if(top+pop.offsetHeight > window.innerHeight-8) top = r.top-pop.offsetHeight-6;
+    pop.style.top = Math.max(8,top)+'px';
+  };
+  const paint = ()=>{
+    pop.querySelector('.dp-label').textContent = `${viewY}년 ${viewM}월`;
+    const firstWeekday = new Date(viewY, viewM-1, 1).getDay();
+    const daysInMonth = new Date(viewY, viewM, 0).getDate();
+    const todayS = todayStr();
+    const selected = inputEl.value;
+    let html = '';
+    for(let i=0;i<firstWeekday;i++) html += `<span class="dp-cell" style="visibility:hidden">0</span>`;
+    for(let d=1; d<=daysInMonth; d++){
+      const ds = `${viewY}-${pad2(viewM)}-${pad2(d)}`;
+      const cls = ['dp-cell'];
+      if(ds===todayS) cls.push('today');
+      if(ds===selected) cls.push('selected');
+      html += `<span class="${cls.join(' ')}" data-date="${ds}">${d}</span>`;
+    }
+    pop.querySelector('.dp-grid').innerHTML = html;
+    $$('.dp-cell[data-date]', pop).forEach(cell=>{
+      cell.onclick = ()=>{
+        inputEl.value = cell.dataset.date;
+        inputEl.dispatchEvent(new Event('change', {bubbles:true}));
+        closeDatePicker();
+      };
+    });
+    position();
+  };
+  $$('.dp-nav', pop).forEach(btn=> btn.onclick = ()=>{
+    viewM += Number(btn.dataset.dir);
+    if(viewM<1){ viewM=12; viewY--; } else if(viewM>12){ viewM=1; viewY++; }
+    paint();
+  });
+  pop.querySelector('.dp-today-btn').onclick = ()=>{
+    inputEl.value = todayStr();
+    inputEl.dispatchEvent(new Event('change', {bubbles:true}));
+    closeDatePicker();
+  };
+  paint();
+  closeDatePickerOutsideHandler = (e)=>{
+    if(!pop.contains(e.target) && e.target!==inputEl) closeDatePicker();
+  };
+  setTimeout(()=> document.addEventListener('mousedown', closeDatePickerOutsideHandler), 0);
+}
+
+// small popover calculator for the 금액 field — for adding up a few line
+// items (여러 영수증 항목 더하기 같은) without leaving the sheet to open a
+// separate calculator app. The expression is restricted to digits and
+// +-*/. before it's ever handed to Function(), so it can't evaluate
+// anything but arithmetic.
+let closeCalculatorOutsideHandler = null;
+function closeCalculator(){
+  const pop = document.querySelector('.calc-pop');
+  if(pop) pop.remove();
+  if(closeCalculatorOutsideHandler){
+    document.removeEventListener('mousedown', closeCalculatorOutsideHandler);
+    closeCalculatorOutsideHandler = null;
+  }
+}
+function evalCalcExpr(expr){
+  if(!expr || !/^[0-9+\-*/. ]+$/.test(expr)) return null;
+  if(/[+\-*/.]$/.test(expr.trim())) return null; // trailing operator — incomplete
+  try{
+    const result = Function('"use strict";return ('+expr+')')();
+    return (typeof result==='number' && isFinite(result)) ? result : null;
+  }catch(e){ return null; }
+}
+function openCalculator(triggerBtn, amountInputEl){
+  closeCalculator(); closeDatePicker(); closeAssetPicker();
+  let expr = amountInputEl.value && /^[0-9]+$/.test(amountInputEl.value) ? amountInputEl.value : '';
+  const pop = document.createElement('div');
+  pop.className = 'calc-pop';
+  pop.innerHTML = `
+    <div class="calc-display" id="calcDisplay">0</div>
+    <div class="calc-grid">
+      <button type="button" class="calc-key calc-fn" data-k="C">C</button>
+      <button type="button" class="calc-key calc-fn" data-k="back">⌫</button>
+      <button type="button" class="calc-key calc-op" data-k="/">÷</button>
+      <button type="button" class="calc-key calc-op" data-k="*">×</button>
+      <button type="button" class="calc-key" data-k="7">7</button>
+      <button type="button" class="calc-key" data-k="8">8</button>
+      <button type="button" class="calc-key" data-k="9">9</button>
+      <button type="button" class="calc-key calc-op" data-k="-">−</button>
+      <button type="button" class="calc-key" data-k="4">4</button>
+      <button type="button" class="calc-key" data-k="5">5</button>
+      <button type="button" class="calc-key" data-k="6">6</button>
+      <button type="button" class="calc-key calc-op" data-k="+">+</button>
+      <button type="button" class="calc-key" data-k="1">1</button>
+      <button type="button" class="calc-key" data-k="2">2</button>
+      <button type="button" class="calc-key" data-k="3">3</button>
+      <button type="button" class="calc-key calc-eq" data-k="=">=</button>
+      <button type="button" class="calc-key calc-zero" data-k="0">0</button>
+      <button type="button" class="calc-key" data-k=".">.</button>
+    </div>
+    <button type="button" class="calc-apply-btn">금액에 적용</button>`;
+  document.body.appendChild(pop);
+  const position = ()=>{
+    const r = triggerBtn.getBoundingClientRect();
+    pop.style.left = Math.max(8, Math.min(r.right-pop.offsetWidth, window.innerWidth-pop.offsetWidth-8))+'px';
+    let top = r.bottom+6;
+    if(top+pop.offsetHeight > window.innerHeight-8) top = r.top-pop.offsetHeight-6;
+    pop.style.top = Math.max(8,top)+'px';
+  };
+  const display = ()=>{ $('#calcDisplay').textContent = expr ? expr.replace(/\*/g,'×').replace(/\//g,'÷') : '0'; };
+  $$('.calc-key', pop).forEach(btn=>{
+    btn.onclick = ()=>{
+      const k = btn.dataset.k;
+      if(k==='C'){ expr=''; }
+      else if(k==='back'){ expr = expr.slice(0,-1); }
+      else if(k==='='){
+        const result = evalCalcExpr(expr);
+        if(result!==null) expr = String(Math.round(result*100)/100);
+      } else {
+        expr += k;
+      }
+      display();
+      position();
+    };
+  });
+  pop.querySelector('.calc-apply-btn').onclick = ()=>{
+    const result = evalCalcExpr(expr) ?? Number(expr);
+    if(!isNaN(result) && expr!==''){ amountInputEl.value = Math.round(Math.abs(result)); }
+    closeCalculator();
+  };
+  display();
+  position();
+  closeCalculatorOutsideHandler = (e)=>{
+    if(!pop.contains(e.target) && e.target!==triggerBtn) closeCalculator();
+  };
+  setTimeout(()=> document.addEventListener('mousedown', closeCalculatorOutsideHandler), 0);
+}
+
+// custom dropdown for asset pickers — a native <select>'s own popup can't
+// be styled at all (no color dots, no matching the app's design), so these
+// fields are a hidden input holding the real value plus a visible trigger
+// that opens a popover built the same way as the date/calculator ones.
+let closeAssetPickerOutsideHandler = null;
+function closeAssetPicker(){
+  const pop = document.querySelector('.asset-picker-pop');
+  if(pop) pop.remove();
+  if(closeAssetPickerOutsideHandler){
+    document.removeEventListener('mousedown', closeAssetPickerOutsideHandler);
+    closeAssetPickerOutsideHandler = null;
+  }
+}
+function openAssetPicker(triggerEl, options, currentValue, onPick){
+  closeAssetPicker(); closeDatePicker(); closeCalculator();
+  const pop = document.createElement('div');
+  pop.className = 'asset-picker-pop';
+  pop.innerHTML = options.map(o=>`
+    <div class="ap-opt ${o.value===currentValue?'sel':''}" data-v="${escapeHtml(o.value)}">
+      <span class="dot" style="background:${o.color||'transparent'}"></span>
+      <span class="ap-name">${escapeHtml(o.label)}</span>
+    </div>`).join('');
+  document.body.appendChild(pop);
+  const r = triggerEl.getBoundingClientRect();
+  pop.style.width = Math.max(180, r.width)+'px';
+  pop.style.left = Math.max(8, Math.min(r.left, window.innerWidth-pop.offsetWidth-8))+'px';
+  let top = r.bottom+6;
+  if(top+pop.offsetHeight > window.innerHeight-8) top = r.top-pop.offsetHeight-6;
+  pop.style.top = Math.max(8,top)+'px';
+  $$('.ap-opt', pop).forEach(el=>{
+    el.onclick = ()=>{ onPick(el.dataset.v); closeAssetPicker(); };
+  });
+  closeAssetPickerOutsideHandler = (e)=>{
+    if(!pop.contains(e.target) && e.target!==triggerEl) closeAssetPicker();
+  };
+  setTimeout(()=> document.addEventListener('mousedown', closeAssetPickerOutsideHandler), 0);
+}
+// wires one trigger+hidden-input pair; buildOptions is a function (not a
+// static array) since the asset list itself can change while the sheet is
+// open (e.g. adding a new asset isn't possible mid-sheet today, but the
+// options must still reflect state.assets at click time, not sheet-open
+// time). Returns a setter so callers (template quick-fill) can update the
+// display without duplicating the "look up the label for this id" logic.
+function wireAssetTrigger(triggerId, labelId, hiddenId, buildOptions){
+  const trigger = $('#'+triggerId), hidden = $('#'+hiddenId), label = $('#'+labelId);
+  if(!trigger || !hidden || !label) return ()=>{};
+  const setDisplay = (val)=>{
+    hidden.value = val;
+    const opts = buildOptions();
+    const match = opts.find(o=>o.value===val);
+    label.textContent = match ? match.label : (opts[0]?.label || '');
+  };
+  setDisplay(hidden.value);
+  trigger.onclick = ()=>{
+    openAssetPicker(trigger, buildOptions(), hidden.value, (v)=>{
+      setDisplay(v);
+      hidden.dispatchEvent(new Event('change', {bubbles:true}));
+    });
+  };
+  return setDisplay;
 }
 
 const AMOUNT_PRESETS = [1000, 5000, 10000, 50000, 100000, 500000, 1000000];
@@ -1922,24 +2521,40 @@ function openTxModal(existing, prefill){
           </div>
         </div>
         <div class="form-group" id="txCatGroup"><label class="form-label">카테고리</label><div class="cat-pick-grid" id="txCatPick"></div></div>
-        <div class="form-group"><label class="form-label">날짜</label><input class="form-input" type="date" id="txDate" value="${existing?.date||prefill?.date||todayStr()}"></div>
+        <div class="form-group"><label class="form-label">날짜</label><input class="form-input" type="text" id="txDate" readonly value="${existing?.date||prefill?.date||todayStr()}"></div>
         <div class="form-group">
           <label class="form-label">금액</label>
-          <input class="form-input" type="number" id="txAmount" placeholder="0" value="${existing?.amount||prefill?.amount||''}">
+          <div class="amount-row">
+            <input class="form-input" type="number" id="txAmount" placeholder="0" value="${existing?.amount||prefill?.amount||''}">
+            <button type="button" class="calc-toggle-btn" id="txCalcBtn" aria-label="계산기">${icon('calculator',{size:17})}</button>
+          </div>
           <div class="amount-presets" id="txAmountPresets"></div>
         </div>
-        <div class="form-group" id="txAssetGroup"><label class="form-label">자산</label><select class="form-input" id="txAsset"></select></div>
-        <div id="txTransferGroup" style="display:none">
-          <div class="form-group"><label class="form-label">보내는 계좌</label><select class="form-input" id="txFromAsset"></select></div>
-          <div class="form-group"><label class="form-label">받는 계좌</label><select class="form-input" id="txToAsset"></select></div>
+        <div class="form-group" id="txAssetGroup">
+          <label class="form-label">자산</label>
+          <div class="form-input asset-trigger" id="txAssetTrigger" tabindex="0" role="button"><span class="at-label" id="txAssetLabel">연결 안 함</span>${icon('chevronRight',{size:13})}</div>
+          <input type="hidden" id="txAsset" value="${existing?.assetId||prefill?.assetId||''}">
         </div>
-        <div class="form-group"><label class="form-label">메모</label><input class="form-input" type="text" id="txMemo" placeholder="선택 사항" value="${existing?escapeHtml(existing.memo||''):escapeHtml(prefill?.memo||'')}"></div>
+        <div id="txTransferGroup" style="display:none">
+          <div class="form-group">
+            <label class="form-label">보내는 계좌</label>
+            <div class="form-input asset-trigger" id="txFromAssetTrigger" tabindex="0" role="button"><span class="at-label" id="txFromAssetLabel">선택</span>${icon('chevronRight',{size:13})}</div>
+            <input type="hidden" id="txFromAsset" value="${existing?.fromAssetId||prefill?.fromAssetId||''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">받는 계좌</label>
+            <div class="form-input asset-trigger" id="txToAssetTrigger" tabindex="0" role="button"><span class="at-label" id="txToAssetLabel">선택</span>${icon('chevronRight',{size:13})}</div>
+            <input type="hidden" id="txToAsset" value="${existing?.toAssetId||prefill?.toAssetId||''}">
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">메모</label><input class="form-input" type="text" id="txMemo" placeholder="선택 사항" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${existing?escapeHtml(existing.memo||''):escapeHtml(prefill?.memo||'')}"></div>
         <div class="sheet-actions">
           ${existing?'<button class="btn btn-danger" id="txDelete">삭제</button>':''}
           <button class="btn btn-primary" id="txSave">저장</button>
         </div>
       </div>
     </div>`;
+  let updateTxAssetDisplay = null;
   if(!existing){
     let tplEditMode = false;
     const paintTplRow = ()=>{
@@ -1951,7 +2566,7 @@ function openTxModal(existing, prefill){
           categoryId = tpl.categoryId;
           paintCatPick();
           $('#txAmount').value = tpl.amount;
-          $('#txAsset').value = tpl.assetId || '';
+          if(updateTxAssetDisplay) updateTxAssetDisplay(tpl.assetId || '');
           toast(`${tpl.name} 불러왔어요`);
         },
         onDeleted: paintTplRow,
@@ -2005,24 +2620,21 @@ function openTxModal(existing, prefill){
   const fillAssetSelect = ()=>{
     const assets = state.assets.filter(a=>!ASSET_TYPES_LIAB.includes(a.type));
     const liabs = state.assets.filter(a=>ASSET_TYPES_LIAB.includes(a.type));
-    const opt = a => `<option value="${a.id}" ${(existing?.assetId||prefill?.assetId)===a.id?'selected':''}>${escapeHtml(a.name)}</option>`;
-    let html = `<option value="">연결 안 함</option>`;
-    if(assets.length) html += `<optgroup label="자산">${assets.map(opt).join('')}</optgroup>`;
-    if(liabs.length) html += `<optgroup label="부채">${liabs.map(opt).join('')}</optgroup>`;
-    $('#txAsset').innerHTML = html;
+    const buildMainOptions = ()=> [
+      {value:'', label:'연결 안 함', color:null},
+      ...assets.map(a=>({value:a.id, label:a.name, color:a.color})),
+      ...liabs.map(a=>({value:a.id, label:a.name, color:a.color})),
+    ];
+    updateTxAssetDisplay = wireAssetTrigger('txAssetTrigger','txAssetLabel','txAsset', buildMainOptions);
     // transfers only move money between real asset accounts (not a
     // card/loan liability balance) — keeping the two pickers scoped to
     // ASSET_TYPES_ASSET avoids the ambiguity of what "paying down a card
     // via transfer" should even mean.
-    const fromSel = existing?.fromAssetId || prefill?.fromAssetId || '';
-    const toSel = existing?.toAssetId || prefill?.toAssetId || '';
-    if(assets.length){
-      $('#txFromAsset').innerHTML = `<option value="">선택</option>` + assets.map(a=>`<option value="${a.id}" ${fromSel===a.id?'selected':''}>${escapeHtml(a.name)}</option>`).join('');
-      $('#txToAsset').innerHTML = `<option value="">선택</option>` + assets.map(a=>`<option value="${a.id}" ${toSel===a.id?'selected':''}>${escapeHtml(a.name)}</option>`).join('');
-    } else {
-      $('#txFromAsset').innerHTML = `<option value="">등록된 자산이 없어요</option>`;
-      $('#txToAsset').innerHTML = `<option value="">등록된 자산이 없어요</option>`;
-    }
+    const buildTransferOptions = ()=> assets.length
+      ? [{value:'', label:'선택', color:null}, ...assets.map(a=>({value:a.id, label:a.name, color:a.color}))]
+      : [{value:'', label:'등록된 자산이 없어요', color:null}];
+    wireAssetTrigger('txFromAssetTrigger','txFromAssetLabel','txFromAsset', buildTransferOptions);
+    wireAssetTrigger('txToAssetTrigger','txToAssetLabel','txToAsset', buildTransferOptions);
   };
   const updateTypeVisibility = ()=>{
     const isTransfer = type==='transfer';
@@ -2034,6 +2646,8 @@ function openTxModal(existing, prefill){
   paintPresets();
   fillAssetSelect();
   updateTypeVisibility();
+  $('#txDate').onclick = ()=> openDatePicker($('#txDate'));
+  $('#txCalcBtn').onclick = ()=> openCalculator($('#txCalcBtn'), $('#txAmount'));
   $$('#typeToggle button').forEach(b=> b.onclick = ()=>{
     type=b.dataset.t; categoryId=null;
     $$('#typeToggle button').forEach(x=>x.className='');
@@ -2223,7 +2837,11 @@ function openTemplateModal(existing){
         </div>
         <div class="form-group"><label class="form-label">카테고리</label><div class="cat-pick-grid" id="tplCatPick"></div></div>
         <div class="form-group"><label class="form-label">금액</label><input class="form-input" type="number" id="tplAmount" placeholder="0" value="${existing?.amount||''}"></div>
-        <div class="form-group"><label class="form-label">자산</label><select class="form-input" id="tplAsset"></select></div>
+        <div class="form-group">
+          <label class="form-label">자산</label>
+          <div class="form-input asset-trigger" id="tplAssetTrigger" tabindex="0" role="button"><span class="at-label" id="tplAssetLabel">연결 안 함</span>${icon('chevronRight',{size:13})}</div>
+          <input type="hidden" id="tplAsset" value="${existing?.assetId||''}">
+        </div>
         <div class="sheet-actions">
           ${existing?'<button class="btn btn-danger" id="tplDelete">삭제</button>':''}
           <button class="btn btn-primary" id="tplSave">저장</button>
@@ -2244,11 +2862,12 @@ function openTemplateModal(existing){
   const fillAssetSelect = ()=>{
     const assets = state.assets.filter(a=>!ASSET_TYPES_LIAB.includes(a.type));
     const liabs = state.assets.filter(a=>ASSET_TYPES_LIAB.includes(a.type));
-    const opt = a => `<option value="${a.id}" ${existing?.assetId===a.id?'selected':''}>${escapeHtml(a.name)}</option>`;
-    let html = `<option value="">연결 안 함</option>`;
-    if(assets.length) html += `<optgroup label="자산">${assets.map(opt).join('')}</optgroup>`;
-    if(liabs.length) html += `<optgroup label="부채">${liabs.map(opt).join('')}</optgroup>`;
-    $('#tplAsset').innerHTML = html;
+    const buildOptions = ()=> [
+      {value:'', label:'연결 안 함', color:null},
+      ...assets.map(a=>({value:a.id, label:a.name, color:a.color})),
+      ...liabs.map(a=>({value:a.id, label:a.name, color:a.color})),
+    ];
+    wireAssetTrigger('tplAssetTrigger','tplAssetLabel','tplAsset', buildOptions);
   };
   paintCatPick();
   fillAssetSelect();
@@ -2270,6 +2889,37 @@ function openTemplateModal(existing){
     closeModal(); scheduleRender(); toast(existing?'수정했어요':'추가했어요');
   });
 }
+
+/* ---------- swipe-to-switch-tab (mobile only) ---------- */
+// mirrors the bottom nav's own tab order. Only active at mobile layout
+// widths (matches the .app column/bottom-nav breakpoint) so it never
+// fights with the desktop rail or with genuinely horizontal-scrolling
+// widgets, which all live inside modals rather than #main.
+(function initSwipeNav(){
+  const TAB_ORDER = ['dashboard','transactions','categories','assets','settings'];
+  const main = $('#main');
+  let startX = 0, startY = 0, tracking = false;
+  main.addEventListener('touchstart', (e)=>{
+    tracking = window.innerWidth<=720 && !$('#modalRoot .overlay') && e.touches.length===1;
+    if(!tracking) return;
+    startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+  }, {passive:true});
+  main.addEventListener('touchend', (e)=>{
+    if(!tracking) return;
+    tracking = false;
+    if($('#modalRoot .overlay')) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    // require a decisive, mostly-horizontal drag so an ordinary vertical
+    // scroll (or a diagonal thumb slip) never gets mistaken for a swipe.
+    if(Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)*1.5) return;
+    const idx = TAB_ORDER.indexOf(state.tab);
+    const nextIdx = idx + (dx<0 ? 1 : -1);
+    if(idx===-1 || nextIdx<0 || nextIdx>=TAB_ORDER.length) return;
+    state.tab = TAB_ORDER[nextIdx];
+    scheduleRender();
+  }, {passive:true});
+})();
 
 /* ---------- boot ---------- */
 paintStaticIcons();
