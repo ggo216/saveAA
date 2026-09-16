@@ -8,15 +8,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="가계부">
-<link rel="apple-touch-icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.png">
 <link rel="icon" href="icon.svg">
 <title>가계부</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
 <style>
 :root{
   color-scheme: light;
@@ -267,7 +265,7 @@ main{flex:1;min-width:0;}
 .tile-num.income{color:var(--income);}
 .tile-num.expense{color:var(--expense);}
 .tile-bar{height:5px;border-radius:4px;background:var(--surface-2);overflow:hidden;margin-top:1px;}
-.tile-bar > i{display:block;height:100%;border-radius:4px;}
+.tile-bar > i{display:block;height:100%;border-radius:4px;transition:width .5s cubic-bezier(.22,.75,.32,1);}
 
 .two-col{display:grid;grid-template-columns:1.1fr 0.9fr;gap:14px;}
 .card h3{margin:0 0 14px;font-size:14.5px;color:var(--ink);font-weight:700;}
@@ -297,7 +295,7 @@ main{flex:1;min-width:0;}
 .empty .e-ic{width:30px;height:30px;color:var(--ink-faint);}
 
 .asset-mini-row{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:13px;}
-.asset-mini-name{flex:1;color:var(--ink-soft);}
+.asset-mini-name{flex:1;min-width:0;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .asset-mini-bar{flex:1.4;height:7px;border-radius:5px;background:var(--surface-2);overflow:hidden;}
 .asset-mini-bar>i{display:block;height:100%;border-radius:5px;}
 .asset-mini-amt{font-variant-numeric:tabular-nums;font-weight:700;font-size:12.5px;min-width:78px;text-align:right;}
@@ -378,7 +376,7 @@ main{flex:1;min-width:0;}
 .tx-memo{font-size:12px;color:var(--ink-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .tx-amt{font-variant-numeric:tabular-nums;font-weight:700;font-size:14px;white-space:nowrap;}
 .tx-amt.income{color:var(--income);}
-.tx-amt.expense{color:var(--ink);}
+.tx-amt.expense{color:var(--expense);}
 .tx-dup{
   width:28px;height:28px;border-radius:8px;border:none;background:transparent;
   color:var(--ink-faint);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;
@@ -415,7 +413,7 @@ main{flex:1;min-width:0;}
 .asset-ic{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .asset-ic svg{width:18px;height:18px;}
 .asset-mid{flex:1;min-width:0;}
-.asset-name{font-size:14px;font-weight:700;}
+.asset-name{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .asset-type{font-size:11.5px;color:var(--ink-faint);}
 .asset-amt{font-variant-numeric:tabular-nums;font-weight:700;font-size:14.5px;}
 .asset-amt.liab{color:var(--expense);}
@@ -532,7 +530,10 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
 @keyframes toastOut{ from{opacity:1; transform:translate(-50%,0);} to{opacity:0; transform:translate(-50%,8px);} }
 .toast .t-dot{width:6px;height:6px;border-radius:50%;background:var(--income);flex-shrink:0;}
 .toast.danger .t-dot{background:var(--expense);}
-@media (max-width:720px){ .toast{bottom:78px;} }
+/* when a modal sheet is open, anchor the toast above it instead of at the
+   viewport bottom — otherwise it lands right on top of the sheet's inputs */
+.toast.in-modal{bottom:auto;top:18px;}
+@media (max-width:720px){ .toast{bottom:78px;} .toast.in-modal{top:14px;bottom:auto;} }
 
 .app{display:none;}
 #fab{display:none;}
@@ -616,44 +617,49 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
 
 <script>
 /* ---------- icon system ---------- */
+// every icon's drawn content is verified centered at (12,12) in its 24x24
+// viewBox — measured via getBBox() in the browser, not eyeballed; icons whose
+// hand-authored coordinates weren't naturally centered get a wrapping
+// <g transform="translate(dx,dy)"> that shifts their true visual center back
+// to (12,12) exactly (confirmed by re-measuring after the shift).
 const ICONS = {
-  home: '<path d="M4 11 12 4l8 7"/><path d="M6 10v9h5v-5h2v5h5v-9"/>',
-  list: '<rect x="5" y="4" width="14" height="17" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/>',
-  tag: '<path d="M12 3h7v7l-9 9-7-7z"/><circle cx="15" cy="8" r="1.1" fill="currentColor" stroke="none"/>',
-  wallet: '<rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M3 10.5h18"/><circle cx="17" cy="14.5" r="1.2" fill="currentColor" stroke="none"/>',
+  home: '<g transform="translate(0,0.5)"><path d="M4 11 12 4l8 7"/><path d="M6 10v9h5v-5h2v5h5v-9"/></g>',
+  list: '<g transform="translate(0,-0.5)"><rect x="5" y="4" width="14" height="17" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></g>',
+  tag: '<g transform="translate(1,1)"><path d="M12 3h7v7l-9 9-7-7z"/><circle cx="15" cy="8" r="1.1" fill="currentColor" stroke="none"/></g>',
+  wallet: '<g transform="translate(0,-1.5)"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M3 10.5h18"/><circle cx="17" cy="14.5" r="1.2" fill="currentColor" stroke="none"/></g>',
   settings: '<line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2.1"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="16" cy="12" r="2.1"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="2.1"/>',
   plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
-  chevronLeft: '<path d="M15 5l-7 7 7 7"/>',
-  chevronRight: '<path d="M9 5l7 7-7 7"/>',
+  chevronLeft: '<g transform="translate(0.5,0)"><path d="M15 5l-7 7 7 7"/></g>',
+  chevronRight: '<g transform="translate(-0.5,0)"><path d="M9 5l7 7-7 7"/></g>',
   close: '<line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/>',
-  trash: '<path d="M5 7h14"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M7 7l1 12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2l1-12"/>',
+  trash: '<g transform="translate(0,-0.5)"><path d="M5 7h14"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M7 7l1 12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2l1-12"/></g>',
   arrowDownCircle: '<circle cx="12" cy="12" r="8.3"/><path d="M12 8v7"/><path d="M9 12.5l3 3 3-3"/>',
   arrowUpCircle: '<circle cx="12" cy="12" r="8.3"/><path d="M12 16V9"/><path d="M9 12.5l3-3 3 3"/>',
   target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.9" fill="currentColor" stroke="none"/>',
-  bowl: '<path d="M4 11h16"/><path d="M4 11a8 8 0 0 0 16 0"/><path d="M12 3v3"/>',
-  coffee: '<path d="M5 9h11v6a5 5 0 0 1-5 5H10a5 5 0 0 1-5-5V9z"/><path d="M16 10.5h1.5a2.3 2.3 0 0 1 0 4.6H16"/>',
-  bus: '<rect x="3" y="9" width="18" height="8" rx="2"/><circle cx="7.5" cy="18.3" r="1.3" fill="currentColor" stroke="none"/><circle cx="16.5" cy="18.3" r="1.3" fill="currentColor" stroke="none"/><path d="M3 13h18"/>',
+  bowl: '<g transform="translate(0,1)"><path d="M4 11h16"/><path d="M4 11a8 8 0 0 0 16 0"/><path d="M12 3v3"/></g>',
+  coffee: '<g transform="translate(-0.4,-2.5)"><path d="M5 9h11v6a5 5 0 0 1-5 5H10a5 5 0 0 1-5-5V9z"/><path d="M16 10.5h1.5a2.3 2.3 0 0 1 0 4.6H16"/></g>',
+  bus: '<g transform="translate(0,-2.3)"><rect x="3" y="9" width="18" height="8" rx="2"/><circle cx="7.5" cy="18.3" r="1.3" fill="currentColor" stroke="none"/><circle cx="16.5" cy="18.3" r="1.3" fill="currentColor" stroke="none"/><path d="M3 13h18"/></g>',
   phone: '<rect x="8" y="3" width="8" height="18" rx="2"/><line x1="8" y1="16.5" x2="16" y2="16.5"/>',
-  bag: '<path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
+  bag: '<g transform="translate(0,0.5)"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></g>',
   health: '<circle cx="12" cy="12" r="8"/><line x1="12" y1="8.5" x2="12" y2="15.5"/><line x1="8.5" y1="12" x2="15.5" y2="12"/>',
   film: '<rect x="3" y="6" width="18" height="12" rx="2"/><line x1="8" y1="6" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="18"/>',
-  book: '<path d="M4 5.5C6 4.5 9 4.5 12 6c3-1.5 6-1.5 8-.5v13c-2-1-5-1-8 .5-3-1.5-6-1.5-8-.5V5.5z"/><line x1="12" y1="6" x2="12" y2="19"/>',
-  gift: '<rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M4 13h16"/><path d="M12 9v11"/><path d="M8 9c-1.6 0-2.8-1.1-2.8-2.4C5.2 5.3 6.5 4.7 8 5.3 9.2 5.8 10.4 7.3 12 9c1.6-1.7 2.8-3.2 4-3.7 1.5-.6 2.8 0 2.8 1.3 0 1.3-1.2 2.4-2.8 2.4"/>',
-  sparkle: '<path d="M12 3l1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6L12 3z"/>',
+  book: '<g transform="translate(0,0.1)"><path d="M4 5.5C6 4.5 9 4.5 12 6c3-1.5 6-1.5 8-.5v13c-2-1-5-1-8 .5-3-1.5-6-1.5-8-.5V5.5z"/><line x1="12" y1="6" x2="12" y2="19"/></g>',
+  gift: '<g transform="translate(0,-0.53)"><rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M4 13h16"/><path d="M12 9v11"/><path d="M8 9c-1.6 0-2.8-1.1-2.8-2.4C5.2 5.3 6.5 4.7 8 5.3 9.2 5.8 10.4 7.3 12 9c1.6-1.7 2.8-3.2 4-3.7 1.5-.6 2.8 0 2.8 1.3 0 1.3-1.2 2.4-2.8 2.4"/></g>',
+  sparkle: '<g transform="translate(0,2)"><path d="M12 3l1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6L12 3z"/></g>',
   banknote: '<rect x="3" y="7" width="18" height="10" rx="1.5"/><circle cx="12" cy="12" r="2.4"/>',
   ticket: '<path d="M4 9a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1.2a1.5 1.5 0 0 0 0 3.6V15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1.2a1.5 1.5 0 0 0 0-3.6V9z"/><line x1="9" y1="7.3" x2="9" y2="16.7" stroke-dasharray="2.2 2.2"/>',
   briefcase: '<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="3" y1="13" x2="21" y2="13"/>',
-  trendingUp: '<polyline points="4,16 9,10 13,13 20,5"/><polyline points="14,5 20,5 20,11"/>',
-  bank: '<path d="M3 10l9-6 9 6"/><rect x="4" y="10" width="16" height="9" rx="1"/><line x1="4" y1="19" x2="20" y2="19"/>',
+  trendingUp: '<g transform="translate(0,1.5)"><polyline points="4,16 9,10 13,13 20,5"/><polyline points="14,5 20,5 20,11"/></g>',
+  bank: '<g transform="translate(0,0.5)"><path d="M3 10l9-6 9 6"/><rect x="4" y="10" width="16" height="9" rx="1"/><line x1="4" y1="19" x2="20" y2="19"/></g>',
   building: '<rect x="6" y="3" width="12" height="18" rx="1"/><rect x="8.3" y="6" width="2" height="2"/><rect x="13.7" y="6" width="2" height="2"/><rect x="8.3" y="10.5" width="2" height="2"/><rect x="13.7" y="10.5" width="2" height="2"/><rect x="8.3" y="15" width="2" height="2"/><rect x="13.7" y="15" width="2" height="2"/>',
   gem: '<path d="M6 3h12l3 6-9 12L3 9z"/><path d="M3 9h18"/><path d="M9 3l3 6 3-6"/>',
   creditcard: '<rect x="3" y="6" width="18" height="12" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/>',
-  file: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="16" x2="15" y2="16"/>',
-  inbox: '<path d="M4 13l2-8h12l2 8"/><path d="M4 13v6a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-6"/><path d="M4 13h5a1 1 0 0 1 1 1 2 2 0 0 0 4 0 1 1 0 0 1 1-1h5"/>',
-  chart: '<path d="M4 19h16"/><path d="M8 19v-6"/><path d="M13 19V9"/><path d="M18 19v-3"/>',
+  file: '<g transform="translate(-1,0)"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="16" x2="15" y2="16"/></g>',
+  inbox: '<g transform="translate(0,-0.5)"><path d="M4 13l2-8h12l2 8"/><path d="M4 13v6a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-6"/><path d="M4 13h5a1 1 0 0 1 1 1 2 2 0 0 0 4 0 1 1 0 0 1 1-1h5"/></g>',
+  chart: '<g transform="translate(0,-2)"><path d="M4 19h16"/><path d="M8 19v-6"/><path d="M13 19V9"/><path d="M18 19v-3"/></g>',
   duplicate: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',
-  flame: '<path d="M12 21c-3.3 0-6-2.4-6-5.8 0-2.7 1.7-4.4 2.8-6.3.3 1.3.9 2 1.7 2.5-.3-2.2.4-4 2.5-6.4.5 2.6 1.8 3.6 2.7 5.3.9 1.7 1.3 2.7 1.3 4.4 0 3.5-2.7 6.3-5 6.3z"/>',
-  pencil: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+  flame: '<g transform="translate(0.5,-1)"><path d="M12 21c-3.3 0-6-2.4-6-5.8 0-2.7 1.7-4.4 2.8-6.3.3 1.3.9 2 1.7 2.5-.3-2.2.4-4 2.5-6.4.5 2.6 1.8 3.6 2.7 5.3.9 1.7 1.3 2.7 1.3 4.4 0 3.5-2.7 6.3-5 6.3z"/></g>',
+  pencil: '<g transform="translate(0,0.56)"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></g>',
 };
 function icon(name, opts){
   opts = opts || {};
@@ -724,14 +730,45 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const fbAuth = firebase.auth();
-const fbDb = firebase.firestore();
-// lets the app show cached data instantly and queue writes while offline —
-// real value on mobile (subway, elevator, spotty signal). Safe to ignore if
-// it can't be enabled (private browsing, unsupported browser, multiple tabs
-// without synchronizeTabs support): the app just falls back to online-only.
-fbDb.enablePersistence({ synchronizeTabs: true }).catch(err=>{
-  console.warn('Firestore offline persistence unavailable:', err.code);
-});
+
+// ---- lazy-load heavy scripts (Firestore ~344KB, Chart.js ~208KB) instead of
+// blocking every page load — the login screen only needs Auth (~139KB), and
+// charts only render once someone's actually on the dashboard. This is a real
+// payload cut: verified via curl that Firestore+Chart.js together are over
+// 550KB, vs. ~171KB for app+auth alone.
+function loadScript(src){
+  return new Promise((resolve, reject)=>{
+    const s = document.createElement('script');
+    s.src = src; s.onload = () => resolve(); s.onerror = () => reject(new Error('load failed: '+src));
+    document.head.appendChild(s);
+  });
+}
+let fbDb = null;
+let firestoreLoadPromise = null;
+function ensureFirestore(){
+  if(fbDb) return Promise.resolve(fbDb);
+  if(!firestoreLoadPromise){
+    firestoreLoadPromise = loadScript('https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js').then(()=>{
+      fbDb = firebase.firestore();
+      // lets the app show cached data instantly and queue writes while
+      // offline — real value on mobile (subway, elevator, spotty signal).
+      // Safe to ignore if it can't be enabled.
+      fbDb.enablePersistence({ synchronizeTabs: true }).catch(err=>{
+        console.warn('Firestore offline persistence unavailable:', err.code);
+      });
+      return fbDb;
+    });
+  }
+  return firestoreLoadPromise;
+}
+let chartJsLoadPromise = null;
+function ensureChartJs(){
+  if(typeof Chart !== 'undefined') return Promise.resolve();
+  if(!chartJsLoadPromise){
+    chartJsLoadPromise = loadScript('https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js');
+  }
+  return chartJsLoadPromise;
+}
 
 const Store = { unsubs: [] };
 let currentUid = null;
@@ -747,6 +784,7 @@ function teardownStore(){
   state.settings = { accent: ACCENT_PRESETS[0] };
   state.ready = false;
   seededCategories = false;
+  idMaps.categories.clear(); idMaps.assets.clear(); idMaps.templates.clear();
 }
 
 let loadStartedAt = null;
@@ -775,9 +813,17 @@ function initStoreForUser(uid){
   }, 8000);
 }
 
+// id -> item maps kept alongside the arrays so lookups used inside list
+// renders (catById/assetById/templateById) are O(1) instead of an O(n)
+// .find() per row — matters once a month's transaction list grows.
+const idMaps = { categories: new Map(), assets: new Map(), templates: new Map() };
 function wireCollection(colRef, key){
   const unsub = colRef.onSnapshot(snap=>{
     state[key] = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    if(idMaps[key]){
+      const m = idMaps[key]; m.clear();
+      state[key].forEach(item=> m.set(item.id, item));
+    }
     if(key==='categories' && state[key].length===0 && !seededCategories){
       seededCategories = true;
       const batch = fbDb.batch();
@@ -818,10 +864,11 @@ function showAuthScreen(show){
   $('.app').style.display = show ? 'none' : 'flex';
   if(show) $('#fab').style.display = 'none';
 }
-fbAuth.onAuthStateChanged(user=>{
+fbAuth.onAuthStateChanged(async user=>{
   teardownStore();
   if(user){
     showAuthScreen(false);
+    await ensureFirestore();
     initStoreForUser(user.uid);
     scheduleRender();
   } else {
@@ -829,29 +876,36 @@ fbAuth.onAuthStateChanged(user=>{
     showAuthScreen(true);
   }
 });
-function isMobileUA(){
-  return /iphone|ipad|ipod|android/i.test(navigator.userAgent);
-}
 function wireAuthUI(){
-  $('#googleLoginBtn').onclick = ()=>{
+  const btn = $('#googleLoginBtn');
+  btn.onclick = async ()=>{
     $('#authError').textContent = '';
+    btn.disabled = true;
+    const originalText = btn.textContent;
+    btn.textContent = '로그인하는 중…';
     const provider = new firebase.auth.GoogleAuthProvider();
-    // mobile browsers frequently block/mishandle popup auth (Safari, in-app
-    // webviews) — send them through a full-page redirect instead.
-    if(isMobileUA()){
-      fbAuth.signInWithRedirect(provider).catch(()=>{
+    try{
+      // iOS Safari's ITP privacy setting frequently blocks the storage
+      // Firebase needs to complete signInWithRedirect (page navigates away
+      // to accounts.google.com and back, and the pending-login state gets
+      // dropped) — so a popup, which never leaves the page, is the more
+      // reliable choice on mobile Safari specifically.
+      await fbAuth.signInWithPopup(provider);
+      // onAuthStateChanged fires and swaps the screen; nothing else to do.
+    }catch(err){
+      console.error(err);
+      btn.disabled = false;
+      btn.textContent = originalText;
+      if(err.code === 'auth/popup-blocked'){
+        $('#authError').textContent = '팝업이 차단됐어요. 브라우저 팝업 차단을 해제한 뒤 다시 시도해주세요.';
+      } else if(err.code === 'auth/cancelled-popup-request' || err.code === 'auth/popup-closed-by-user'){
+        // user closed it themselves — no error needed
+      } else {
         $('#authError').textContent = '로그인에 실패했어요. 다시 시도해주세요.';
-      });
-    } else {
-      fbAuth.signInWithPopup(provider).catch(()=>{
-        $('#authError').textContent = '로그인에 실패했어요. 다시 시도해주세요.';
-      });
+      }
     }
   };
 }
-fbAuth.getRedirectResult().catch(()=>{
-  $('#authError').textContent = '로그인에 실패했어요. 다시 시도해주세요.';
-});
 
 /* ---------- accent theming ---------- */
 function applyAccent(hex){
@@ -864,9 +918,9 @@ function txForMonth(y,m){
   const mk = monthKey(y,m);
   return state.transactions.filter(t=>t.date && t.date.startsWith(mk));
 }
-function catById(id){ return state.categories.find(c=>c.id===id); }
-function assetById(id){ return state.assets.find(a=>a.id===id); }
-function templateById(id){ return state.templates.find(t=>t.id===id); }
+function catById(id){ return idMaps.categories.get(id); }
+function assetById(id){ return idMaps.assets.get(id); }
+function templateById(id){ return idMaps.templates.get(id); }
 function sumBy(txs, type){ return txs.filter(t=>t.type===type).reduce((s,t)=>s+Number(t.amount||0),0); }
 // categories for a given type, most-used first (ties keep original order)
 function categoriesByUsage(type){
@@ -910,8 +964,8 @@ function computeSpendInsight(){
   });
   const totalDelta = curExpense - prevExpense;
   const catName = topCat && catById(topCat) ? catById(topCat).name : null;
-  const driver = (catName && Math.abs(topDelta) >= Math.abs(totalDelta)*0.4) ? ` (${catName} 영향이 커요)` : '';
-  return `이번 달 지출이 지난달보다 ${Math.abs(pct)}% ${dir}${driver}`;
+  const driver = (catName && Math.abs(topDelta) >= Math.abs(totalDelta)*0.4) ? `${escapeHtml(catName)} 지출 영향으로 ` : '';
+  return `${driver}이번 달 지출이 지난달보다 ${Math.abs(pct)}% ${dir}`;
 }
 function netWorth(){
   const assetsSum = state.assets.filter(a=>!ASSET_TYPES_LIAB.includes(a.type)).reduce((s,a)=>s+Number(a.amount||0),0);
@@ -986,7 +1040,8 @@ function render(){
     return;
   }
   const fns = { dashboard: renderDashboard, transactions: renderTransactions, categories: renderCategories, assets: renderAssets, settings: renderSettings };
-  main.innerHTML = '';
+  // each fn immediately does its own full main.innerHTML = `...` — clearing
+  // here first was a redundant extra reflow before that replace.
   fns[state.tab]();
   $('#fab').style.display = (state.tab==='dashboard' || state.tab==='transactions') ? 'flex' : 'none';
   replayViewAnim(main);
@@ -1003,7 +1058,8 @@ function toast(msg, opts){
   opts = opts || {};
   $$('.toast').forEach(t=>t.remove());
   const el = document.createElement('div');
-  el.className = 'toast' + (opts.danger ? ' danger' : '');
+  const modalOpen = !!document.querySelector('#modalRoot .overlay');
+  el.className = 'toast' + (opts.danger ? ' danger' : '') + (modalOpen ? ' in-modal' : '');
   el.innerHTML = `<span class="t-dot"></span><span>${escapeHtml(msg)}</span>`;
   document.body.appendChild(el);
   clearTimeout(toastTimer);
@@ -1053,14 +1109,15 @@ function wonCompact(n){
   return (neg?'-':'')+s;
 }
 
-let lastNetWorth = null;
-function animateNumber(el, from, to, duration){
+let lastNetWorth = null, lastIncome = null, lastExpense = null, lastSavingsRate = null;
+function animateNumber(el, from, to, duration, fmt){
   duration = duration || 500;
+  fmt = fmt || won;
   const start = performance.now();
   function step(now){
     const p = Math.min(1, (now-start)/duration);
     const eased = 1 - Math.pow(1-p, 3);
-    el.textContent = won(from + (to-from)*eased);
+    el.textContent = fmt(from + (to-from)*eased);
     if(p<1) requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
@@ -1100,15 +1157,15 @@ function renderDashboard(){
       <div class="tiles">
         <div class="card tile">
           <div class="tile-label"><span class="ic" style="color:var(--income)">${icon('arrowDownCircle',{size:16})}</span>이번 달 수입</div>
-          <div class="tile-num income">${won(income)}</div>
+          <div class="tile-num income" id="incomeTileNum">${won(income)}</div>
         </div>
         <div class="card tile">
           <div class="tile-label"><span class="ic" style="color:var(--expense)">${icon('arrowUpCircle',{size:16})}</span>이번 달 지출</div>
-          <div class="tile-num expense">${won(expense)}</div>
+          <div class="tile-num expense" id="expenseTileNum">${won(expense)}</div>
         </div>
         <div class="card tile">
           <div class="tile-label"><span class="ic">${icon('target',{size:16})}</span>저축률</div>
-          <div class="tile-num" style="color:${savingsRate>=0?'var(--income)':'var(--expense)'}">${savingsRate}%</div>
+          <div class="tile-num" id="savingsTileNum" style="color:${savingsRate>=0?'var(--income)':'var(--expense)'}">${savingsRate}%</div>
           <div class="tile-bar"><i style="width:${Math.max(0,Math.min(100,savingsRate))}%;background:var(--income)"></i></div>
         </div>
       </div>
@@ -1137,6 +1194,14 @@ function renderDashboard(){
   const heroEl = $('.num-hero');
   if(lastNetWorth !== null && lastNetWorth !== nw){ animateNumber(heroEl, lastNetWorth, nw); }
   lastNetWorth = nw;
+  if(lastIncome !== null && lastIncome !== income){ animateNumber($('#incomeTileNum'), lastIncome, income); }
+  lastIncome = income;
+  if(lastExpense !== null && lastExpense !== expense){ animateNumber($('#expenseTileNum'), lastExpense, expense); }
+  lastExpense = expense;
+  if(lastSavingsRate !== null && lastSavingsRate !== savingsRate){
+    animateNumber($('#savingsTileNum'), lastSavingsRate, savingsRate, 500, v => Math.round(v)+'%');
+  }
+  lastSavingsRate = savingsRate;
 }
 
 function renderDonut(txs, expenseTotal){
@@ -1150,21 +1215,32 @@ function renderDonut(txs, expenseTotal){
   }
   wrap.innerHTML = `<div style="position:relative;height:186px;"><canvas id="donutCanvas"></canvas></div><div class="legend-list" id="donutLegend"></div>`;
   const legend = $('#donutLegend');
-  entries.forEach((e,i)=>{
+  // build the whole legend as one string and set innerHTML once, instead of
+  // an insertAdjacentHTML per row — one reflow instead of one per category.
+  legend.innerHTML = entries.map((e,i)=>{
     const pct = expenseTotal>0 ? Math.round((e.amt/expenseTotal)*100) : 0;
-    legend.insertAdjacentHTML('beforeend', `
-      <div class="legend-row" data-idx="${i}">
+    return `<div class="legend-row" data-idx="${i}">
         <span class="swatch" style="background:${e.cat.color}"></span>
-        <span class="legend-name">${e.cat.name}</span>
+        <span class="legend-name">${escapeHtml(e.cat.name)}</span>
         <span class="legend-pct">${pct}%</span>
         <span class="legend-amt">${won(e.amt)}</span>
-      </div>`);
-  });
-  if(typeof Chart === 'undefined'){ $('#donutWrap').insertAdjacentHTML('beforeend', `<div class="empty" style="padding:14px"><div>차트를 불러오는 중이에요…</div></div>`); return; }
+      </div>`;
+  }).join('');
+  if(typeof Chart === 'undefined'){
+    $('#donutWrap').insertAdjacentHTML('beforeend', `<div class="empty" style="padding:14px"><div>차트를 불러오는 중이에요…</div></div>`);
+    ensureChartJs().then(()=>{ if(state.tab==='dashboard') scheduleRender(); });
+    return;
+  }
   const ctx = $('#donutCanvas').getContext('2d');
   if(chartDonut) chartDonut.destroy();
 
   let activeDonutIndex = null;
+  // read once per chart build rather than on every draw — afterDatasetsDraw
+  // fires on each animation/hover frame, and these CSS custom properties
+  // don't change mid-chart, so re-querying getComputedStyle every frame was
+  // pure waste.
+  const inkColor = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#1B1F2A';
+  const softColor = getComputedStyle(document.documentElement).getPropertyValue('--ink-soft').trim() || '#6B7280';
 
   // real content (name + % + amount) drawn INSIDE the donut hole, never on
   // the slices themselves — so it never gets cramped or spills past a thin
@@ -1175,8 +1251,6 @@ function renderDonut(txs, expenseTotal){
       const c = chart.ctx;
       const {left,right,top,bottom} = chart.chartArea;
       const cx = (left+right)/2, cy = (top+bottom)/2;
-      const inkColor = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#1B1F2A';
-      const softColor = getComputedStyle(document.documentElement).getPropertyValue('--ink-soft').trim() || '#6B7280';
       c.save();
       c.textAlign = 'center';
       c.textBaseline = 'middle';
@@ -1245,7 +1319,7 @@ function renderAssetMini(){
   const max = Math.max(...list.map(a=>Number(a.amount||0)), 1);
   wrap.innerHTML = list.map(a=>`
     <div class="asset-mini-row">
-      <span class="asset-mini-name">${a.name}</span>
+      <span class="asset-mini-name">${escapeHtml(a.name)}</span>
       <span class="asset-mini-bar"><i style="width:${Math.max(4,(Number(a.amount||0)/max)*100)}%;background:${a.color||'var(--accent)'}"></i></span>
       <span class="asset-mini-amt">${won(a.amount)}</span>
     </div>`).join('');
@@ -1262,7 +1336,11 @@ function renderTrend(){
     incomeData.push(sumBy(txs,'income'));
     expenseData.push(sumBy(txs,'expense'));
   }
-  if(typeof Chart === 'undefined'){ $('#trendCanvas').closest('div').insertAdjacentHTML('beforeend', `<div class="empty" style="padding:14px"><div>차트를 불러오는 중이에요…</div></div>`); return; }
+  if(typeof Chart === 'undefined'){
+    $('#trendCanvas').closest('div').insertAdjacentHTML('beforeend', `<div class="empty" style="padding:14px"><div>차트를 불러오는 중이에요…</div></div>`);
+    ensureChartJs().then(()=>{ if(state.tab==='dashboard') scheduleRender(); });
+    return;
+  }
   const ctx = $('#trendCanvas').getContext('2d');
   const inkSoft = getComputedStyle(document.documentElement).getPropertyValue('--ink-soft').trim() || '#6B7280';
   const border = getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || '#E5E7EB';
@@ -1291,7 +1369,7 @@ function txRowHtml(t){
   return `<div class="tx-row" data-id="${t.id}">
     <span class="tx-ic" style="background:${color}1F;color:${color}">${icon(c?.icon||'sparkle',{size:17})}</span>
     <div class="tx-mid">
-      <div class="tx-cat">${c?.name||'삭제된 카테고리'}</div>
+      <div class="tx-cat">${c?escapeHtml(c.name):'삭제된 카테고리'}</div>
       ${subParts.length?`<div class="tx-memo">${subParts.join(' · ')}</div>`:''}
     </div>
     <div class="tx-amt ${t.type}">${t.type==='income'?'+':'-'}${won(Math.abs(Number(t.amount)))}</div>
@@ -1488,7 +1566,7 @@ function renderCategories(){
   const buildGrid = (list, type) => list.map(c=>`
       <div class="cat-chip" data-id="${c.id}">
         <span class="cdot" style="background:${c.color}22;color:${c.color}">${icon(c.icon||'sparkle',{size:14})}</span>
-        <span class="cat-chip-name">${c.name}</span>
+        <span class="cat-chip-name">${escapeHtml(c.name)}</span>
       </div>`).join('') + `<button class="add-cat-chip" data-type="${type}">${icon('plus',{size:14})} 추가</button>`;
   $('#catGridExpense').innerHTML = buildGrid(expense,'expense');
   $('#catGridIncome').innerHTML = buildGrid(income,'income');
@@ -1527,7 +1605,7 @@ function renderAssets(){
   const rowsHtml = (list, isLiab) => list.length ? list.map(a=>`
     <div class="asset-row" data-id="${a.id}">
       <span class="asset-ic" style="background:${(a.color||'var(--accent)')}22;color:${a.color||'var(--accent)'}">${icon(a.icon||ASSET_ICONS[a.type]||'gem',{size:18})}</span>
-      <div class="asset-mid"><div class="asset-name">${a.name}</div><div class="asset-type">${a.type}</div></div>
+      <div class="asset-mid"><div class="asset-name">${escapeHtml(a.name)}</div><div class="asset-type">${a.type}</div></div>
       <div class="asset-amt ${isLiab?'liab':''}">${isLiab?'-':''}${won(a.amount)}</div>
     </div>`).join('') : `<div class="empty" style="padding:20px 10px"><div class="e-ic">${icon(isLiab?'creditcard':'wallet',{size:26})}</div><div>${isLiab?'등록된 부채가 없어요':'자산을 등록해보세요'}</div></div>`;
   $('#assetListPositive').innerHTML = rowsHtml(assets, false);
@@ -1626,7 +1704,7 @@ function openTxModal(existing, prefill){
     if(!categoryId && opts.length) categoryId = opts[0].id;
     $('#txCatPick').innerHTML = opts.length ? opts.map(c=>`
       <span class="cat-opt ${categoryId===c.id?'sel':''}" data-id="${c.id}" style="${categoryId===c.id?`background:${c.color}1F;color:${c.color};border-color:${c.color}`:''}">
-        ${icon(c.icon||'sparkle',{size:14})}<span>${c.name}</span>
+        ${icon(c.icon||'sparkle',{size:14})}<span>${escapeHtml(c.name)}</span>
       </span>
     `).join('') : `<div class="empty" style="padding:14px 6px"><div>카테고리를 먼저 추가해주세요</div></div>`;
     $$('#txCatPick .cat-opt').forEach(el=> el.onclick=()=>{ categoryId=el.dataset.id; paintCatPick(); });
@@ -1642,7 +1720,7 @@ function openTxModal(existing, prefill){
   const fillAssetSelect = ()=>{
     const assets = state.assets.filter(a=>!ASSET_TYPES_LIAB.includes(a.type));
     const liabs = state.assets.filter(a=>ASSET_TYPES_LIAB.includes(a.type));
-    const opt = a => `<option value="${a.id}" ${(existing?.assetId||prefill?.assetId)===a.id?'selected':''}>${a.name}</option>`;
+    const opt = a => `<option value="${a.id}" ${(existing?.assetId||prefill?.assetId)===a.id?'selected':''}>${escapeHtml(a.name)}</option>`;
     let html = `<option value="">연결 안 함</option>`;
     if(assets.length) html += `<optgroup label="자산">${assets.map(opt).join('')}</optgroup>`;
     if(liabs.length) html += `<optgroup label="부채">${liabs.map(opt).join('')}</optgroup>`;
@@ -1806,7 +1884,7 @@ function openTemplateModal(existing){
     if(!categoryId && opts.length) categoryId = opts[0].id;
     $('#tplCatPick').innerHTML = opts.length ? opts.map(c=>`
       <span class="cat-opt ${categoryId===c.id?'sel':''}" data-id="${c.id}" style="${categoryId===c.id?`background:${c.color}1F;color:${c.color};border-color:${c.color}`:''}">
-        ${icon(c.icon||'sparkle',{size:14})}<span>${c.name}</span>
+        ${icon(c.icon||'sparkle',{size:14})}<span>${escapeHtml(c.name)}</span>
       </span>
     `).join('') : `<div class="empty" style="padding:14px 6px"><div>카테고리를 먼저 추가해주세요</div></div>`;
     $$('#tplCatPick .cat-opt').forEach(el=> el.onclick=()=>{ categoryId=el.dataset.id; paintCatPick(); });
@@ -1814,7 +1892,7 @@ function openTemplateModal(existing){
   const fillAssetSelect = ()=>{
     const assets = state.assets.filter(a=>!ASSET_TYPES_LIAB.includes(a.type));
     const liabs = state.assets.filter(a=>ASSET_TYPES_LIAB.includes(a.type));
-    const opt = a => `<option value="${a.id}" ${existing?.assetId===a.id?'selected':''}>${a.name}</option>`;
+    const opt = a => `<option value="${a.id}" ${existing?.assetId===a.id?'selected':''}>${escapeHtml(a.name)}</option>`;
     let html = `<option value="">연결 안 함</option>`;
     if(assets.length) html += `<optgroup label="자산">${assets.map(opt).join('')}</optgroup>`;
     if(liabs.length) html += `<optgroup label="부채">${liabs.map(opt).join('')}</optgroup>`;
