@@ -202,7 +202,7 @@ main{flex:1;min-width:0;}
 /* visual size stays compact; the tappable area is quietly widened to ~44px
    (Apple/Google's minimum touch target) so small icon buttons are easy to
    hit accurately on a phone. */
-.month-nav button::before, .tx-dup::before, .sheet-close::before{
+.month-nav button::before, .sheet-close::before{
   content:'';position:absolute;inset:-9px;
 }
 .month-nav button svg{width:15px;height:15px;}
@@ -254,7 +254,7 @@ main{flex:1;min-width:0;}
   grid-template-columns:repeat(3,1fr);
   gap:12px;
 }
-.tile{display:flex;flex-direction:column;gap:10px;padding:16px;}
+.tile{display:flex;flex-direction:column;gap:10px;padding:16px;min-width:0;}
 .tile-label{font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:8px;font-weight:500;}
 .tile-label .ic{
   width:26px;height:26px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
@@ -268,10 +268,18 @@ main{flex:1;min-width:0;}
 .tile-bar > i{display:block;height:100%;border-radius:4px;transition:width .5s cubic-bezier(.22,.75,.32,1);}
 
 .two-col{display:grid;grid-template-columns:1.1fr 0.9fr;gap:14px;}
+.two-col > .card{min-width:0;}
 .card h3{margin:0 0 14px;font-size:14.5px;color:var(--ink);font-weight:700;}
 .card h3 .sub{font-family:'Pretendard Variable','Pretendard',sans-serif;font-weight:400;font-size:12px;color:var(--ink-faint);}
 
-.legend-list{display:flex;flex-direction:column;gap:2px;margin-top:12px;}
+.donut-layout{display:flex;flex-direction:column;}
+.donut-layout.active{flex-direction:row;align-items:center;gap:14px;}
+.donut-chart-box{position:relative;height:186px;flex-shrink:0;width:100%;transition:width .25s ease, height .25s ease;}
+.donut-layout.active .donut-chart-box{width:38%;height:150px;}
+.legend-list{display:flex;flex-direction:column;gap:2px;margin-top:12px;min-width:0;transition:margin .25s ease;}
+.donut-layout.active .legend-list{flex:1;margin-top:0;max-height:150px;overflow-x:hidden;overflow-y:auto;}
+.donut-layout.active .legend-amt{display:none;}
+.donut-layout.active .legend-row{padding:4px 6px;font-size:12px;}
 .legend-row{
   display:flex;align-items:center;gap:9px;font-size:13px;
   cursor:pointer;padding:5px 6px;margin:0 -6px;border-radius:8px;
@@ -315,28 +323,37 @@ main{flex:1;min-width:0;}
 .fab svg{width:24px;height:24px;}
 #txAddBtn{display:none;}
 
-.tpl-card{padding:16px 18px;}
-.tpl-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+.tpl-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;}
+.tpl-head h3{font-size:12.5px;}
 .tpl-edit-toggle{
   border:1px solid var(--border);background:var(--surface-2);color:var(--ink-soft);
-  border-radius:100px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;
+  border-radius:100px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;
   display:flex;align-items:center;justify-content:center;flex-shrink:0;
 }
-.tpl-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch;touch-action:pan-x;}
+.tpl-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch;touch-action:pan-x;}
 .tpl-row::-webkit-scrollbar{height:0;}
 .tpl-chip{
-  display:flex;align-items:center;gap:7px;flex-shrink:0;
-  padding:7px 12px 7px 7px;border-radius:100px;border:1px solid var(--border);
-  background:var(--surface-2);cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink);
+  display:flex;align-items:center;gap:6px;flex-shrink:0;
+  padding:5px 10px 5px 5px;border-radius:100px;border:1px solid var(--border);
+  background:var(--surface-2);cursor:pointer;font-size:12px;font-weight:600;color:var(--ink);
   white-space:nowrap;position:relative;
 }
-.tpl-ic{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.tpl-ic{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .tpl-del{
   width:16px;height:16px;border-radius:50%;background:var(--expense);color:#fff;
   display:flex;align-items:center;justify-content:center;margin-left:2px;flex-shrink:0;
 }
-.tpl-add{padding:7px 14px;color:var(--ink-faint);border-style:dashed;background:transparent;}
+.tpl-add{padding:5px 12px;color:var(--ink-faint);border-style:dashed;background:transparent;}
 .tpl-add:hover{border-color:var(--accent);color:var(--accent);}
+
+.asset-chip-row{display:flex;flex-direction:column;gap:2px;}
+.asset-chip{
+  display:flex;align-items:center;gap:7px;
+  padding:6px 2px;font-size:12.5px;white-space:nowrap;
+}
+.asset-chip .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.asset-chip .name{color:var(--ink-soft);font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+.asset-chip .amt{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums;flex-shrink:0;}
 
 .tx-view-toggle{display:inline-flex;gap:3px;background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:3px;}
 .tx-view-toggle button{border:none;background:transparent;padding:7px 14px;border-radius:100px;font-size:12.5px;font-weight:700;color:var(--ink-soft);cursor:pointer;font-family:inherit;}
@@ -346,7 +363,7 @@ main{flex:1;min-width:0;}
 .cal-weekdays span{text-align:center;font-size:11px;color:var(--ink-faint);font-weight:700;}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
 .cal-cell{
-  min-height:58px;border-radius:10px;border:1px solid transparent;
+  min-height:58px;min-width:0;border-radius:10px;border:1px solid transparent;
   padding:6px 5px;cursor:pointer;background:var(--surface-2);
   display:flex;flex-direction:column;gap:2px;
 }
@@ -378,20 +395,13 @@ main{flex:1;min-width:0;}
 .tx-amt{font-variant-numeric:tabular-nums;font-weight:700;font-size:14px;white-space:nowrap;}
 .tx-amt.income{color:var(--income);}
 .tx-amt.expense{color:var(--expense);}
-.tx-dup{
-  width:28px;height:28px;border-radius:8px;border:none;background:transparent;
-  color:var(--ink-faint);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;
-  position:relative;
-}
-.tx-dup:hover{background:var(--surface);color:var(--accent);}
-.tx-dup svg{width:14px;height:14px;}
 
 .cat-group-title{font-size:12.5px;font-weight:700;color:var(--ink-soft);margin:20px 0 10px;display:flex;align-items:center;gap:7px;text-transform:uppercase;letter-spacing:.3px;}
 .cat-group-title .ic{width:14px;height:14px;}
 .cat-group-title:first-child{margin-top:0;}
 .cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px;}
 .cat-chip{
-  display:flex;align-items:center;gap:9px;
+  display:flex;align-items:center;gap:9px;min-width:0;
   padding:10px 12px;border-radius:var(--radius-sm);
   background:var(--surface-2);border:1px solid transparent;cursor:pointer;
   font-size:13px;font-weight:500;
@@ -485,26 +495,26 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
   background:var(--surface-2);color:var(--ink);font-size:16px;font-family:inherit;
 }
 .form-input:focus{outline:2px solid color-mix(in srgb, var(--accent) 50%, transparent);outline-offset:1px;}
-.type-toggle{display:flex;gap:8px;}
+.type-toggle{display:flex;gap:6px;}
 .type-toggle button{
-  flex:1;padding:10px;border-radius:var(--radius-sm);border:1px solid var(--border);
-  background:var(--surface-2);color:var(--ink-soft);cursor:pointer;font-family:inherit;font-weight:700;font-size:13px;
+  flex:1;padding:7px;border-radius:var(--radius-sm);border:1px solid var(--border);
+  background:var(--surface-2);color:var(--ink-soft);cursor:pointer;font-family:inherit;font-weight:700;font-size:12px;
 }
 .type-toggle button.sel-expense{background:color-mix(in srgb, var(--expense) 15%, var(--surface));color:var(--expense);border-color:transparent;}
 .type-toggle button.sel-transfer{background:color-mix(in srgb, var(--accent) 15%, var(--surface));color:var(--accent);border-color:transparent;}
 .type-toggle button.sel-income{background:color-mix(in srgb, var(--income) 15%, var(--surface));color:var(--income);border-color:transparent;}
-.cat-pick-grid{display:flex;flex-wrap:wrap;gap:7px;}
+.cat-pick-grid{display:flex;flex-wrap:wrap;gap:6px;}
 .cat-opt{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:8px 12px;border-radius:100px;border:1px solid var(--border);
-  background:var(--surface-2);color:var(--ink-soft);cursor:pointer;font-size:12.5px;font-weight:600;
+  display:inline-flex;align-items:center;gap:4px;
+  padding:5px 9px;border-radius:100px;border:1px solid var(--border);
+  background:var(--surface-2);color:var(--ink-soft);cursor:pointer;font-size:11px;font-weight:600;
 }
-.cat-opt svg{width:14px;height:14px;flex-shrink:0;}
+.cat-opt svg{width:11px;height:11px;flex-shrink:0;}
 .cat-opt.sel{font-weight:700;}
-.amount-presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.amount-presets{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
 .preset-chip{
   border:1px solid var(--border);background:var(--surface-2);color:var(--ink-soft);
-  border-radius:100px;padding:6px 11px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;
+  border-radius:100px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;
 }
 .preset-chip.clear{color:var(--ink-faint);}
 .icon-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;}
@@ -568,6 +578,14 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
 
 @media (max-width:860px){
   .two-col{grid-template-columns:1fr;}
+  /* the 내역-tab pairing (asset list + a small donut) needs much less width
+     to stay legible side by side than the dashboard's bigger donut+legend
+     pairing does, so it keeps the 2-column layout past the general
+     860px cutoff and only stacks near true phone widths. */
+  .two-col.two-col-tx{grid-template-columns:1.1fr 0.9fr;}
+}
+@media (max-width:560px){
+  .two-col.two-col-tx{grid-template-columns:1fr;}
 }
 @media (max-width:720px){
   .app{flex-direction:column;padding:16px 14px 96px;gap:14px;}
@@ -729,7 +747,6 @@ const state = {
   ready: false,
   txView: 'list', // list | calendar
   selectedDay: null,
-  templateEditMode: false,
 };
 
 /* ---------- Firebase ---------- */
@@ -798,6 +815,8 @@ function teardownStore(){
   state.ready = false;
   seededCategories = false;
   idMaps.categories.clear(); idMaps.assets.clear(); idMaps.templates.clear();
+  loadedCollections.clear();
+  legacyMigrationDone = false;
 }
 
 let loadStartedAt = null;
@@ -830,6 +849,8 @@ function initStoreForUser(uid){
 // renders (catById/assetById/templateById) are O(1) instead of an O(n)
 // .find() per row — matters once a month's transaction list grows.
 const idMaps = { categories: new Map(), assets: new Map(), templates: new Map() };
+const loadedCollections = new Set();
+let legacyMigrationDone = false;
 function wireCollection(colRef, key){
   const unsub = colRef.onSnapshot(snap=>{
     state[key] = snap.docs.map(d=>({id:d.id, ...d.data()}));
@@ -844,14 +865,39 @@ function wireCollection(colRef, key){
       batch.commit();
     }
     state.ready = true;
+    loadedCollections.add(key);
+    // an asset's balance now lives entirely in initialAmount + its
+    // transactions (see computeAssetBalances) — an asset written by the
+    // previous version has an old-style `amount` instead. Back-solving that
+    // into an initialAmount is only safe against the COMPLETE transaction
+    // list (recomputing it later, after more transactions exist, would
+    // silently re-absorb every new transaction into initialAmount and make
+    // the balance stop moving) — so this waits for both collections' first
+    // snapshot, runs once, and persists the result immediately.
+    if(!legacyMigrationDone && loadedCollections.has('assets') && loadedCollections.has('transactions')){
+      legacyMigrationDone = true;
+      migrateLegacyAssetBalances();
+    }
     scheduleRender();
   }, err=>console.error(err));
   Store.unsubs.push(unsub);
 }
+function migrateLegacyAssetBalances(){
+  const deltaLists = computeAssetDeltaLists();
+  state.assets.forEach(a=>{
+    if(a.initialAmount!=null) return;
+    const list = deltaLists.get(a.id) || [];
+    const sumDeltas = list.reduce((s,d)=>s+d.delta, 0);
+    const initialAmount = Number(a.amount||0) - sumDeltas;
+    a.initialAmount = initialAmount; // optimistic: this render already uses it
+    updateDoc('assets', a.id, { initialAmount }).catch(err=>console.error(err));
+  });
+}
 
 /* mutation helpers - all scoped under users/{uid}/... */
 async function addDoc(key, data){
-  await userCol(currentUid, key).add(data);
+  const ref = await userCol(currentUid, key).add(data);
+  return ref.id;
 }
 async function updateDoc(key, id, data){
   await userCol(currentUid, key).doc(id).update(data);
@@ -986,13 +1032,14 @@ function computeSpendInsight(){
   const driver = (catName && Math.abs(topDelta) >= Math.abs(totalDelta)*0.4) ? `${escapeHtml(catName)} 지출 영향으로 ` : '';
   return `${driver}이번 달 지출이 지난달보다 ${Math.abs(pct)}% ${dir}`;
 }
-function netWorth(){
-  const assetsSum = state.assets.filter(a=>!ASSET_TYPES_LIAB.includes(a.type)).reduce((s,a)=>s+Number(a.amount||0),0);
-  const liabSum = state.assets.filter(a=>ASSET_TYPES_LIAB.includes(a.type)).reduce((s,a)=>s+Number(a.amount||0),0);
-  return assetsSum - liabSum;
-}
+/* ---------- asset balances (fully derived, no stored running total) ----------
+   An asset's balance is never separately stored/mutated. It's always exactly
+   initialAmount + the sum of every transaction that has ever touched it, so
+   there is nothing to drift, reconcile, or get wrong — the transaction list
+   IS the ledger. This also means editing an asset's starting balance later
+   (to fix a typo, say) is always safe: it just shifts every balance for that
+   asset, past and present, by the same fixed amount. */
 
-/* ---------- asset balance linkage ---------- */
 // how a transaction moves each linked asset's balance, as {assetId: delta}.
 // expense drains an asset account but adds to a liability (card/loan)
 // balance; income does the reverse. A transfer moves the same amount out of
@@ -1014,22 +1061,47 @@ function assetDeltaMap(tx){
   map[tx.assetId] = delta;
   return map;
 }
-async function adjustAssetBalance(assetId, delta){
-  if(!assetId || !delta) return;
-  const asset = assetById(assetId);
-  if(!asset) return;
-  await updateDoc('assets', assetId, { amount: Number(asset.amount||0) + delta });
+// one pass over every transaction, grouped by which asset(s) it affects —
+// the shared building block for both "current balance" and "balance after
+// transaction X" so neither has to re-scan the full transaction list itself.
+function computeAssetDeltaLists(){
+  const byAsset = new Map();
+  state.transactions.forEach(t=>{
+    const dm = assetDeltaMap(t);
+    Object.entries(dm).forEach(([assetId, delta])=>{
+      if(!byAsset.has(assetId)) byAsset.set(assetId, []);
+      byAsset.get(assetId).push({t, delta});
+    });
+  });
+  return byAsset;
 }
-// reconcile every affected asset's balance when a transaction is added
-// (oldTx=null), edited (both set), or deleted (newTx=null).
-async function reconcileAssetForTx(oldTx, newTx){
-  const oldMap = assetDeltaMap(oldTx);
-  const newMap = assetDeltaMap(newTx);
-  const ids = new Set([...Object.keys(oldMap), ...Object.keys(newMap)]);
-  for(const id of ids){
-    const net = (newMap[id]||0) - (oldMap[id]||0);
-    if(net) await adjustAssetBalance(id, net);
-  }
+// an asset saved before this fully-derived model shipped has an `amount`
+// (the old live-mutated field) but no `initialAmount`. Back-solve it once:
+// initialAmount = storedAmount - sum(deltas so far) reproduces the exact
+// same current total, and every transaction from here on is exact too.
+function resolveInitialAmount(asset, deltaList){
+  if(asset.initialAmount!=null) return Number(asset.initialAmount)||0;
+  const sumDeltas = (deltaList||[]).reduce((s,d)=>s+d.delta, 0);
+  return Number(asset.amount||0) - sumDeltas;
+}
+function computeAssetBalances(){
+  const byAsset = computeAssetDeltaLists();
+  const map = new Map();
+  state.assets.forEach(a=>{
+    const list = byAsset.get(a.id) || [];
+    const init = resolveInitialAmount(a, list);
+    map.set(a.id, init + list.reduce((s,d)=>s+d.delta, 0));
+  });
+  return map;
+}
+function netWorth(balances){
+  balances = balances || computeAssetBalances();
+  let assetsSum = 0, liabSum = 0;
+  state.assets.forEach(a=>{
+    const bal = balances.get(a.id) || 0;
+    if(ASSET_TYPES_LIAB.includes(a.type)) liabSum += bal; else assetsSum += bal;
+  });
+  return assetsSum - liabSum;
 }
 
 /* ---------- static icon paint (nav, brand, fab) ---------- */
@@ -1154,7 +1226,7 @@ function animateNumber(el, from, to, duration, fmt){
 }
 
 /* ---------- dashboard ---------- */
-let chartDonut=null, chartTrend=null;
+let chartDonut=null, chartTrend=null, chartTxCat=null;
 function renderDashboard(){
   const main = $('#main');
   const {y,m} = state.month;
@@ -1162,7 +1234,10 @@ function renderDashboard(){
   const income = sumBy(txs,'income');
   const expense = sumBy(txs,'expense');
   const savingsRate = income>0 ? Math.round(((income-expense)/income)*100) : 0;
-  const nw = netWorth();
+  const balances = computeAssetBalances();
+  const nw = netWorth(balances);
+  const assetsSum = state.assets.filter(a=>!ASSET_TYPES_LIAB.includes(a.type)).reduce((s,a)=>s+(balances.get(a.id)||0),0);
+  const liabSum = state.assets.filter(a=>ASSET_TYPES_LIAB.includes(a.type)).reduce((s,a)=>s+(balances.get(a.id)||0),0);
   const streak = computeStreak();
   const insight = computeSpendInsight();
 
@@ -1177,7 +1252,7 @@ function renderDashboard(){
         <div>
           <div class="hero-label">순자산</div>
           <div class="num-hero">${won(nw)}</div>
-          <div class="hero-sub">자산 ${won(state.assets.filter(a=>!ASSET_TYPES_LIAB.includes(a.type)).reduce((s,a)=>s+Number(a.amount||0),0))} · 부채 ${won(state.assets.filter(a=>ASSET_TYPES_LIAB.includes(a.type)).reduce((s,a)=>s+Number(a.amount||0),0))}</div>
+          <div class="hero-sub">자산 ${won(assetsSum)} · 부채 ${won(liabSum)}</div>
         </div>
       </div>
       ${(streak>0 || insight) ? `<div class="insight-row">
@@ -1219,7 +1294,7 @@ function renderDashboard(){
   `;
   wireMonthNav();
   renderDonut(txs, expense);
-  renderAssetMini();
+  renderAssetMini(balances);
   renderTrend();
   const heroEl = $('.num-hero');
   if(lastNetWorth !== null && lastNetWorth !== nw){ animateNumber(heroEl, lastNetWorth, nw); }
@@ -1243,7 +1318,7 @@ function renderDonut(txs, expenseTotal){
     wrap.innerHTML = `<div class="empty"><div class="e-ic">${icon('chart',{size:30})}</div><div>이번 달 지출 내역이 아직 없어요</div></div>`;
     return;
   }
-  wrap.innerHTML = `<div style="position:relative;height:186px;"><canvas id="donutCanvas"></canvas></div><div class="legend-list" id="donutLegend"></div>`;
+  wrap.innerHTML = `<div class="donut-layout" id="donutLayout"><div class="donut-chart-box"><canvas id="donutCanvas"></canvas></div><div class="legend-list" id="donutLegend"></div></div>`;
   const legend = $('#donutLegend');
   // build the whole legend as one string and set innerHTML once, instead of
   // an insertAdjacentHTML per row — one reflow instead of one per category.
@@ -1328,8 +1403,18 @@ function renderDonut(txs, expenseTotal){
       row.classList.toggle('active', rowIdx===i);
       row.classList.toggle('dim', i!==null && rowIdx!==i);
     });
+    // shrinks the chart to the left and turns the legend into a compact
+    // reference list on the right, instead of the default full-width
+    // chart-on-top / detailed-list-below stack — the center label already
+    // shows the tapped category's name/%/amount, so the side legend only
+    // needs to remind what else is in the breakdown.
+    $('#donutLayout').classList.toggle('active', i!==null);
     chartDonut.setActiveElements(i===null ? [] : [{datasetIndex:0, index:i}]);
     chartDonut.update();
+    // Chart.js's own ResizeObserver picks up the container resize during
+    // the CSS transition, but calling resize() right away avoids a stale
+    // frame between the class toggle and the observer's next tick.
+    chartDonut.resize();
   }
   $$('.legend-row', legend).forEach(row=>{
     row.onclick = ()=>{
@@ -1339,20 +1424,112 @@ function renderDonut(txs, expenseTotal){
   });
 }
 
-function renderAssetMini(){
-  const wrap = $('#assetMiniWrap');
-  const list = state.assets.filter(a=>!ASSET_TYPES_LIAB.includes(a.type)).sort((a,b)=>Number(b.amount)-Number(a.amount)).slice(0,5);
+function renderAssetSummaryInto(wrapId, balances, limit){
+  balances = balances || computeAssetBalances();
+  const wrap = $('#'+wrapId);
+  if(!wrap) return;
+  let list = state.assets.filter(a=>!ASSET_TYPES_LIAB.includes(a.type))
+    .map(a=>({...a, bal: balances.get(a.id)||0}))
+    .sort((a,b)=>b.bal-a.bal);
+  if(limit) list = list.slice(0, limit);
   if(list.length===0){
     wrap.innerHTML = `<div class="empty"><div class="e-ic">${icon('wallet',{size:30})}</div><div>자산을 등록해보세요</div></div>`;
     return;
   }
-  const max = Math.max(...list.map(a=>Number(a.amount||0)), 1);
+  const max = Math.max(...list.map(a=>a.bal), 1);
   wrap.innerHTML = list.map(a=>`
     <div class="asset-mini-row">
       <span class="asset-mini-name">${escapeHtml(a.name)}</span>
-      <span class="asset-mini-bar"><i style="width:${Math.max(4,(Number(a.amount||0)/max)*100)}%;background:${a.color||'var(--accent)'}"></i></span>
-      <span class="asset-mini-amt">${won(a.amount)}</span>
+      <span class="asset-mini-bar"><i style="width:${Math.max(4,(a.bal/max)*100)}%;background:${a.color||'var(--accent)'}"></i></span>
+      <span class="asset-mini-amt">${won(a.bal)}</span>
     </div>`).join('');
+}
+function renderAssetMini(balances){ renderAssetSummaryInto('assetMiniWrap', balances, 5); }
+// shown at the top of 내역 so the reader always has the same current asset
+// figures in view while looking at their transaction history, without
+// having to jump to the 자산 tab — every non-liability asset, not just top 5.
+function renderTxAssetSummary(){
+  const wrap = $('#txAssetSummaryWrap');
+  if(!wrap) return;
+  const balances = computeAssetBalances();
+  const list = state.assets.filter(a=>!ASSET_TYPES_LIAB.includes(a.type))
+    .map(a=>({...a, bal: balances.get(a.id)||0}))
+    .sort((a,b)=>b.bal-a.bal);
+  if(list.length===0){
+    wrap.innerHTML = `<div class="settings-desc">등록된 자산이 없어요</div>`;
+    return;
+  }
+  // each row stretches to the full width of the column (asset-chip-row is a
+  // flex column, default align-items:stretch), so the amount — pinned to
+  // the row's own right edge — lands at the same x position on every row
+  // regardless of how long that row's asset name is.
+  wrap.innerHTML = `<div class="asset-chip-row">${list.map(a=>`
+    <span class="asset-chip">
+      <span class="dot" style="background:${a.color||'var(--accent)'}"></span>
+      <span class="name">${escapeHtml(a.name)}</span>
+      <span class="amt">${won(a.bal)}</span>
+    </span>`).join('')}</div>`;
+}
+
+// compact read-only companion to the asset list on the other side of the
+// same row — a smaller version of the dashboard's donut (no click-to-expand
+// interaction, since this is meant as an at-a-glance reference while
+// looking at the transaction list, not a second place to drill in).
+function renderTxCategoryChart(){
+  const wrap = $('#txCatChartWrap');
+  if(!wrap) return;
+  const {y,m} = state.month;
+  const txs = txForMonth(y,m).filter(t=>t.type==='expense');
+  const total = sumBy(txs,'expense');
+  const byCat = {};
+  txs.forEach(t=>{ byCat[t.categoryId] = (byCat[t.categoryId]||0) + Number(t.amount||0); });
+  const entries = Object.entries(byCat).map(([cid,amt])=>({cat:catById(cid), amt})).filter(e=>e.cat).sort((a,b)=>b.amt-a.amt);
+  if(entries.length===0){
+    wrap.innerHTML = `<div class="empty" style="padding:10px 6px"><div class="e-ic">${icon('chart',{size:22})}</div><div>이번 달 지출이 없어요</div></div>`;
+    return;
+  }
+  wrap.innerHTML = `<div style="display:flex;align-items:center;gap:10px;">
+    <div style="position:relative;height:96px;width:96px;flex-shrink:0;"><canvas id="txCatCanvas"></canvas></div>
+    <div class="asset-chip-row" style="flex:1;min-width:0;" id="txCatLegend"></div>
+  </div>`;
+  const legendList = entries.slice(0,4);
+  const restCount = entries.length - legendList.length;
+  $('#txCatLegend').innerHTML = legendList.map(e=>{
+    const pct = total>0 ? Math.round((e.amt/total)*100) : 0;
+    return `<span class="asset-chip">
+      <span class="dot" style="background:${e.cat.color}"></span>
+      <span class="name">${escapeHtml(e.cat.name)}</span>
+      <span class="amt">${pct}%</span>
+    </span>`;
+  }).join('') + (restCount>0 ? `<span class="asset-chip"><span class="name" style="color:var(--ink-faint)">외 ${restCount}개</span></span>` : '');
+  if(typeof Chart === 'undefined'){
+    wrap.insertAdjacentHTML('beforeend', `<div class="empty" style="padding:8px"><div>차트를 불러오는 중이에요…</div></div>`);
+    ensureChartJs().then(()=>{ if(state.tab==='transactions') scheduleRender(); });
+    return;
+  }
+  const ctx = $('#txCatCanvas').getContext('2d');
+  if(chartTxCat) chartTxCat.destroy();
+  const inkColor = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#1B1F2A';
+  const surfaceColor = getComputedStyle(document.body).getPropertyValue('--surface') || '#fff';
+  const centerPlugin = {
+    id:'txCatCenter',
+    afterDatasetsDraw(chart){
+      const c = chart.ctx;
+      const {left,right,top,bottom} = chart.chartArea;
+      const cx=(left+right)/2, cy=(top+bottom)/2;
+      c.save(); c.textAlign='center'; c.textBaseline='middle';
+      c.font = "800 12px 'Pretendard Variable','Pretendard',sans-serif";
+      c.fillStyle = inkColor;
+      c.fillText(wonCompact(total), cx, cy);
+      c.restore();
+    }
+  };
+  chartTxCat = new Chart(ctx, {
+    type:'doughnut',
+    data:{ labels: entries.map(e=>e.cat.name), datasets:[{ data: entries.map(e=>e.amt), backgroundColor: entries.map(e=>e.cat.color), borderColor: surfaceColor, borderWidth:2 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'68%', plugins:{ legend:{display:false}, tooltip:{enabled:false} } },
+    plugins:[centerPlugin]
+  });
 }
 
 function renderTrend(){
@@ -1405,7 +1582,6 @@ function txRowHtml(t){
         <div class="tx-memo">${fromName} → ${toName}${memoPart}</div>
       </div>
       <div class="tx-amt">${won(Math.abs(Number(t.amount)))}</div>
-      <button class="tx-dup" data-dup="${t.id}" title="오늘 날짜로 복제" aria-label="오늘 날짜로 복제">${icon('duplicate',{size:14})}</button>
     </div>`;
   }
   const c = catById(t.categoryId);
@@ -1419,25 +1595,11 @@ function txRowHtml(t){
       ${subParts.length?`<div class="tx-memo">${subParts.join(' · ')}</div>`:''}
     </div>
     <div class="tx-amt ${t.type}">${t.type==='income'?'+':'-'}${won(Math.abs(Number(t.amount)))}</div>
-    <button class="tx-dup" data-dup="${t.id}" title="오늘 날짜로 복제" aria-label="오늘 날짜로 복제">${icon('duplicate',{size:14})}</button>
   </div>`;
 }
 function wireTxRows(container){
   $$('.tx-row', container).forEach(row=>{
     row.onclick = ()=> openTxModal(state.transactions.find(t=>t.id===row.dataset.id));
-  });
-  $$('.tx-dup', container).forEach(btn=>{
-    guardedClick(btn, async (e)=>{
-      e.stopPropagation();
-      const src = state.transactions.find(t=>t.id===btn.dataset.dup);
-      if(!src) return;
-      const data = src.type==='transfer'
-        ? { type:'transfer', date:todayStr(), amount:src.amount, memo:src.memo||'', fromAssetId:src.fromAssetId||null, toAssetId:src.toAssetId||null }
-        : { type:src.type, date:todayStr(), categoryId:src.categoryId, amount:src.amount, memo:src.memo||'', assetId:src.assetId||null };
-      await reconcileAssetForTx(null, data);
-      await addDoc('transactions', data);
-      scheduleRender(); toast('오늘 날짜로 복제했어요');
-    });
   });
 }
 
@@ -1451,17 +1613,15 @@ function renderTransactions(){
         <button class="btn btn-primary btn-sm" id="txAddBtn">${icon('plus',{size:14})}거래 추가</button>
       </div>
     </div>
-    <div class="card tpl-card" style="margin-bottom:14px;">
-      <div class="tpl-head">
-        <div>
-          <h3 style="margin:0">자주 쓰는 거래</h3>
-          ${state.templates.length===0?'<div class="settings-desc" style="margin-top:2px">반복되는 거래를 등록해두면 탭 한 번으로 바로 추가할 수 있어요</div>':''}
-        </div>
-        <button class="tpl-edit-toggle" id="tplEditToggle" aria-label="${state.templateEditMode?'편집 완료':'템플릿 편집'}">${state.templateEditMode ? '완료' : icon('pencil',{size:13})}</button>
+    <div class="two-col two-col-tx" style="margin-bottom:10px;">
+      <div class="card" style="padding:10px 14px;">
+        <div id="txAssetSummaryWrap"></div>
       </div>
-      <div class="tpl-row" id="tplRow"></div>
+      <div class="card" style="padding:10px 14px;">
+        <div id="txCatChartWrap"></div>
+      </div>
     </div>
-    <div class="tx-view-toggle" style="margin-bottom:14px;">
+    <div class="tx-view-toggle" style="margin-bottom:10px;">
       <button data-v="list" class="${state.txView==='list'?'active':''}">목록</button>
       <button data-v="calendar" class="${state.txView==='calendar'?'active':''}">달력</button>
     </div>
@@ -1469,61 +1629,73 @@ function renderTransactions(){
   `;
   wireMonthNav();
   $('#txAddBtn').onclick = ()=> openTxModal(null);
-  renderTemplateRow();
-  $('#tplEditToggle').onclick = ()=>{ state.templateEditMode = !state.templateEditMode; scheduleRender(); };
+  renderTxAssetSummary();
+  renderTxCategoryChart();
   $$('.tx-view-toggle button').forEach(b=> b.onclick = ()=>{
     state.txView = b.dataset.v;
     if(state.txView==='calendar' && !state.selectedDay){
       const t = todayStr();
       state.selectedDay = t.startsWith(monthKey(state.month.y, state.month.m)) ? t : null;
     }
-    scheduleRender();
+    // swapping 목록/달력 doesn't change the month, the asset totals, or the
+    // category chart above it — a full scheduleRender() was rebuilding the
+    // topbar and re-creating the Chart.js donut canvas (destroy + new
+    // Chart(), the most expensive part of a render) on every toggle click
+    // for no reason. Only #txBody actually needs to change.
+    $$('.tx-view-toggle button').forEach(x=> x.classList.toggle('active', x===b));
+    if(state.txView==='calendar') renderTxCalendar(); else renderTxList();
   });
   if(state.txView==='calendar') renderTxCalendar(); else renderTxList();
 }
 
-function renderTemplateRow(){
-  const wrap = $('#tplRow');
-  const edit = state.templateEditMode;
+// used from inside openTxModal's "자주 쓰는 거래" quick-pick row — templates
+// no longer have their own standalone card on the 내역 page (moved here so
+// that page isn't dominated by a big template widget above the actual
+// transaction list); callbacks let the caller decide what "added" / "list
+// changed" should do (close the add-transaction sheet vs. just repaint).
+function renderTemplateRow(wrapId, editMode, callbacks){
+  callbacks = callbacks || {};
+  const wrap = $('#'+wrapId);
+  if(!wrap) return;
   const chips = state.templates.map(t=>{
     const c = catById(t.categoryId);
     const color = c ? c.color : '#9CA3AF';
     return `<div class="tpl-chip" data-id="${t.id}" style="border-color:${color}44">
       <span class="tpl-ic" style="background:${color}1F;color:${color}">${icon(c?.icon||'sparkle',{size:14})}</span>
       <span class="tpl-name">${escapeHtml(t.name)}</span>
-      ${edit?`<span class="tpl-del" data-del="${t.id}">${icon('close',{size:11})}</span>`:''}
+      ${editMode?`<span class="tpl-del" data-del="${t.id}">${icon('close',{size:11})}</span>`:''}
     </div>`;
   }).join('');
-  wrap.innerHTML = chips + `<button class="tpl-chip tpl-add" id="tplAddBtn">${icon('plus',{size:14})}<span>추가</span></button>`;
+  wrap.innerHTML = chips + `<button type="button" class="tpl-chip tpl-add" id="${wrapId}AddBtn">${icon('plus',{size:14})}<span>추가</span></button>`;
   $$('.tpl-chip[data-id]', wrap).forEach(chip=>{
     chip.onclick = (e)=>{
       if(e.target.closest('.tpl-del')) return;
       const id = chip.dataset.id;
-      if(edit){ openTemplateModal(templateById(id)); return; }
-      runGuarded(chip, ()=> quickAddFromTemplate(templateById(id)));
+      if(editMode){ openTemplateModal(templateById(id)); return; }
+      // fills the still-open transaction form rather than saving instantly
+      // — templates used to live on their own page as a one-tap shortcut,
+      // but now that they're inside the add-transaction sheet itself,
+      // tapping one and then still having to notice/hit 저장 separately
+      // read as "registering the template just added a transaction on its
+      // own". Prefilling and leaving 저장 as the one explicit save action
+      // removes that surprise.
+      if(callbacks.onSelect) callbacks.onSelect(templateById(id));
     };
   });
   $$('.tpl-del', wrap).forEach(del=>{
     guardedClick(del, async (e)=>{
       e.stopPropagation();
       await deleteDoc('templates', del.dataset.del);
-      scheduleRender(); toast('삭제했어요', {danger:true});
+      toast('삭제했어요', {danger:true});
+      if(callbacks.onDeleted) callbacks.onDeleted();
     });
   });
-  $('#tplAddBtn').onclick = ()=> openTemplateModal(null);
-}
-
-async function quickAddFromTemplate(tpl){
-  if(!tpl) return;
-  const data = { type:tpl.type, date:todayStr(), categoryId:tpl.categoryId, amount:tpl.amount, memo:tpl.memo||'', assetId:tpl.assetId||null };
-  await reconcileAssetForTx(null, data);
-  await addDoc('transactions', data);
-  scheduleRender(); toast(`${tpl.name} 추가했어요`);
+  $('#'+wrapId+'AddBtn').onclick = ()=> openTemplateModal(null);
 }
 
 function renderTxList(){
   const {y,m} = state.month;
-  const txs = txForMonth(y,m).slice().sort((a,b)=> b.date.localeCompare(a.date));
+  const txs = txForMonth(y,m).slice().sort((a,b)=> a.date===b.date ? (b.updatedAt||0)-(a.updatedAt||0) : b.date.localeCompare(a.date));
   const body = $('#txBody');
   body.innerHTML = `<div class="card" id="txListCard"></div>`;
   const card = $('#txListCard');
@@ -1589,7 +1761,7 @@ function renderTxCalendar(){
     detail.innerHTML = `<div class="empty" style="padding:24px 10px"><div class="e-ic">${icon('list',{size:26})}</div><div>날짜를 선택하면 그날의 내역을 볼 수 있어요</div></div>`;
     return;
   }
-  const dayTxs = state.transactions.filter(t=>t.date===state.selectedDay);
+  const dayTxs = state.transactions.filter(t=>t.date===state.selectedDay).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
   const d = new Date(state.selectedDay+'T00:00:00');
   const label = `${d.getMonth()+1}월 ${d.getDate()}일 (${'일월화수목금토'[d.getDay()]})`;
   if(dayTxs.length===0){
@@ -1631,7 +1803,8 @@ function renderAssets(){
   const main = $('#main');
   const assets = state.assets.filter(a=>!ASSET_TYPES_LIAB.includes(a.type));
   const liabs = state.assets.filter(a=>ASSET_TYPES_LIAB.includes(a.type));
-  const nw = netWorth();
+  const balances = computeAssetBalances();
+  const nw = netWorth(balances);
   main.innerHTML = `
     <div class="topbar">
       <h1 class="page-title">자산현황</h1>
@@ -1658,7 +1831,7 @@ function renderAssets(){
     <div class="asset-row" data-id="${a.id}">
       <span class="asset-ic" style="background:${(a.color||'var(--accent)')}22;color:${a.color||'var(--accent)'}">${icon(a.icon||ASSET_ICONS[a.type]||'gem',{size:18})}</span>
       <div class="asset-mid"><div class="asset-name">${escapeHtml(a.name)}</div><div class="asset-type">${a.type}</div></div>
-      <div class="asset-amt ${isLiab?'liab':''}">${isLiab?'-':''}${won(a.amount)}</div>
+      <div class="asset-amt ${isLiab?'liab':''}">${isLiab?'-':''}${won(balances.get(a.id)||0)}</div>
     </div>`).join('') : `<div class="empty" style="padding:20px 10px"><div class="e-ic">${icon(isLiab?'creditcard':'wallet',{size:26})}</div><div>${isLiab?'등록된 부채가 없어요':'자산을 등록해보세요'}</div></div>`;
   $('#assetListPositive').innerHTML = rowsHtml(assets, false);
   $('#assetListLiab').innerHTML = rowsHtml(liabs, true);
@@ -1717,7 +1890,7 @@ function shakeSheet(){
   sheet.style.animation = 'shake .32s ease';
 }
 
-const AMOUNT_PRESETS = [1000, 5000, 10000, 50000, 100000];
+const AMOUNT_PRESETS = [1000, 5000, 10000, 50000, 100000, 500000, 1000000];
 function openTxModal(existing, prefill){
   const root = $('#modalRoot');
   let type = existing?.type || prefill?.type || 'expense';
@@ -1729,6 +1902,14 @@ function openTxModal(existing, prefill){
           <div class="sheet-title">${existing?'거래 수정':'거래 추가'}</div>
           <button class="sheet-close" id="closeTx" aria-label="닫기">${icon('close',{size:18})}</button>
         </div>
+        ${!existing ? `
+        <div class="form-group" style="margin-bottom:16px;">
+          <div class="tpl-head" style="margin-bottom:8px;">
+            <h3 style="margin:0">자주 쓰는 거래</h3>
+            <button type="button" class="tpl-edit-toggle" id="txTplEditToggle">${icon('pencil',{size:12})}</button>
+          </div>
+          <div class="tpl-row" id="txTplRow"></div>
+        </div>` : ''}
         <div class="form-group">
           <div class="type-toggle" id="typeToggle">
             <button type="button" data-t="expense" class="${type==='expense'?'sel-expense':''}">지출</button>
@@ -1755,16 +1936,59 @@ function openTxModal(existing, prefill){
         </div>
       </div>
     </div>`;
+  if(!existing){
+    let tplEditMode = false;
+    const paintTplRow = ()=>{
+      renderTemplateRow('txTplRow', tplEditMode, {
+        onSelect: (tpl)=>{
+          type = tpl.type;
+          $$('#typeToggle button').forEach(b=>{ b.className = b.dataset.t===type ? (type==='expense'?'sel-expense':'sel-income') : ''; });
+          updateTypeVisibility();
+          categoryId = tpl.categoryId;
+          paintCatPick();
+          $('#txAmount').value = tpl.amount;
+          $('#txAsset').value = tpl.assetId || '';
+          toast(`${tpl.name} 불러왔어요`);
+        },
+        onDeleted: paintTplRow,
+      });
+    };
+    paintTplRow();
+    $('#txTplEditToggle').onclick = ()=>{
+      tplEditMode = !tplEditMode;
+      $('#txTplEditToggle').innerHTML = tplEditMode ? '완료' : icon('pencil',{size:12});
+      paintTplRow();
+    };
+  }
   const paintCatPick = ()=>{
     const opts = categoriesByUsage(type);
     if(categoryId && !opts.some(c=>c.id===categoryId)) categoryId = null;
     if(!categoryId && opts.length) categoryId = opts[0].id;
-    $('#txCatPick').innerHTML = opts.length ? opts.map(c=>`
+    const optsHtml = opts.map(c=>`
       <span class="cat-opt ${categoryId===c.id?'sel':''}" data-id="${c.id}" style="${categoryId===c.id?`background:${c.color}1F;color:${c.color};border-color:${c.color}`:''}">
         ${icon(c.icon||'sparkle',{size:14})}<span>${escapeHtml(c.name)}</span>
       </span>
-    `).join('') : `<div class="empty" style="padding:14px 6px"><div>카테고리를 먼저 추가해주세요</div></div>`;
-    $$('#txCatPick .cat-opt').forEach(el=> el.onclick=()=>{ categoryId=el.dataset.id; paintCatPick(); });
+    `).join('');
+    const addChip = `<span class="cat-opt" id="txAddCatOpt" style="border-style:dashed;color:var(--ink-faint)">${icon('plus',{size:14})}<span>카테고리 추가</span></span>`;
+    $('#txCatPick').innerHTML = (opts.length ? optsHtml : `<div class="empty" style="padding:14px 6px;width:100%"><div>카테고리를 먼저 추가해주세요</div></div>`) + addChip;
+    $$('#txCatPick .cat-opt[data-id]').forEach(el=> el.onclick=()=>{ categoryId=el.dataset.id; paintCatPick(); });
+    // lets someone add a missing category mid-entry instead of abandoning
+    // the transaction to go to the 카테고리 tab and losing what they'd
+    // already typed — the in-progress form values are captured and the
+    // transaction sheet reopens with them intact plus the new category
+    // selected as soon as it's saved.
+    $('#txAddCatOpt').onclick = ()=>{
+      const captured = { date: $('#txDate').value, amount: $('#txAmount').value, memo: $('#txMemo').value, assetId: $('#txAsset').value || null };
+      const draftExisting = existing ? {...existing, ...captured} : null;
+      // no closeModal() here — openCategoryModal replaces #modalRoot's
+      // content directly and immediately; calling closeModal() first would
+      // schedule its delayed clear (used for the close animation) to fire
+      // ~160ms later and wipe out whichever modal is open by then.
+      openCategoryModal(null, type, (newCat)=>{
+        const merged = draftExisting ? {...draftExisting, categoryId:newCat.id} : null;
+        openTxModal(merged, {...captured, type, categoryId:newCat.id});
+      }, true);
+    };
   };
   const paintPresets = ()=>{
     $('#txAmountPresets').innerHTML = AMOUNT_PRESETS.map(p=>`<button type="button" class="preset-chip" data-p="${p}">+${wonCompact(p)}</button>`).join('') + `<button type="button" class="preset-chip clear" id="txAmountClear">지우기</button>`;
@@ -1815,7 +2039,6 @@ function openTxModal(existing, prefill){
   $('#closeTx').onclick = closeModal;
   $('#ovTx').onclick = (e)=>{ if(e.target.id==='ovTx') closeModal(); };
   if(existing) guardedClick($('#txDelete'), async ()=>{
-    await reconcileAssetForTx(existing, null);
     await deleteDoc('transactions', existing.id);
     closeModal(); scheduleRender(); toast('삭제했어요', {danger:true});
   });
@@ -1831,19 +2054,18 @@ function openTxModal(existing, prefill){
       const toAssetId = $('#txToAsset').value || null;
       if(!fromAssetId || !toAssetId){ toast('보내는 계좌와 받는 계좌를 선택해주세요', {danger:true}); shakeSheet(); return; }
       if(fromAssetId===toAssetId){ toast('서로 다른 계좌를 선택해주세요', {danger:true}); shakeSheet(); return; }
-      data = { type:'transfer', date, amount, memo, fromAssetId, toAssetId, categoryId:null, assetId:null };
+      data = { type:'transfer', date, amount, memo, fromAssetId, toAssetId, categoryId:null, assetId:null, updatedAt:Date.now() };
     } else {
       if(!categoryId){ toast('카테고리를 선택해주세요', {danger:true}); shakeSheet(); return; }
       const assetId = $('#txAsset').value || null;
-      data = { type, date, categoryId, amount, memo, assetId, fromAssetId:null, toAssetId:null };
+      data = { type, date, categoryId, amount, memo, assetId, fromAssetId:null, toAssetId:null, updatedAt:Date.now() };
     }
-    await reconcileAssetForTx(existing || null, data);
     if(existing) await updateDoc('transactions', existing.id, data); else await addDoc('transactions', data);
     closeModal(); scheduleRender(); toast(existing?'수정했어요':'추가했어요');
   });
 }
 
-function openCategoryModal(existing, forcedType){
+function openCategoryModal(existing, forcedType, onSaved, lockType){
   const root = $('#modalRoot');
   let type = existing?.type || forcedType || 'expense';
   let color = existing?.color || CATEGORY_PALETTE[state.categories.length % CATEGORY_PALETTE.length];
@@ -1855,7 +2077,7 @@ function openCategoryModal(existing, forcedType){
           <div class="sheet-title">${existing?'카테고리 수정':'카테고리 추가'}</div>
           <button class="sheet-close" id="closeCat" aria-label="닫기">${icon('close',{size:18})}</button>
         </div>
-        <div class="form-group">
+        <div class="form-group" ${lockType?'style="display:none"':''}>
           <div class="type-toggle" id="catTypeToggle">
             <button type="button" data-t="expense" class="${type==='expense'?'sel-expense':''}">지출</button>
             <button type="button" data-t="income" class="${type==='income'?'sel-income':''}">수입</button>
@@ -1880,7 +2102,7 @@ function openCategoryModal(existing, forcedType){
     $$('#catColor .color-opt').forEach(el=> el.onclick=()=>{ color=el.dataset.c; paintColor(); });
   };
   paintIcons(); paintColor();
-  $$('#catTypeToggle button').forEach(b=> b.onclick=()=>{ type=b.dataset.t; $$('#catTypeToggle button').forEach(x=>x.className=''); b.className=type==='expense'?'sel-expense':'sel-income'; paintIcons(); });
+  if(!lockType) $$('#catTypeToggle button').forEach(b=> b.onclick=()=>{ type=b.dataset.t; $$('#catTypeToggle button').forEach(x=>x.className=''); b.className=type==='expense'?'sel-expense':'sel-income'; paintIcons(); });
   $('#closeCat').onclick = closeModal;
   $('#ovCat').onclick = (e)=>{ if(e.target.id==='ovCat') closeModal(); };
   if(existing) guardedClick($('#catDelete'), async ()=>{
@@ -1892,8 +2114,25 @@ function openCategoryModal(existing, forcedType){
     const name = $('#catName').value.trim();
     if(!name){ toast('이름을 입력해주세요', {danger:true}); shakeSheet(); return; }
     const data = { name, type, icon: iconKey, color };
-    if(existing) await updateDoc('categories', existing.id, data); else await addDoc('categories', data);
-    closeModal(); scheduleRender(); toast(existing?'수정했어요':'추가했어요');
+    if(existing){
+      await updateDoc('categories', existing.id, data);
+      closeModal(); scheduleRender(); toast('수정했어요');
+    } else {
+      const newId = await addDoc('categories', data);
+      // optimistic local insert so a caller that immediately reopens
+      // another modal (see openTxModal's "카테고리 추가" chip) can already
+      // see the brand-new category instead of racing the Firestore
+      // snapshot round-trip; the real snapshot overwrites this harmlessly
+      // once it lands.
+      const newCat = { id:newId, ...data };
+      if(!state.categories.some(c=>c.id===newId)){ state.categories.push(newCat); idMaps.categories.set(newId, newCat); }
+      scheduleRender(); toast('추가했어요');
+      // when onSaved is set, it reopens another modal right away (see the
+      // "카테고리 추가" chip in openTxModal) which already replaces
+      // #modalRoot's content — calling closeModal() here too would queue
+      // its delayed clear to wipe that reopened modal out ~160ms later.
+      if(onSaved) onSaved(newCat); else closeModal();
+    }
   });
 }
 
@@ -1910,7 +2149,7 @@ function openAssetModal(existing){
         </div>
         <div class="form-group"><label class="form-label">이름</label><input class="form-input" id="assetName" placeholder="예: 주거래 통장" value="${existing?escapeHtml(existing.name):''}"></div>
         <div class="form-group"><label class="form-label">종류</label><select class="form-input" id="assetType"></select></div>
-        <div class="form-group"><label class="form-label">금액</label><input class="form-input" type="number" id="assetAmount" placeholder="0" value="${existing?.amount||''}"></div>
+        <div class="form-group"><label class="form-label">금액</label><input class="form-input" type="number" id="assetAmount" placeholder="0" value="${existing?(computeAssetBalances().get(existing.id)||''):''}"></div>
         <div class="form-group"><label class="form-label">색상</label><div class="color-grid" id="assetColor"></div></div>
         <div class="sheet-actions">
           ${existing?'<button class="btn btn-danger" id="assetDelete">삭제</button>':''}
@@ -1937,7 +2176,24 @@ function openAssetModal(existing){
     const t = $('#assetType').value;
     if(!name){ toast('이름을 입력해주세요', {danger:true}); shakeSheet(); return; }
     if(isNaN(amount) || amount<0){ toast('금액을 확인해주세요', {danger:true}); shakeSheet(); return; }
-    const data = { name, type:t, amount, color, icon: ASSET_ICONS[t] };
+    // an asset's balance is always initialAmount + every transaction's
+    // effect (see computeAssetBalances) — there's no separate live total to
+    // overwrite. This field still shows/edits the CURRENT balance, matching
+    // what's shown everywhere else, so correcting it here just shifts
+    // initialAmount by the difference between what was shown and what was
+    // typed — safe at any time, and every transaction stays exactly as
+    // accurate as before.
+    let initialAmount;
+    if(existing){
+      const deltaLists = computeAssetDeltaLists();
+      const list = deltaLists.get(existing.id) || [];
+      const oldInitial = resolveInitialAmount(existing, list);
+      const before = oldInitial + list.reduce((s,d)=>s+d.delta, 0);
+      initialAmount = oldInitial + (amount - before);
+    } else {
+      initialAmount = amount;
+    }
+    const data = { name, type:t, color, icon: ASSET_ICONS[t], initialAmount };
     if(existing) await updateDoc('assets', existing.id, data); else await addDoc('assets', data);
     closeModal(); scheduleRender(); toast(existing?'수정했어요':'추가했어요');
   });
