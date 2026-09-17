@@ -30,6 +30,9 @@
   --accent:#6C4FD9;
   --accent-ink:#ffffff;
   --shadow: 0 1px 2px rgba(16,20,30,0.04), 0 10px 24px -14px rgba(16,20,30,0.14);
+  --shadow-pop: 0 8px 20px -6px rgba(16,20,30,0.18), 0 24px 48px -16px rgba(16,20,30,0.28);
+  --status-ok: #1FA7AD;
+  --radius-xl: 20px;
   --radius-lg: 16px;
   --radius-md: 12px;
   --radius-sm: 9px;
@@ -47,6 +50,8 @@
     --income:#3FC7CC;
     --expense:#E8829A;
     --shadow: 0 1px 2px rgba(0,0,0,0.2), 0 10px 24px -14px rgba(0,0,0,0.5);
+    --shadow-pop: 0 8px 20px -6px rgba(0,0,0,0.35), 0 24px 48px -16px rgba(0,0,0,0.55);
+    --status-ok: #3FC7CC;
   }
 }
 :root[data-theme="dark"]{
@@ -61,12 +66,16 @@
   --income:#3FC7CC;
   --expense:#E8829A;
   --shadow: 0 1px 2px rgba(0,0,0,0.2), 0 10px 24px -14px rgba(0,0,0,0.5);
+  --shadow-pop: 0 8px 20px -6px rgba(0,0,0,0.35), 0 24px 48px -16px rgba(0,0,0,0.55);
+  --status-ok: #3FC7CC;
 }
 *{box-sizing:border-box;}
 @media (prefers-reduced-motion: reduce){
   *{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important;}
 }
 @keyframes viewIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+@keyframes viewInFromRight{ from{transform:translateX(100%);} to{transform:translateX(0);} }
+@keyframes viewInFromLeft{ from{transform:translateX(-100%);} to{transform:translateX(0);} }
 @keyframes overlayIn{ from{opacity:0;} to{opacity:1;} }
 @keyframes overlayOut{ from{opacity:1;} to{opacity:0;} }
 @keyframes sheetIn{ from{opacity:0; transform:translateY(18px);} to{opacity:1; transform:translateY(0);} }
@@ -97,11 +106,11 @@ button, .navlink, .tx-row, .cat-chip, .asset-row, .cal-cell, .tpl-chip, .accent-
   user-select:none;
   -webkit-user-select:none;
 }
-#main{animation:viewIn .28s cubic-bezier(.22,.75,.32,1);}
+#main{animation:viewIn .28s cubic-bezier(.22,.75,.32,1); touch-action:pan-y; overflow-x:hidden;}
 .brand-mark, .hero-badge, .btn-primary, .fab, .accent-swatch, .navlink.active{
   transition:background-color .2s ease, color .2s ease, outline-color .2s ease;
 }
-.btn, .fab, .navlink, .cat-chip, .asset-row, .tx-row, .cal-cell, .accent-swatch, .color-opt, .icon-opt, .add-cat-chip, .month-nav button, .sheet-close, .tx-view-toggle button, .cat-opt, .preset-chip, .tpl-chip{
+.btn, .fab, .navlink, .cat-chip, .asset-row, .tx-row, .cal-cell, .accent-swatch, .color-opt, .icon-opt, .add-cat-chip, .month-nav button, .sheet-close, .tx-view-toggle button, .cat-opt, .preset-chip, .tpl-chip, .type-toggle button{
   transition:background-color .15s ease, border-color .15s ease, color .15s ease, transform .12s ease, outline-color .15s ease, box-shadow .15s ease;
 }
 .btn:active, .fab:active, .cat-chip:active, .asset-row:active, .tx-row:active, .cal-cell:active, .navlink:active, .accent-swatch:active, .color-opt:active, .icon-opt:active, .cat-opt:active, .preset-chip:active, .tpl-chip:active{
@@ -150,7 +159,7 @@ svg{display:block;}
 }
 .brand-name{font-family:'Pretendard Variable','Pretendard',sans-serif;font-size:18px;font-weight:800;}
 .brand-sync{font-size:11px;color:var(--ink-faint);display:flex;align-items:center;gap:5px;margin-top:2px;}
-.dot{width:6px;height:6px;border-radius:50%;background:var(--income);flex-shrink:0;}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--status-ok);flex-shrink:0;}
 .dot.offline{background:var(--ink-faint);}
 
 .navlink{
@@ -240,6 +249,32 @@ main{flex:1;min-width:0;}
 .hero-label{font-size:13px;color:var(--ink-soft);font-weight:500;position:relative;z-index:1;}
 .num-hero{font-size:33px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-0.6px;position:relative;z-index:1;}
 .hero-sub{font-size:12.5px;color:var(--ink-faint);margin-top:2px;position:relative;z-index:1;}
+
+.daily-budget-card{padding:16px 18px;}
+.daily-budget-top{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;
+}
+.daily-budget-title{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-soft);font-weight:600;}
+.daily-budget-title .ic{width:16px;height:16px;display:flex;flex-shrink:0;color:var(--accent);}
+.daily-budget-add-btn{
+  border:none;background:transparent;color:var(--accent);font-size:12px;font-weight:700;
+  cursor:pointer;font-family:inherit;padding:4px 8px;border-radius:8px;flex-shrink:0;white-space:nowrap;
+}
+.daily-budget-add-btn:hover{background:color-mix(in srgb, var(--accent) 10%, transparent);}
+.daily-budget-num{font-size:26px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-0.4px;color:var(--accent);}
+.planned-expense-list{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px;}
+.planned-expense-row{display:flex;align-items:center;gap:8px;font-size:12px;}
+.pe-date{color:var(--ink-faint);flex-shrink:0;width:30px;font-variant-numeric:tabular-nums;}
+.pe-memo{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink-soft);}
+.pe-amt{font-weight:700;font-variant-numeric:tabular-nums;flex-shrink:0;}
+.pe-del{
+  width:16px;height:16px;border-radius:50%;background:var(--surface-2);color:var(--ink-faint);border:none;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;cursor:pointer;
+}
+.pe-del::before{content:'';position:absolute;inset:-8px;}
+.pe-del:hover{background:var(--expense);color:#fff;}
+@keyframes rowEnter{ from{opacity:0; transform:translateY(-6px);} to{opacity:1; transform:translateY(0);} }
+.pe-row-enter{animation:rowEnter .28s cubic-bezier(.22,.75,.32,1);}
 
 .insight-row{display:flex;gap:8px;flex-wrap:wrap;}
 .insight-chip{
@@ -369,6 +404,7 @@ main{flex:1;min-width:0;}
   background:var(--surface-2);cursor:pointer;font-size:12px;font-weight:600;color:var(--ink);
   white-space:nowrap;position:relative;
 }
+.tpl-chip:hover{border-color:var(--accent);background:color-mix(in srgb, var(--accent) 8%, var(--surface-2));}
 .tpl-ic{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .tpl-del{
   width:16px;height:16px;border-radius:50%;background:var(--expense);color:#fff;
@@ -426,6 +462,21 @@ main{flex:1;min-width:0;}
 .tx-amt{font-variant-numeric:tabular-nums;font-weight:700;font-size:14px;white-space:nowrap;}
 .tx-amt.income{color:var(--income);}
 .tx-amt.expense{color:var(--expense);}
+.tx-row.sel{background:color-mix(in srgb, var(--accent) 8%, transparent);}
+.tx-check{
+  width:20px;height:20px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;color:#fff;
+}
+.tx-check.sel{background:var(--accent);border-color:var(--accent);}
+.tx-check svg{width:13px;height:13px;}
+.tx-select-bar{
+  position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);
+  display:flex;align-items:center;gap:14px;background:var(--ink);color:var(--bg);
+  padding:12px 14px 12px 18px;border-radius:100px;box-shadow:var(--shadow-pop);z-index:45;
+  font-size:13px;font-weight:600;white-space:nowrap;
+}
+.tx-select-bar .btn-danger{background:var(--expense);color:#fff;}
+.tx-select-bar .btn-danger:disabled{opacity:.4;cursor:default;}
 
 .cat-group-title{font-size:12.5px;font-weight:700;color:var(--ink-soft);margin:24px 0 12px;display:flex;align-items:center;gap:7px;text-transform:uppercase;letter-spacing:.3px;}
 .cat-group-title .ic{width:14px;height:14px;}
@@ -475,6 +526,16 @@ main{flex:1;min-width:0;}
 }
 .accent-swatch.sel{outline-color:var(--ink);}
 .color-input-wrap{display:flex;align-items:center;gap:8px;}
+.budget-asset-list{display:flex;flex-direction:column;gap:6px;}
+.budget-asset-chip{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 12px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface-2);
+  cursor:pointer;font-size:13px;
+}
+.budget-asset-chip.sel{border-color:var(--accent);background:color-mix(in srgb, var(--accent) 8%, var(--surface-2));}
+.bac-name{font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bac-bal{color:var(--ink-faint);font-variant-numeric:tabular-nums;flex-shrink:0;}
+.budget-asset-chip.sel .bac-bal{color:var(--accent);}
 input[type=color]{width:30px;height:30px;border-radius:50%;border:1px solid var(--border);padding:0;background:none;cursor:pointer;overflow:hidden;}
 input[type=color]::-webkit-color-swatch-wrapper{padding:0;}
 input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
@@ -501,20 +562,20 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
 .overlay.closing{animation:overlayOut .16s ease forwards;}
 .sheet{
   width:100%;max-width:440px;background:var(--surface);
-  border-radius:20px 20px 0 0;
+  border-radius:var(--radius-xl) var(--radius-xl) 0 0;
   padding:22px 22px 26px;
   max-height:88vh;overflow-y:auto;
   box-shadow:0 -20px 50px rgba(0,0,0,0.2);
   animation:sheetIn .22s cubic-bezier(.22,.85,.32,1);
 }
-.overlay.center .sheet{border-radius:18px; animation:sheetInCenter .2s cubic-bezier(.22,.85,.32,1);}
+.overlay.center .sheet{border-radius:var(--radius-lg); animation:sheetInCenter .2s cubic-bezier(.22,.85,.32,1);}
 .overlay.closing .sheet{animation:sheetOut .16s ease forwards;}
 /* on desktop there's no thumb-reach reason to anchor sheets to the bottom
    edge — that's a mobile-only affordance. Every modal (not just the ones
    explicitly marked .center) becomes a centered dialog on wider screens. */
 @media (min-width:721px){
   .overlay{align-items:center;}
-  .overlay .sheet{border-radius:18px; box-shadow:0 20px 60px -10px rgba(0,0,0,0.3); animation:sheetInCenter .2s cubic-bezier(.22,.85,.32,1);}
+  .overlay .sheet{border-radius:var(--radius-lg); box-shadow:var(--shadow-pop); animation:sheetInCenter .2s cubic-bezier(.22,.85,.32,1);}
   .fab.tab-tx{display:none !important;}
   #txAddBtn{display:inline-flex;}
 }
@@ -551,7 +612,7 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
 
 .date-picker-pop{
   position:fixed;z-index:250;background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius-md);box-shadow:0 12px 32px -10px rgba(0,0,0,0.3);
+  border-radius:var(--radius-md);box-shadow:var(--shadow-pop);
   padding:12px;width:248px;
   animation:sheetInCenter .15s cubic-bezier(.22,.85,.32,1);
 }
@@ -586,7 +647,7 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
 .calc-toggle-btn svg{width:17px;height:17px;}
 .calc-pop{
   position:fixed;z-index:250;background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius-md);box-shadow:0 12px 32px -10px rgba(0,0,0,0.3);
+  border-radius:var(--radius-md);box-shadow:var(--shadow-pop);
   padding:12px;width:216px;
   animation:sheetInCenter .15s cubic-bezier(.22,.85,.32,1);
 }
@@ -614,7 +675,7 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
 .asset-trigger svg{flex-shrink:0;color:var(--ink-faint);transform:rotate(90deg);}
 .asset-picker-pop{
   position:fixed;z-index:250;background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius-md);box-shadow:0 12px 32px -10px rgba(0,0,0,0.3);
+  border-radius:var(--radius-md);box-shadow:var(--shadow-pop);
   padding:6px;max-height:264px;overflow-y:auto;
   animation:sheetInCenter .15s cubic-bezier(.22,.85,.32,1);
 }
@@ -640,21 +701,21 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
 }
 .cat-opt svg{width:11px;height:11px;flex-shrink:0;}
 .cat-opt.sel{font-weight:700;}
-.amount-presets{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+.amount-presets{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;}
 .preset-chip{
   border:1px solid var(--border);background:var(--surface-2);color:var(--ink-soft);
-  border-radius:100px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;
+  border-radius:100px;padding:10px 13px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;
 }
 .preset-chip.clear{color:var(--ink-faint);}
-.icon-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;}
+.icon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:6px;}
 .icon-opt{
   aspect-ratio:1;border-radius:9px;border:1px solid var(--border);background:var(--surface-2);
   display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-soft);
 }
 .icon-opt svg{width:15px;height:15px;}
 .icon-opt.sel{border-color:var(--accent);background:color-mix(in srgb, var(--accent) 14%, var(--surface));color:var(--accent);}
-.color-grid{display:flex;gap:8px;flex-wrap:wrap;}
-.color-opt{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;outline:2px solid transparent;outline-offset:2px;}
+.color-grid{display:flex;gap:10px;flex-wrap:wrap;}
+.color-opt{width:34px;height:34px;border-radius:50%;cursor:pointer;border:2px solid transparent;outline:2px solid transparent;outline-offset:2px;}
 .color-opt.sel{outline-color:var(--ink);}
 .sheet-actions{display:flex;gap:10px;margin-top:20px;}
 .sheet-actions .btn{flex:1;}
@@ -672,7 +733,7 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
   padding:11px 18px;border-radius:100px;
   font-size:13px;font-weight:600;
   display:flex;align-items:center;gap:8px;
-  box-shadow:0 12px 28px -10px rgba(0,0,0,0.35);
+  box-shadow:var(--shadow-pop);
   z-index:200;
   animation:toastIn .22s cubic-bezier(.22,.85,.32,1);
   white-space:nowrap;
@@ -717,7 +778,7 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
   .two-col.two-col-tx{grid-template-columns:1fr;}
 }
 @media (max-width:720px){
-  .app{flex-direction:column;padding:16px 14px 96px;gap:14px;}
+  .app{flex-direction:column;padding:16px 14px 152px;gap:14px;}
   .rail{
     position:fixed;bottom:0;left:0;right:0;top:auto;width:auto;
     flex-direction:row;justify-content:space-around;
@@ -823,6 +884,8 @@ const ICONS = {
   swap: '<path d="M4 8h14"/><path d="M15 4l3 4-3 4"/><path d="M20 16H6"/><path d="M9 12l-3 4 3 4"/>',
   calculator: '<rect x="5" y="3" width="14" height="18" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><circle cx="8.5" cy="11.5" r="0.8" fill="currentColor" stroke="none"/><circle cx="12" cy="11.5" r="0.8" fill="currentColor" stroke="none"/><circle cx="15.5" cy="11.5" r="0.8" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15" r="0.8" fill="currentColor" stroke="none"/><circle cx="12" cy="15" r="0.8" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15" r="0.8" fill="currentColor" stroke="none"/><circle cx="8.5" cy="18.5" r="0.8" fill="currentColor" stroke="none"/><circle cx="12" cy="18.5" r="0.8" fill="currentColor" stroke="none"/><circle cx="15.5" cy="18.5" r="0.8" fill="currentColor" stroke="none"/>',
   search: '<g transform="translate(0.5,0.5)"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="19" y1="19" x2="15.3" y2="15.3"/></g>',
+  calendar: '<g transform="translate(0,0.5)"><rect x="4" y="5" width="16" height="15" rx="2"/><line x1="4" y1="10" x2="20" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></g>',
+  check: '<polyline points="5,13 10,18 19,7"/>',
 };
 function icon(name, opts){
   opts = opts || {};
@@ -865,7 +928,11 @@ function inkFor(hex){
   return contrastWith('#1B1F2A') >= contrastWith('#ffffff') ? '#1B1F2A' : '#ffffff';
 }
 
-const CATEGORY_PALETTE = ['#8b5ec9','#009baa','#cf5976','#ca952b','#398bc6','#ce6c3b','#c059c0','#669438'];
+// 15 colors, one per DEFAULT_CATEGORIES entry — previously only 8, which
+// meant the 9th default category alone (before a user added anything) had
+// to wrap and silently reuse category #1's exact color in every legend,
+// donut chart, and picker relying on color as the primary visual key.
+const CATEGORY_PALETTE = ['#8b5ec9','#009baa','#cf5976','#ca952b','#398bc6','#ce6c3b','#c059c0','#669438','#5b6fd6','#1f9e83','#a8477c','#8a7a1f','#c2493f','#3f9e5c','#9c6b3f'];
 const ACCENT_PRESETS = [
   '#6C4FD9','#8B5CF6','#2F6FE0','#0EA5E9','#1FA7AD',
   '#1E8F5F','#65A30D','#E8A93A','#DA6A2B','#D6456E',
@@ -876,6 +943,10 @@ const INCOME_ICON_KEYS = ['banknote','ticket','briefcase','gift','trendingUp','s
 const ASSET_ICONS = {'현금':'banknote','예금/적금':'bank','투자':'trendingUp','부동산':'building','기타자산':'gem','카드/대출':'creditcard','기타부채':'file'};
 const ASSET_TYPES_ASSET = ['현금','예금/적금','투자','부동산','기타자산'];
 const ASSET_TYPES_LIAB = ['카드/대출','기타부채'];
+// left-to-right order of both the bottom nav and mobile swipe — shared so a
+// swipe and a nav-bar tap animate the exact same "which way did we move"
+// direction instead of drifting out of sync with two separate lists.
+const TAB_ORDER = ['dashboard','transactions','categories','assets','analytics','settings'];
 
 const DEFAULT_CATEGORIES = [
   {name:'식비',type:'expense',icon:'bowl'}, {name:'카페/간식',type:'expense',icon:'coffee'},
@@ -894,6 +965,7 @@ const state = {
   transactions: [],
   assets: [],
   templates: [],
+  plannedExpenses: [],
   settings: { accent: ACCENT_PRESETS[0] },
   tab: 'dashboard',
   month: (()=>{ const d=new Date(); return {y:d.getFullYear(), m:d.getMonth()+1}; })(),
@@ -902,6 +974,8 @@ const state = {
   selectedDay: null,
   analyticsView: 'weekly', // weekly | monthly
   txSearchQuery: '',
+  txSelectMode: false,
+  selectedTxIds: new Set(),
 };
 
 /* ---------- Firebase ---------- */
@@ -965,8 +1039,8 @@ function userCol(uid, name){ return userDoc(uid).collection(name); }
 function teardownStore(){
   Store.unsubs.forEach(u=>u());
   Store.unsubs = [];
-  state.categories = []; state.transactions = []; state.assets = []; state.templates = [];
-  state.settings = { accent: ACCENT_PRESETS[0] };
+  state.categories = []; state.transactions = []; state.assets = []; state.templates = []; state.plannedExpenses = [];
+  state.settings = { accent: ACCENT_PRESETS[0], theme: 'system' };
   state.ready = false;
   seededCategories = false;
   idMaps.categories.clear(); idMaps.assets.clear(); idMaps.templates.clear();
@@ -982,9 +1056,14 @@ function initStoreForUser(uid){
   wireCollection(userCol(uid,'transactions'), 'transactions');
   wireCollection(userCol(uid,'assets'), 'assets');
   wireCollection(userCol(uid,'templates'), 'templates');
+  wireCollection(userCol(uid,'plannedExpenses'), 'plannedExpenses');
   const unsub = userDoc(uid).onSnapshot(snap=>{
     if(snap.exists && snap.data().accent){ state.settings.accent = snap.data().accent; }
+    if(snap.exists && snap.data().payday){ state.settings.payday = snap.data().payday; }
+    if(snap.exists && snap.data().budgetAssetIds){ state.settings.budgetAssetIds = snap.data().budgetAssetIds; }
+    if(snap.exists && snap.data().theme){ state.settings.theme = snap.data().theme; }
     applyAccent(state.settings.accent);
+    applyTheme(state.settings.theme);
     state.ready = true;
     scheduleRender();
     updateSyncIndicator();
@@ -1132,6 +1211,17 @@ function applyAccent(hex){
   document.documentElement.style.setProperty('--accent', hex);
   document.documentElement.style.setProperty('--accent-ink', inkFor(hex));
 }
+// theme:'system' just means "no override" — the existing prefers-color-scheme
+// media query already handles it, so this only ever needs to set/clear the
+// data-theme attribute the light/dark CSS blocks key off of.
+function applyTheme(theme){
+  if(theme==='light' || theme==='dark') document.documentElement.setAttribute('data-theme', theme);
+  else document.documentElement.removeAttribute('data-theme');
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.content = theme==='dark' ? '#14161C'
+    : theme==='light' ? '#FAFAFB'
+    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? '#14161C' : '#FAFAFB');
+}
 
 /* ---------- derived data ---------- */
 function txForMonth(y,m){
@@ -1258,6 +1348,46 @@ function netWorth(balances){
   });
   return assetsSum - liabSum;
 }
+// assets counted toward the daily-budget's spendable cash — an explicit
+// pick list (state.settings.budgetAssetIds) once the user has set one via
+// 설정, otherwise every 현금-type asset (matches the feature's original
+// behavior before the picker existed).
+function budgetAssets(){
+  const ids = state.settings.budgetAssetIds;
+  return ids ? state.assets.filter(a=>ids.includes(a.id)) : state.assets.filter(a=>a.type==='현금');
+}
+// how much of today's remaining cash can be spent per day to make it to
+// payday, split across every day from today through the next occurrence of
+// the payday-of-month setting (inclusive, so a payday that's today still
+// budgets for today rather than dividing by zero). Planned expenses dated
+// between today and that payday are subtracted first — a planned expense
+// whose date has already passed no longer counts at all (in the deducted
+// sum or in the returned list), since by then it either happened for real
+// (and shows up in cashSum via the actual transaction) or didn't.
+function computeDailyBudget(balances){
+  const payday = state.settings.payday;
+  if(!payday) return null;
+  balances = balances || computeAssetBalances();
+  const cashSum = budgetAssets().reduce((s,a)=>s+(balances.get(a.id)||0),0);
+  const today = new Date();
+  const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const lastDayOf = (y,m)=> new Date(y, m, 0).getDate(); // m is 1-indexed month
+  let y = today.getFullYear(), m = today.getMonth()+1;
+  let target = new Date(y, m-1, Math.min(payday, lastDayOf(y,m)));
+  if(target < todayMid){
+    m += 1; if(m>12){ m=1; y+=1; }
+    target = new Date(y, m-1, Math.min(payday, lastDayOf(y,m)));
+  }
+  const daysLeft = Math.round((target - todayMid) / 86400000) + 1;
+  const todayS = todayStr();
+  const targetS = `${target.getFullYear()}-${pad2(target.getMonth()+1)}-${pad2(target.getDate())}`;
+  const upcomingPlanned = state.plannedExpenses
+    .filter(p=> p.date>=todayS && p.date<=targetS)
+    .sort((a,b)=> a.date<b.date ? -1 : a.date>b.date ? 1 : 0);
+  const plannedSum = upcomingPlanned.reduce((s,p)=>s+Number(p.amount||0),0);
+  const spendable = cashSum - plannedSum;
+  return { cashSum, plannedSum, spendable, daysLeft, perDay: spendable / daysLeft, targetDate: target, upcomingPlanned };
+}
 
 /* ---------- static icon paint (nav, brand, fab) ---------- */
 function paintStaticIcons(){
@@ -1277,9 +1407,22 @@ function scheduleRender(){
   renderScheduled = true;
   requestAnimationFrame(()=>{ renderScheduled = false; render(); });
 }
+// scheduleRender's own rAF-coalescing only catches calls landing in the
+// same ~16ms tick — a month-nav rebuild is expensive enough (it recreates
+// Chart.js instances) that ordinary human-speed repeat taps each land in a
+// separate tick and each still pay full price, stacking up into visible
+// stutter. This waits for taps to actually stop before paying for one.
+let monthNavRenderTimer = null;
+function debouncedScheduleRender(){
+  clearTimeout(monthNavRenderTimer);
+  monthNavRenderTimer = setTimeout(scheduleRender, 90);
+}
+let lastRenderedTab = null;
 function render(){
   $$('.navlink').forEach(b=> b.classList.toggle('active', b.dataset.tab===state.tab));
   const main = $('#main');
+  const prevTab = lastRenderedTab;
+  lastRenderedTab = state.tab;
   if(!state.ready){
     const slow = loadStartedAt && (Date.now() - loadStartedAt > 7000);
     main.innerHTML = `<div class="card empty" style="margin-top:40px">
@@ -1295,18 +1438,39 @@ function render(){
   // each fn immediately does its own full main.innerHTML = `...` — clearing
   // here first was a redundant extra reflow before that replace.
   fns[state.tab]();
-  $('#fab').style.display = (state.tab==='dashboard' || state.tab==='transactions') ? 'flex' : 'none';
+  // hidden during 선택 mode too — a floating "add" control right next to a
+  // "delete what I selected" bar is a mixed signal, and 선택 mode already
+  // hides the topbar's own 거래 추가 button for the same reason.
+  $('#fab').style.display = (state.tab==='dashboard' || (state.tab==='transactions' && !state.txSelectMode)) ? 'flex' : 'none';
   // on desktop the 내역 tab has its own top-right "거래 추가" button (like
   // 자산현황's), so the thumb-reach floating button is redundant there —
   // this class lets a min-width media query hide it without touching the
   // per-tab display logic above (which still governs mobile + dashboard).
   $('#fab').classList.toggle('tab-tx', state.tab==='transactions');
-  replayViewAnim(main);
+  let dir = null;
+  if(prevTab && prevTab!==state.tab){
+    const pi = TAB_ORDER.indexOf(prevTab), ni = TAB_ORDER.indexOf(state.tab);
+    if(pi!==-1 && ni!==-1) dir = ni>pi ? 'forward' : 'back';
+  }
+  replayViewAnim(main, dir);
+  justAddedTxId = null;
 }
-function replayViewAnim(el){
+// a lighter-weight replay for a single card/section updating in place
+// (not a full tab change) — same fade+rise motion as a freshly-entering
+// row, just retriggered on the whole block so a toggle-driven data swap
+// reads as a transition instead of a hard cut.
+function flashAnim(el){
+  if(!el) return;
   el.style.animation = 'none';
   void el.offsetWidth;
-  el.style.animation = '';
+  el.style.animation = 'rowEnter .25s cubic-bezier(.22,.75,.32,1)';
+}
+function replayViewAnim(el, dir){
+  el.style.animation = 'none';
+  void el.offsetWidth;
+  el.style.animation = dir==='forward' ? 'viewInFromRight .3s cubic-bezier(.22,.75,.32,1)'
+    : dir==='back' ? 'viewInFromLeft .3s cubic-bezier(.22,.75,.32,1)'
+    : '';
 }
 
 /* ---------- toast ---------- */
@@ -1354,8 +1518,8 @@ function monthNavHtml(){
   </div>`;
 }
 function wireMonthNav(){
-  $('#prevMonth').onclick = ()=>{ state.month.m--; if(state.month.m<1){state.month.m=12; state.month.y--;} state.selectedDay=null; scheduleRender(); };
-  $('#nextMonth').onclick = ()=>{ state.month.m++; if(state.month.m>12){state.month.m=1; state.month.y++;} state.selectedDay=null; scheduleRender(); };
+  $('#prevMonth').onclick = ()=>{ state.month.m--; if(state.month.m<1){state.month.m=12; state.month.y--;} state.selectedDay=null; debouncedScheduleRender(); };
+  $('#nextMonth').onclick = ()=>{ state.month.m++; if(state.month.m>12){state.month.m=1; state.month.y++;} state.selectedDay=null; debouncedScheduleRender(); };
 }
 function wonCompact(n){
   const neg = n<0; const abs = Math.abs(n);
@@ -1390,6 +1554,8 @@ function wireAmountInput(inputEl){
 }
 
 let lastNetWorth = null, lastIncome = null, lastExpense = null, lastSavingsRate = null;
+let justAddedPlannedId = null;
+let justAddedTxId = null;
 function animateNumber(el, from, to, duration, fmt){
   duration = duration || 500;
   fmt = fmt || won;
@@ -1401,6 +1567,35 @@ function animateNumber(el, from, to, duration, fmt){
     if(p<1) requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
+}
+// collapses a list row/chip (height-or-width + opacity + padding/margin to
+// 0) before it's actually removed from the data — used for inline-delete
+// items (템플릿 칩, 예상 지출) so the item visibly leaves instead of the
+// whole list just snapping to a shorter version of itself on next render.
+// axis:'height' for a vertical list row (default), 'width' for a chip in a
+// horizontally-laid-out row (e.g. .tpl-row's flex chips).
+function animateRowExit(el, onDone, axis){
+  if(!el){ onDone(); return; }
+  axis = axis || 'height';
+  const dim = axis==='width' ? 'width' : 'height';
+  const marginProps = axis==='width' ? ['marginLeft','marginRight'] : ['marginTop','marginBottom'];
+  const paddingProps = axis==='width' ? ['paddingLeft','paddingRight'] : ['paddingTop','paddingBottom'];
+  const r = el.getBoundingClientRect();
+  const cs = getComputedStyle(el);
+  el.style[dim] = r[dim]+'px';
+  if(axis==='width') el.style.flexShrink = '0';
+  marginProps.forEach(p=> el.style[p]=cs[p]);
+  paddingProps.forEach(p=> el.style[p]=cs[p]);
+  el.style.overflow = 'hidden';
+  void el.offsetHeight;
+  el.style.transition = `${dim} .22s cubic-bezier(.4,0,.6,1), opacity .16s ease, margin .22s ease, padding .22s ease`;
+  el.style.opacity = '0';
+  el.style[dim] = '0px';
+  [...marginProps, ...paddingProps].forEach(p=> el.style[p]='0px');
+  let done = false;
+  const finish = ()=>{ if(done) return; done = true; el.removeEventListener('transitionend', finish); onDone(); };
+  el.addEventListener('transitionend', finish);
+  setTimeout(finish, 260); // safety net if transitionend never fires
 }
 
 /* ---------- dashboard ---------- */
@@ -1417,6 +1612,7 @@ function renderDashboard(){
   const assetsSum = state.assets.filter(a=>!ASSET_TYPES_LIAB.includes(a.type)).reduce((s,a)=>s+(balances.get(a.id)||0),0);
   const liabSum = state.assets.filter(a=>ASSET_TYPES_LIAB.includes(a.type)).reduce((s,a)=>s+(balances.get(a.id)||0),0);
   const insight = computeSpendInsight();
+  const dailyBudget = computeDailyBudget(balances);
 
   main.innerHTML = `
     <div class="topbar">
@@ -1432,6 +1628,21 @@ function renderDashboard(){
           <div class="hero-sub">자산 ${won(assetsSum)} · 부채 ${won(liabSum)}</div>
         </div>
       </div>
+      ${dailyBudget ? `<div class="card daily-budget-card">
+        <div class="daily-budget-top">
+          <div class="daily-budget-title"><span class="ic">${icon('calendar',{size:16})}</span><span>하루 예산</span></div>
+          <button type="button" class="daily-budget-add-btn" id="addPlannedExpenseBtn">+ 예상 지출</button>
+        </div>
+        <div class="daily-budget-num" style="color:${dailyBudget.perDay<0?'var(--expense)':'var(--accent)'}">${won(Math.floor(dailyBudget.perDay))}</div>
+        <div class="hero-sub">남은 현금 ${won(dailyBudget.cashSum)}${dailyBudget.plannedSum>0?` · 예상지출 ${won(dailyBudget.plannedSum)}`:''} · ${dailyBudget.daysLeft}일 남음</div>
+        ${dailyBudget.upcomingPlanned.length ? `<div class="planned-expense-list">${dailyBudget.upcomingPlanned.map(p=>`
+          <div class="planned-expense-row${p.id===justAddedPlannedId?' pe-row-enter':''}">
+            <span class="pe-date">${Number(p.date.slice(5,7))}/${Number(p.date.slice(8,10))}</span>
+            <span class="pe-memo">${p.memo?escapeHtml(p.memo):'예상 지출'}</span>
+            <span class="pe-amt">${won(p.amount)}</span>
+            <button type="button" class="pe-del" data-del="${p.id}" aria-label="삭제">${icon('close',{size:11})}</button>
+          </div>`).join('')}</div>` : ''}
+      </div>` : ''}
       ${insight ? `<div class="insight-row"><div class="insight-chip">${insight}</div></div>` : ''}
       <div class="tiles">
         <div class="card tile">
@@ -1470,6 +1681,17 @@ function renderDashboard(){
   renderDonut(txs, expense);
   renderAssetMini(balances);
   renderTrend();
+  if(dailyBudget){
+    $('#addPlannedExpenseBtn').onclick = ()=> openPlannedExpenseModal();
+    $$('.pe-del', main).forEach(btn=> guardedClick(btn, ()=> new Promise(resolve=>{
+      animateRowExit(btn.closest('.planned-expense-row'), async ()=>{
+        await deleteDoc('plannedExpenses', btn.dataset.del);
+        toast('삭제했어요', {danger:true});
+        resolve();
+      });
+    })));
+    justAddedPlannedId = null;
+  }
   const heroEl = $('.num-hero');
   if(lastNetWorth !== null && lastNetWorth !== nw){ animateNumber(heroEl, lastNetWorth, nw); }
   lastNetWorth = nw;
@@ -1560,7 +1782,7 @@ function renderDonut(txs, expenseTotal){
   chartDonut = new Chart(ctx, {
     type:'doughnut',
     data:{ labels: entries.map(e=>e.cat.name), datasets:[{ data: entries.map(e=>e.amt), backgroundColor: entries.map(e=>e.cat.color), borderColor: getComputedStyle(document.body).getPropertyValue('--surface') || '#fff', borderWidth:3, hoverOffset:8 }] },
-    options:{ responsive:true, maintainAspectRatio:false, cutout:'72%',
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'72%', animation:{duration:350},
       onClick:(evt, elements)=> setActiveDonutSlice(elements.length ? elements[0].index : null),
       // the center label already shows name/%/amount for the tapped slice,
       // so the default hover tooltip would just duplicate it — worse, it
@@ -1624,11 +1846,17 @@ function renderAssetSummaryInto(wrapId, balances, limit){
   }
   const max = Math.max(...list.map(a=>a.bal), 1);
   wrap.innerHTML = list.map(a=>`
-    <div class="asset-mini-row">
+    <div class="asset-mini-row" data-id="${a.id}" style="cursor:pointer;">
       <span class="asset-mini-name">${escapeHtml(a.name)}</span>
       <span class="asset-mini-bar"><i style="width:${Math.max(4,(a.bal/max)*100)}%;background:${a.color||'var(--accent)'}"></i></span>
       <span class="asset-mini-amt">${won(a.bal)}</span>
     </div>`).join('');
+  // a shortcut into the asset's own edit modal — e.g. to correct its
+  // balance after a real bank reconciliation — without first having to
+  // know to go find it again on the 자산 tab.
+  $$('.asset-mini-row[data-id]', wrap).forEach(row=>{
+    row.onclick = ()=> openAssetModal(state.assets.find(a=>a.id===row.dataset.id));
+  });
 }
 function renderAssetMini(balances){ renderAssetSummaryInto('assetMiniWrap', balances); }
 // shown at the top of 내역 so the reader always has the same current asset
@@ -1693,7 +1921,7 @@ function renderTxCategoryChart(){
     </span>`;
   }).join('') + (restCount>0 ? `<span class="asset-chip"><span class="name" style="color:var(--ink-faint)">외 ${restCount}개</span></span>` : '');
   if(typeof Chart === 'undefined'){
-    wrap.insertAdjacentHTML('beforeend', `<div class="empty" style="padding:8px"><div>차트를 불러오는 중이에요…</div></div>`);
+    wrap.insertAdjacentHTML('beforeend', `<div class="empty" style="padding:14px"><div>차트를 불러오는 중이에요…</div></div>`);
     ensureChartJs().then(()=>{ if(state.tab==='transactions') scheduleRender(); });
     return;
   }
@@ -1717,7 +1945,7 @@ function renderTxCategoryChart(){
   chartTxCat = new Chart(ctx, {
     type:'doughnut',
     data:{ labels: entries.map(e=>e.cat.name), datasets:[{ data: entries.map(e=>e.amt), backgroundColor: entries.map(e=>e.cat.color), borderColor: surfaceColor, borderWidth:2 }] },
-    options:{ responsive:true, maintainAspectRatio:false, cutout:'68%', plugins:{ legend:{display:false}, tooltip:{enabled:false} } },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'68%', animation:{duration:350}, plugins:{ legend:{display:false}, tooltip:{enabled:false} } },
     plugins:[centerPlugin]
   });
 }
@@ -1750,7 +1978,7 @@ function renderTrend(){
       { label:'수입', data: incomeData, borderColor: incomeColor, backgroundColor: incomeColor+'22', fill:true, tension:0.3, pointRadius:3, pointBackgroundColor: incomeColor, borderWidth:2.5 },
       { label:'지출', data: expenseData, borderColor: expenseColor, backgroundColor: expenseColor+'22', fill:true, tension:0.3, pointRadius:3, pointBackgroundColor: expenseColor, borderWidth:2.5 },
     ]},
-    options:{ responsive:true, maintainAspectRatio:false,
+    options:{ responsive:true, maintainAspectRatio:false, animation:{duration:350},
       scales:{ y:{ ticks:{ color:inkSoft, callback:v=>won(v) }, grid:{ color:border } }, x:{ ticks:{ color:inkSoft }, grid:{ display:false } } },
       plugins:{ legend:{ position:'top', align:'end', labels:{ color:inkSoft, boxWidth:10, boxHeight:10, usePointStyle:true, pointStyle:'circle' } },
         tooltip:{ callbacks:{ label: c => ` ${c.dataset.label}: ${won(c.parsed.y)}` } } } }
@@ -1759,13 +1987,21 @@ function renderTrend(){
 
 /* ---------- transactions ---------- */
 function txRowHtml(t){
+  const enterCls = t.id===justAddedTxId ? ' pe-row-enter' : '';
+  // 선택 mode (bulk delete) swaps every row's leading icon for a checkbox —
+  // only ever turned on from the list view, so a row rendered anywhere else
+  // (search results, calendar day-detail) simply won't be in select mode.
+  const selecting = state.txSelectMode;
+  const selCls = selecting ? (state.selectedTxIds.has(t.id) ? ' sel' : '') : '';
+  const checkHtml = selecting ? `<span class="tx-check${state.selectedTxIds.has(t.id)?' sel':''}">${state.selectedTxIds.has(t.id)?icon('check',{size:13}):''}</span>` : '';
   if(t.type==='transfer'){
     const fromA = t.fromAssetId ? assetById(t.fromAssetId) : null;
     const toA = t.toAssetId ? assetById(t.toAssetId) : null;
     const fromName = fromA ? escapeHtml(fromA.name) : '삭제된 자산';
     const toName = toA ? escapeHtml(toA.name) : '삭제된 자산';
     const memoPart = t.memo ? ` · ${escapeHtml(t.memo)}` : '';
-    return `<div class="tx-row" data-id="${t.id}">
+    return `<div class="tx-row${enterCls}${selCls}" data-id="${t.id}">
+      ${checkHtml}
       <span class="tx-ic" style="background:var(--surface-2);color:var(--ink-soft)">${icon('swap',{size:17})}</span>
       <div class="tx-mid">
         <div class="tx-cat">계좌 이체</div>
@@ -1778,7 +2014,8 @@ function txRowHtml(t){
   const color = c ? c.color : '#9CA3AF';
   const a = t.assetId ? assetById(t.assetId) : null;
   const subParts = [a ? escapeHtml(a.name) : null, t.memo ? escapeHtml(t.memo) : null].filter(Boolean);
-  return `<div class="tx-row" data-id="${t.id}">
+  return `<div class="tx-row${enterCls}${selCls}" data-id="${t.id}">
+    ${checkHtml}
     <span class="tx-ic" style="background:${color}1F;color:${color}">${icon(c?.icon||'sparkle',{size:17})}</span>
     <div class="tx-mid">
       <div class="tx-cat">${c?escapeHtml(c.name):'삭제된 카테고리'}</div>
@@ -1789,8 +2026,28 @@ function txRowHtml(t){
 }
 function wireTxRows(container){
   $$('.tx-row', container).forEach(row=>{
-    row.onclick = ()=> openTxModal(state.transactions.find(t=>t.id===row.dataset.id));
+    row.onclick = ()=>{
+      if(state.txSelectMode){
+        const id = row.dataset.id;
+        if(state.selectedTxIds.has(id)) state.selectedTxIds.delete(id); else state.selectedTxIds.add(id);
+        renderTxList();
+        updateTxSelectBar();
+        return;
+      }
+      openTxModal(state.transactions.find(t=>t.id===row.dataset.id));
+    };
   });
+}
+// keeps the floating "N건 선택됨 · 삭제" bar in sync with the selection Set
+// without a full renderTransactions() — that would also destroy/recreate
+// the category donut chart for no reason, same cost concern as the
+// list/calendar toggle just above.
+function updateTxSelectBar(){
+  const bar = $('#txSelectBar');
+  if(!bar) return;
+  $('#txSelectCount').textContent = `${state.selectedTxIds.size}건 선택됨`;
+  const delBtn = $('#txBulkDeleteBtn');
+  if(delBtn) delBtn.disabled = state.selectedTxIds.size===0;
 }
 
 function renderTransactions(){
@@ -1800,7 +2057,8 @@ function renderTransactions(){
       <h1 class="page-title">내역</h1>
       <div style="display:flex;align-items:center;gap:10px;">
         <span id="txMonthNavWrap">${monthNavHtml()}</span>
-        <button class="btn btn-primary btn-sm" id="txAddBtn">${icon('plus',{size:14})}거래 추가</button>
+        <button class="btn btn-ghost btn-sm" id="txSelectToggleBtn" style="${state.txView==='list'?'':'display:none;'}">${state.txSelectMode?'취소':'선택'}</button>
+        <button class="btn btn-primary btn-sm" id="txAddBtn" style="${state.txSelectMode?'display:none;':''}">${icon('plus',{size:14})}거래 추가</button>
       </div>
     </div>
     <div class="search-bar-wrap" style="margin-bottom:10px;">
@@ -1821,16 +2079,52 @@ function renderTransactions(){
       <button data-v="calendar" class="${state.txView==='calendar'?'active':''}">달력</button>
     </div>
     <div id="txBody"></div>
+    ${state.txSelectMode ? `<div class="tx-select-bar" id="txSelectBar">
+      <span id="txSelectCount">${state.selectedTxIds.size}건 선택됨</span>
+      <button type="button" class="btn btn-danger btn-sm" id="txBulkDeleteBtn" ${state.selectedTxIds.size===0?'disabled':''}>삭제</button>
+    </div>` : ''}
   `;
   wireMonthNav();
   $('#txAddBtn').onclick = ()=> openTxModal(null);
   renderTxAssetSummary();
   renderTxCategoryChart();
+  $('#txSelectToggleBtn').onclick = ()=>{
+    state.txSelectMode = !state.txSelectMode;
+    state.selectedTxIds.clear();
+    scheduleRender();
+  };
+  if($('#txBulkDeleteBtn')) guardedClick($('#txBulkDeleteBtn'), async ()=>{
+    const ids = [...state.selectedTxIds];
+    if(!ids.length) return;
+    if(!confirm(`선택한 ${ids.length}건을 삭제할까요?`)) return;
+    // allSettled rather than all — if one delete fails partway through a
+    // batch, the ones that DID succeed must still drop out of the
+    // selection Set and off the screen instead of lingering as "selected"
+    // ghosts of transactions that no longer exist.
+    const results = await Promise.allSettled(ids.map(id=> deleteDoc('transactions', id)));
+    results.forEach((r,i)=>{ if(r.status==='fulfilled') state.selectedTxIds.delete(ids[i]); });
+    const failCount = results.filter(r=>r.status==='rejected').length;
+    if(failCount===0){ state.txSelectMode = false; }
+    scheduleRender();
+    if(failCount>0){
+      results.forEach(r=>{ if(r.status==='rejected') console.error(r.reason); });
+      toast(`${ids.length-failCount}건 삭제, ${failCount}건 실패했어요`, {danger:true});
+    } else {
+      toast('삭제했어요', {danger:true});
+    }
+  });
   $$('.tx-view-toggle button').forEach(b=> b.onclick = ()=>{
     state.txView = b.dataset.v;
-    if(state.txView==='calendar' && !state.selectedDay){
-      const t = todayStr();
-      state.selectedDay = t.startsWith(monthKey(state.month.y, state.month.m)) ? t : null;
+    if(state.txView==='calendar'){
+      // 선택 mode only makes sense against the flat list — the calendar's
+      // day-detail panel reuses the same row markup/checkbox, so leaving
+      // it on here would show checkboxes with no way to see the running
+      // total across a whole month at once.
+      state.txSelectMode = false; state.selectedTxIds.clear();
+      if(!state.selectedDay){
+        const t = todayStr();
+        state.selectedDay = t.startsWith(monthKey(state.month.y, state.month.m)) ? t : null;
+      }
     }
     // swapping 목록/달력 doesn't change the month, the asset totals, or the
     // category chart above it — a full scheduleRender() was rebuilding the
@@ -1839,6 +2133,15 @@ function renderTransactions(){
     // for no reason. Only #txBody actually needs to change.
     $$('.tx-view-toggle button').forEach(x=> x.classList.toggle('active', x===b));
     if(state.txView==='calendar') renderTxCalendar(); else renderTxList();
+    // 선택 toggle button and the floating select bar live in the shell built
+    // above, outside what the branch above just repainted — cheap direct
+    // DOM update keeps them in sync with the now-off select mode without a
+    // full re-render (which would also needlessly rebuild the donut chart).
+    $('#txSelectToggleBtn').style.display = state.txView==='list' ? '' : 'none';
+    $('#txSelectToggleBtn').textContent = state.txSelectMode ? '취소' : '선택';
+    if($('#txSelectBar')) $('#txSelectBar').remove();
+    $('#txAddBtn').style.display = '';
+    $('#fab').style.display = 'flex';
   });
   // the search input is never rebuilt while the user types (only #txBody
   // and the sections it toggles are) — replacing the input element itself
@@ -1970,11 +2273,16 @@ function renderTemplateRow(wrapId, editMode, callbacks){
     };
   });
   $$('.tpl-del', wrap).forEach(del=>{
-    guardedClick(del, async (e)=>{
+    guardedClick(del, (e)=>{
       e.stopPropagation();
-      await deleteDoc('templates', del.dataset.del);
-      toast('삭제했어요', {danger:true});
-      if(callbacks.onDeleted) callbacks.onDeleted();
+      return new Promise(resolve=>{
+        animateRowExit(del.closest('.tpl-chip'), async ()=>{
+          await deleteDoc('templates', del.dataset.del);
+          toast('삭제했어요', {danger:true});
+          if(callbacks.onDeleted) callbacks.onDeleted();
+          resolve();
+        }, 'width');
+      });
     });
   });
   $('#'+wrapId+'AddBtn').onclick = ()=> openTemplateModal(null);
@@ -2058,7 +2366,14 @@ function renderTxCalendar(){
   detail.innerHTML = `<h3>${label}</h3>` + dayTxs.map(txRowHtml).join('');
   wireTxRows(detail);
 }
-function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+// escapes for BOTH element content and quoted-attribute contexts (some call
+// sites interpolate this into value="..."), since d.textContent/innerHTML
+// alone never touches quote characters — an unescaped " in a search query
+// or name field could otherwise break out of a value="" attribute.
+function escapeHtml(s){
+  const d=document.createElement('div'); d.textContent=s;
+  return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 
 /* ---------- categories ---------- */
 function renderCategories(){
@@ -2123,6 +2438,9 @@ function renderAssets(){
   $('#assetListPositive').innerHTML = rowsHtml(assets, false);
   $('#assetListLiab').innerHTML = rowsHtml(liabs, true);
   $$('.asset-row').forEach(r=> r.onclick = ()=> openAssetModal(state.assets.find(a=>a.id===r.dataset.id)));
+  const heroEl = $('.num-hero');
+  if(lastNetWorth !== null && lastNetWorth !== nw){ animateNumber(heroEl, lastNetWorth, nw); }
+  lastNetWorth = nw;
 }
 
 /* ---------- analytics ---------- */
@@ -2260,6 +2578,7 @@ function renderAnalytics(){
     const sub = $('#catChangeSub');
     if(sub) sub.textContent = state.analyticsView==='weekly' ? '지난주 대비' : '지난달 대비';
     renderCategoryChanges();
+    flashAnim($('#analyticsCatChangeWrap'));
   });
   renderCategoryChanges();
   renderWeekdayPattern();
@@ -2303,6 +2622,7 @@ function renderAnalytics(){
   });
   updateGoal();
 }
+let lastAnalyticsStatValue = null;
 function renderAnalyticsChart(){
   const canvas = $('#analyticsCanvas');
   if(!canvas) return;
@@ -2322,8 +2642,12 @@ function renderAnalyticsChart(){
       <div class="analytics-stat-label">${isWeekly?'이번 주':'이번 달'} 지출</div>
       ${delta!==0 ? `<div class="analytics-stat-badge ${up?'up':'down'}">${up?'▲':'▼'}${pctStr?' '+pctStr:''} ${won(Math.abs(delta))}</div>` : ''}
     `;
+    const statEl = $('.analytics-stat-value', statWrap);
+    if(lastAnalyticsStatValue !== null && lastAnalyticsStatValue !== cur){ animateNumber(statEl, lastAnalyticsStatValue, cur); }
+    lastAnalyticsStatValue = cur;
   } else if(statWrap){
     statWrap.innerHTML = '';
+    lastAnalyticsStatValue = null;
   }
   if(typeof Chart === 'undefined'){
     wrap.insertAdjacentHTML('beforeend', `<div class="empty" style="padding:14px"><div>차트를 불러오는 중이에요…</div></div>`);
@@ -2331,14 +2655,30 @@ function renderAnalyticsChart(){
     return;
   }
   const ctx = canvas.getContext('2d');
-  if(chartAnalytics) chartAnalytics.destroy();
   const inkSoft = getComputedStyle(document.documentElement).getPropertyValue('--ink-soft').trim() || '#6B7280';
   const border = getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || '#E5E7EB';
   const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#6C4FD9';
+  // toggling 주별/월별 re-runs this on the SAME canvas (the toggle handler
+  // calls this function directly rather than the full renderAnalytics()) —
+  // updating the live chart's data lets Chart.js tween bars from their old
+  // height to the new one instead of a destroy+recreate hard-cut. Only a
+  // genuine tab re-entry (a fresh #analyticsCanvas element) still needs a
+  // full rebuild.
+  if(chartAnalytics && chartAnalytics.canvas === canvas){
+    chartAnalytics.data.labels = labels;
+    chartAnalytics.data.datasets[0].data = data;
+    chartAnalytics.data.datasets[0].backgroundColor = accent+'CC';
+    chartAnalytics.options.scales.y.ticks.color = inkSoft;
+    chartAnalytics.options.scales.y.grid.color = border;
+    chartAnalytics.options.scales.x.ticks.color = inkSoft;
+    chartAnalytics.update();
+    return;
+  }
+  if(chartAnalytics) chartAnalytics.destroy();
   chartAnalytics = new Chart(ctx, {
     type:'bar',
     data:{ labels, datasets:[{ data, backgroundColor: accent+'CC', borderRadius:6, maxBarThickness:28 }] },
-    options:{ responsive:true, maintainAspectRatio:false,
+    options:{ responsive:true, maintainAspectRatio:false, animation:{duration:350},
       scales:{ y:{ ticks:{ color:inkSoft, callback:v=>wonCompact(v) }, grid:{ color:border } }, x:{ ticks:{ color:inkSoft }, grid:{ display:false } } },
       plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>won(c.parsed.y) } } } }
   });
@@ -2347,7 +2687,7 @@ function renderCategoryChanges(){
   const wrap = $('#analyticsCatChangeWrap');
   const rows = computeCategoryChanges();
   if(rows.length===0){
-    wrap.innerHTML = `<div class="empty" style="padding:16px 6px"><div>비교할 지출 내역이 아직 없어요</div></div>`;
+    wrap.innerHTML = `<div class="empty" style="padding:16px 6px"><div class="e-ic">${icon('chart',{size:22})}</div><div>비교할 지출 내역이 아직 없어요</div></div>`;
     return;
   }
   wrap.innerHTML = rows.map(r=>{
@@ -2370,7 +2710,7 @@ function renderWeekdayPattern(){
   const labels = ['일','월','화','수','목','금','토'];
   const max = Math.max(...sums, 1);
   if(sums.every(s=>s===0)){
-    wrap.innerHTML = `<div class="empty" style="padding:16px 6px"><div>지출 내역이 아직 없어요</div></div>`;
+    wrap.innerHTML = `<div class="empty" style="padding:16px 6px"><div class="e-ic">${icon('chart',{size:22})}</div><div>지출 내역이 아직 없어요</div></div>`;
     if($('#analyticsWeekdaySummary')) $('#analyticsWeekdaySummary').textContent = '';
     return;
   }
@@ -2404,6 +2744,34 @@ function renderSettings(){
           <span class="settings-desc">직접 고르기</span>
         </div>
       </div>
+      <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+        <div>
+          <div class="settings-label">다크 모드</div>
+          <div class="settings-desc">화면을 어둡게 표시해요</div>
+        </div>
+        <div class="tx-view-toggle" id="themeToggle" style="align-self:flex-start;">
+          <button type="button" data-v="system" class="${state.settings.theme==='system'?'active':''}">시스템</button>
+          <button type="button" data-v="light" class="${state.settings.theme==='light'?'active':''}">라이트</button>
+          <button type="button" data-v="dark" class="${state.settings.theme==='dark'?'active':''}">다크</button>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div style="flex:1;min-width:0;margin-right:12px;">
+          <div class="settings-label">급여일</div>
+          <div class="settings-desc">홈 화면에 급여일까지 하루 예산을 보여드려요</div>
+        </div>
+        <select id="paydaySelect" class="btn btn-ghost btn-sm" style="flex-shrink:0;">
+          <option value="">미설정</option>
+          ${Array.from({length:31},(_,i)=>i+1).map(d=>`<option value="${d}" ${state.settings.payday===d?'selected':''}>${d}일</option>`).join('')}
+        </select>
+      </div>
+      ${state.assets.length ? `<div class="settings-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+        <div>
+          <div class="settings-label">하루 예산에 포함할 자산</div>
+          <div class="settings-desc">체크한 자산의 잔액만 하루 예산 계산에 들어가요</div>
+        </div>
+        <div class="budget-asset-list" id="budgetAssetList"></div>
+      </div>` : ''}
       <div class="settings-row">
         <div style="flex:1;min-width:0;margin-right:12px;">
           <div class="settings-label">계정</div>
@@ -2416,8 +2784,37 @@ function renderSettings(){
   const sw = $('#accentSwatches');
   sw.innerHTML = ACCENT_PRESETS.map(c=>`<span class="accent-swatch ${state.settings.accent===c?'sel':''}" data-c="${c}" style="background:${c}"></span>`).join('');
   $$('.accent-swatch', sw).forEach(s=> s.onclick = ()=>{ applyAccent(s.dataset.c); saveSettings({accent:s.dataset.c}); renderSettings(); });
+  $$('#themeToggle button').forEach(b=> b.onclick = ()=>{
+    state.settings.theme = b.dataset.v;
+    applyTheme(state.settings.theme);
+    saveSettings({theme:b.dataset.v});
+    renderSettings();
+  });
   $('#accentCustom').oninput = (e)=>{ applyAccent(e.target.value); };
   $('#accentCustom').onchange = (e)=>{ saveSettings({accent:e.target.value}); renderSettings(); };
+  $('#paydaySelect').onchange = (e)=>{
+    const v = e.target.value ? Number(e.target.value) : null;
+    state.settings.payday = v;
+    saveSettings({payday:v});
+  };
+  if(state.assets.length){
+    const balances = computeAssetBalances();
+    const selected = state.settings.budgetAssetIds || state.assets.filter(a=>a.type==='현금').map(a=>a.id);
+    const list = $('#budgetAssetList');
+    list.innerHTML = sortAssetsForPicker(state.assets, balances).map(a=>`
+      <span class="budget-asset-chip ${selected.includes(a.id)?'sel':''}" data-id="${a.id}">
+        <span class="bac-name">${escapeHtml(a.name)}</span>
+        <span class="bac-bal">${won(balances.get(a.id)||0)}</span>
+      </span>`).join('');
+    $$('.budget-asset-chip', list).forEach(chip=> chip.onclick = ()=>{
+      const cur = state.settings.budgetAssetIds || state.assets.filter(a=>a.type==='현금').map(a=>a.id);
+      const id = chip.dataset.id;
+      const next = cur.includes(id) ? cur.filter(x=>x!==id) : [...cur, id];
+      state.settings.budgetAssetIds = next;
+      saveSettings({budgetAssetIds:next});
+      renderSettings();
+    });
+  }
   $('#logoutBtn').onclick = ()=> fbAuth.signOut();
 }
 
@@ -2432,6 +2829,23 @@ function closeModal(){
   setTimeout(()=>{ $('#modalRoot').innerHTML=''; }, 160);
 }
 document.addEventListener('keydown', (e)=>{
+  if(e.key==='Enter'){
+    // Enter submits whichever sheet is open — but only when it's a plain
+    // text field being typed into, not a button (native Enter already
+    // clicks it) and not while a popover sits on top (the calculator has
+    // its own Enter behavior — compute then apply — so let it handle Enter
+    // itself rather than also submitting the sheet underneath).
+    if(document.querySelector('.date-picker-pop, .calc-pop, .asset-picker-pop')) return;
+    const overlay = $('#modalRoot .overlay');
+    if(!overlay || e.target.tagName!=='INPUT') return;
+    // a readonly field (날짜) isn't actually being typed into — Enter here
+    // reads as "open this" (same as a click/tap would), not "I'm done with
+    // the form", so it shouldn't submit whatever's currently filled in.
+    if(e.target.readOnly){ e.preventDefault(); e.target.click(); return; }
+    const saveBtn = overlay.querySelector('.sheet-actions .btn-primary');
+    if(saveBtn){ e.preventDefault(); saveBtn.click(); }
+    return;
+  }
   if(e.key!=='Escape') return;
   // a popover (date/calculator/asset picker) sits on top of the sheet, not
   // inside it — Escape should back out of just that first, the same way an
@@ -2718,6 +3132,13 @@ function openTxModal(existing, prefill){
   const root = $('#modalRoot');
   let type = existing?.type || prefill?.type || 'expense';
   let categoryId = existing?.categoryId || prefill?.categoryId || null;
+  // a brand-new, from-scratch transaction (no existing/template) defaults
+  // its asset to whichever one was used last — most transactions in a row
+  // pay from the same card/account, so this saves a tap on the common case
+  // without overriding an existing transaction's own asset or a template's.
+  const rememberedAssetId = (()=>{ try{ return localStorage.getItem('gagyebu_lastAssetId')||''; }catch(e){ return ''; } })();
+  const defaultAssetId = existing?.assetId || prefill?.assetId ||
+    ((!existing && !prefill && state.assets.some(a=>a.id===rememberedAssetId)) ? rememberedAssetId : '');
   root.innerHTML = `
     <div class="overlay" id="ovTx">
       <div class="sheet">
@@ -2753,7 +3174,7 @@ function openTxModal(existing, prefill){
         <div class="form-group" id="txAssetGroup">
           <label class="form-label">자산</label>
           <div class="form-input asset-trigger" id="txAssetTrigger" tabindex="0" role="button"><span class="at-label" id="txAssetLabel">연결 안 함</span>${icon('chevronRight',{size:13})}</div>
-          <input type="hidden" id="txAsset" value="${existing?.assetId||prefill?.assetId||''}">
+          <input type="hidden" id="txAsset" value="${defaultAssetId}">
         </div>
         <div id="txTransferGroup" style="display:none">
           <div class="form-group">
@@ -2804,13 +3225,20 @@ function openTxModal(existing, prefill){
     if(categoryId && !opts.some(c=>c.id===categoryId)) categoryId = null;
     if(!categoryId && opts.length) categoryId = opts[0].id;
     const optsHtml = opts.map(c=>`
-      <span class="cat-opt ${categoryId===c.id?'sel':''}" data-id="${c.id}" style="${categoryId===c.id?`background:${c.color}1F;color:${c.color};border-color:${c.color}`:''}">
+      <span class="cat-opt ${categoryId===c.id?'sel':''}" data-id="${c.id}" tabindex="0" role="button" style="${categoryId===c.id?`background:${c.color}1F;color:${c.color};border-color:${c.color}`:''}">
         ${icon(c.icon||'sparkle',{size:14})}<span>${escapeHtml(c.name)}</span>
       </span>
     `).join('');
-    const addChip = `<span class="cat-opt" id="txAddCatOpt" style="border-style:dashed;color:var(--ink-faint)">${icon('plus',{size:14})}<span>카테고리 추가</span></span>`;
+    const addChip = `<span class="cat-opt" id="txAddCatOpt" tabindex="0" role="button" style="border-style:dashed;color:var(--ink-faint)">${icon('plus',{size:14})}<span>카테고리 추가</span></span>`;
     $('#txCatPick').innerHTML = (opts.length ? optsHtml : `<div class="empty" style="padding:14px 6px;width:100%"><div>카테고리를 먼저 추가해주세요</div></div>`) + addChip;
     $$('#txCatPick .cat-opt[data-id]').forEach(el=> el.onclick=()=>{ categoryId=el.dataset.id; paintCatPick(); });
+    // chips are <span>s, not real <button>s (so the selected one can carry
+    // its category's own color as inline background rather than a fixed
+    // button style) — tabindex+role above puts them in tab order, this
+    // makes Enter/Space activate them the way a real button would.
+    $$('#txCatPick .cat-opt').forEach(el=> el.onkeydown=(e)=>{
+      if(e.key==='Enter' || e.key===' '){ e.preventDefault(); el.click(); }
+    });
     // lets someone add a missing category mid-entry instead of abandoning
     // the transaction to go to the 카테고리 tab and losing what they'd
     // already typed — the in-progress form values are captured and the
@@ -2877,10 +3305,16 @@ function openTxModal(existing, prefill){
   });
   $('#closeTx').onclick = closeModal;
   $('#ovTx').onclick = (e)=>{ if(e.target.id==='ovTx') closeModal(); };
-  if(existing) guardedClick($('#txDelete'), async ()=>{
-    await deleteDoc('transactions', existing.id);
-    closeModal(); scheduleRender(); toast('삭제했어요', {danger:true});
-  });
+  if(existing) guardedClick($('#txDelete'), ()=> new Promise(resolve=>{
+    // the row lives in the list underneath this modal — animate it out
+    // there while the modal's own close animation plays on top, so both
+    // finish together instead of the row just snapping away afterward.
+    animateRowExit(document.querySelector(`.tx-row[data-id="${existing.id}"]`), async ()=>{
+      await deleteDoc('transactions', existing.id);
+      closeModal(); scheduleRender(); toast('삭제했어요', {danger:true});
+      resolve();
+    });
+  }));
   guardedClick($('#txSave'), async ()=>{
     const amount = amountValue($('#txAmount'));
     const date = $('#txDate').value;
@@ -2898,8 +3332,9 @@ function openTxModal(existing, prefill){
       if(!categoryId){ toast('카테고리를 선택해주세요', {danger:true}); shakeSheet(); return; }
       const assetId = $('#txAsset').value || null;
       data = { type, date, categoryId, amount, memo, assetId, fromAssetId:null, toAssetId:null, updatedAt:Date.now() };
+      if(assetId){ try{ localStorage.setItem('gagyebu_lastAssetId', assetId); }catch(e){} }
     }
-    if(existing) await updateDoc('transactions', existing.id, data); else await addDoc('transactions', data);
+    if(existing) await updateDoc('transactions', existing.id, data); else justAddedTxId = await addDoc('transactions', data);
     closeModal(); scheduleRender(); toast(existing?'수정했어요':'추가했어요');
   });
 }
@@ -3040,6 +3475,43 @@ function openAssetModal(existing){
   });
 }
 
+function openPlannedExpenseModal(existing){
+  const root = $('#modalRoot');
+  root.innerHTML = `
+    <div class="overlay" id="ovPlanned">
+      <div class="sheet">
+        <div class="sheet-head">
+          <div class="sheet-title">${existing?'예상 지출 수정':'예상 지출 추가'}</div>
+          <button class="sheet-close" id="closePlanned" aria-label="닫기">${icon('close',{size:18})}</button>
+        </div>
+        <div class="form-group"><label class="form-label">금액</label><input class="form-input" type="text" id="plannedAmount" placeholder="0" value="${existing?.amount?Number(existing.amount).toLocaleString('ko-KR'):''}"></div>
+        <div class="form-group"><label class="form-label">날짜</label><input class="form-input" type="text" id="plannedDate" readonly value="${existing?.date||todayStr()}"></div>
+        <div class="form-group"><label class="form-label">메모</label><input class="form-input" id="plannedMemo" lang="ko" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="예: 여행 경비, 병원비" value="${existing?escapeHtml(existing.memo||''):''}"></div>
+        <div class="sheet-actions">
+          ${existing?'<button class="btn btn-danger" id="plannedDelete">삭제</button>':''}
+          <button class="btn btn-primary" id="plannedSave">저장</button>
+        </div>
+      </div>
+    </div>`;
+  wireAmountInput($('#plannedAmount'));
+  $('#plannedDate').onclick = ()=> openDatePicker($('#plannedDate'));
+  $('#closePlanned').onclick = closeModal;
+  $('#ovPlanned').onclick = (e)=>{ if(e.target.id==='ovPlanned') closeModal(); };
+  if(existing) guardedClick($('#plannedDelete'), async ()=>{
+    await deleteDoc('plannedExpenses', existing.id); closeModal(); toast('삭제했어요', {danger:true});
+  });
+  guardedClick($('#plannedSave'), async ()=>{
+    const amount = amountValue($('#plannedAmount'));
+    const date = $('#plannedDate').value;
+    const memo = $('#plannedMemo').value.trim();
+    if(!amount || amount<=0){ toast('금액을 입력해주세요', {danger:true}); shakeSheet(); return; }
+    if(!date){ toast('날짜를 선택해주세요', {danger:true}); shakeSheet(); return; }
+    const data = { amount, date, memo };
+    if(existing) await updateDoc('plannedExpenses', existing.id, data); else justAddedPlannedId = await addDoc('plannedExpenses', data);
+    closeModal(); scheduleRender(); toast(existing?'수정했어요':'추가했어요');
+  });
+}
+
 function openTemplateModal(existing){
   const root = $('#modalRoot');
   let type = existing?.type || 'expense';
@@ -3076,11 +3548,14 @@ function openTemplateModal(existing){
     if(categoryId && !opts.some(c=>c.id===categoryId)) categoryId = null;
     if(!categoryId && opts.length) categoryId = opts[0].id;
     $('#tplCatPick').innerHTML = opts.length ? opts.map(c=>`
-      <span class="cat-opt ${categoryId===c.id?'sel':''}" data-id="${c.id}" style="${categoryId===c.id?`background:${c.color}1F;color:${c.color};border-color:${c.color}`:''}">
+      <span class="cat-opt ${categoryId===c.id?'sel':''}" data-id="${c.id}" tabindex="0" role="button" style="${categoryId===c.id?`background:${c.color}1F;color:${c.color};border-color:${c.color}`:''}">
         ${icon(c.icon||'sparkle',{size:14})}<span>${escapeHtml(c.name)}</span>
       </span>
     `).join('') : `<div class="empty" style="padding:14px 6px"><div>카테고리를 먼저 추가해주세요</div></div>`;
-    $$('#tplCatPick .cat-opt').forEach(el=> el.onclick=()=>{ categoryId=el.dataset.id; paintCatPick(); });
+    $$('#tplCatPick .cat-opt').forEach(el=>{
+      el.onclick=()=>{ categoryId=el.dataset.id; paintCatPick(); };
+      el.onkeydown=(e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); el.click(); } };
+    });
   };
   const fillAssetSelect = ()=>{
     const balances = computeAssetBalances();
@@ -3116,33 +3591,77 @@ function openTemplateModal(existing){
 }
 
 /* ---------- swipe-to-switch-tab (mobile only) ---------- */
-// mirrors the bottom nav's own tab order. Only active at mobile layout
-// widths (matches the .app column/bottom-nav breakpoint) so it never
-// fights with the desktop rail or with genuinely horizontal-scrolling
-// widgets, which all live inside modals rather than #main.
+// mirrors the bottom nav's own tab order (TAB_ORDER, shared with render()'s
+// direction-aware transition). Only active at mobile layout widths (matches
+// the .app column/bottom-nav breakpoint) so it never fights with the
+// desktop rail or with genuinely horizontal-scrolling widgets, which all
+// live inside modals rather than #main.
+//
+// The content visibly tracks the finger (touch-action:pan-y on #main cedes
+// horizontal gesture handling to this listener instead of the browser's own
+// edge-swipe-back, which is what made one direction feel unreliable before)
+// and either finishes the push into the next tab or springs back — both
+// directions are symmetric, there's no directional bias.
 (function initSwipeNav(){
-  const TAB_ORDER = ['dashboard','transactions','categories','assets','analytics','settings'];
   const main = $('#main');
-  let startX = 0, startY = 0, tracking = false;
+  let startX = 0, startY = 0, axis = null, tracking = false, dragDX = 0, swapping = false;
   main.addEventListener('touchstart', (e)=>{
-    tracking = window.innerWidth<=720 && !$('#modalRoot .overlay') && e.touches.length===1;
+    tracking = !swapping && window.innerWidth<=720 && !$('#modalRoot .overlay') && e.touches.length===1;
     if(!tracking) return;
+    axis = null; dragDX = 0;
     startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+    main.style.transition = 'none';
   }, {passive:true});
-  main.addEventListener('touchend', (e)=>{
+  main.addEventListener('touchmove', (e)=>{
     if(!tracking) return;
-    tracking = false;
-    if($('#modalRoot .overlay')) return;
-    const dx = e.changedTouches[0].clientX - startX;
-    const dy = e.changedTouches[0].clientY - startY;
-    // require a decisive, mostly-horizontal drag so an ordinary vertical
-    // scroll (or a diagonal thumb slip) never gets mistaken for a swipe.
-    if(Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)*1.5) return;
+    const dx = e.touches[0].clientX - startX, dy = e.touches[0].clientY - startY;
+    if(axis===null){
+      // require a decisive, mostly-horizontal drag before committing to
+      // either axis — an ordinary vertical scroll (or a diagonal thumb
+      // slip) should never get mistaken for a swipe.
+      if(Math.abs(dx)<8 && Math.abs(dy)<8) return;
+      axis = Math.abs(dx) > Math.abs(dy)*1.2 ? 'x' : 'y';
+      if(axis!=='x'){ tracking = false; return; } // hand off to native vertical scroll
+    }
+    e.preventDefault();
     const idx = TAB_ORDER.indexOf(state.tab);
-    const nextIdx = idx + (dx<0 ? 1 : -1);
-    if(idx===-1 || nextIdx<0 || nextIdx>=TAB_ORDER.length) return;
-    state.tab = TAB_ORDER[nextIdx];
-    scheduleRender();
+    const atStart = idx<=0 && dx>0, atEnd = idx>=TAB_ORDER.length-1 && dx<0;
+    // rubber-band resistance past the first/last tab, same idea as iOS
+    // overscroll, so dragging off either end still feels like it's
+    // responding to your finger instead of just doing nothing.
+    dragDX = (atStart || atEnd) ? dx*0.35 : dx;
+    main.style.transform = `translateX(${dragDX}px)`;
+  }, {passive:false});
+  main.addEventListener('touchend', ()=>{
+    if(!tracking || axis!=='x'){ tracking = false; axis = null; return; }
+    tracking = false;
+    const idx = TAB_ORDER.indexOf(state.tab);
+    const nextIdx = idx + (dragDX<0 ? 1 : -1);
+    const valid = Math.abs(dragDX)>=60 && nextIdx>=0 && nextIdx<TAB_ORDER.length;
+    main.style.transition = 'transform .22s cubic-bezier(.22,.75,.32,1)';
+    if(valid){
+      swapping = true;
+      main.style.transform = `translateX(${dragDX<0?-100:100}%)`;
+      const finish = ()=>{
+        main.removeEventListener('transitionend', finish);
+        state.tab = TAB_ORDER[nextIdx];
+        main.style.transition = 'none';
+        main.style.transform = '';
+        render();
+        swapping = false;
+      };
+      main.addEventListener('transitionend', finish, {once:true});
+      setTimeout(()=>{ if(swapping) finish(); }, 260); // safety net if transitionend never fires
+    } else {
+      main.style.transform = 'translateX(0px)';
+    }
+    axis = null;
+  }, {passive:true});
+  main.addEventListener('touchcancel', ()=>{
+    if(!tracking) return;
+    tracking = false; axis = null;
+    main.style.transition = 'transform .22s ease';
+    main.style.transform = 'translateX(0px)';
   }, {passive:true});
 })();
 
@@ -3152,6 +3671,7 @@ wireAuthUI();
 $$('.navlink').forEach(b=> b.onclick = ()=>{ state.tab = b.dataset.tab; scheduleRender(); });
 $('#fab').onclick = ()=> openTxModal(null);
 applyAccent(state.settings.accent);
+applyTheme(state.settings.theme);
 </script>
 </body>
 </html>
