@@ -2539,11 +2539,28 @@ function renderTxCalendar(){
     <div class="card" id="dayDetailCard"></div>
   `;
   $$('.cal-cell[data-date]').forEach(cell=>{
-    cell.onclick = ()=>{ state.selectedDay = state.selectedDay===cell.dataset.date ? null : cell.dataset.date; renderTxCalendar(); };
+    cell.onclick = ()=>{
+      // picking a day used to rebuild the ENTIRE calendar (grid + detail)
+      // through this same function — a full innerHTML replace just to
+      // toggle which cell has .selected, which also meant the detail panel
+      // below always hard-swapped with no transition. Now only the grid's
+      // own selection state changes in place, and the detail panel gets a
+      // fade so switching days reads as a transition, not a jump.
+      const wasSelected = state.selectedDay===cell.dataset.date;
+      $$('.cal-cell.selected').forEach(c=> c.classList.remove('selected'));
+      state.selectedDay = wasSelected ? null : cell.dataset.date;
+      if(!wasSelected) cell.classList.add('selected');
+      paintDayDetail();
+    };
   });
+  paintDayDetail();
+}
+function paintDayDetail(){
   const detail = $('#dayDetailCard');
+  if(!detail) return;
   if(!state.selectedDay){
     detail.innerHTML = `<div class="empty" style="padding:24px 10px"><div class="e-ic">${icon('list',{size:26})}</div><div>날짜를 선택하면 그날의 내역을 볼 수 있어요</div></div>`;
+    flashAnim(detail);
     return;
   }
   const dayTxs = state.transactions.filter(t=>t.date===state.selectedDay).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
@@ -2551,10 +2568,12 @@ function renderTxCalendar(){
   const label = `${d.getMonth()+1}월 ${d.getDate()}일 (${'일월화수목금토'[d.getDay()]})`;
   if(dayTxs.length===0){
     detail.innerHTML = `<h3>${label}</h3><div class="empty" style="padding:18px 10px"><div class="e-ic">${icon('inbox',{size:24})}</div><div>이 날 기록된 내역이 없어요</div></div>`;
+    flashAnim(detail);
     return;
   }
   detail.innerHTML = `<h3>${label}</h3>` + dayTxs.map(txRowHtml).join('');
   wireTxRows(detail);
+  flashAnim(detail);
 }
 // escapes for BOTH element content and quoted-attribute contexts (some call
 // sites interpolate this into value="..."), since d.textContent/innerHTML
