@@ -101,7 +101,7 @@ body{
   min-height:100dvh;
   transition:background-color .2s ease;
 }
-button, .navlink, .tx-row, .cat-chip, .asset-row, .cal-cell, .tpl-chip, .accent-swatch, .color-opt, .icon-opt, .cat-opt{
+button, .navlink, .tx-row, .cat-chip, .asset-row, .cal-cell, .tpl-chip, .accent-swatch, .color-opt, .icon-opt, .cat-opt, .asset-filter-chip{
   -webkit-tap-highlight-color: transparent;
   user-select:none;
   -webkit-user-select:none;
@@ -110,10 +110,10 @@ button, .navlink, .tx-row, .cat-chip, .asset-row, .cal-cell, .tpl-chip, .accent-
 .brand-mark, .hero-badge, .btn-primary, .fab, .accent-swatch, .navlink.active{
   transition:background-color .2s ease, color .2s ease, outline-color .2s ease;
 }
-.btn, .fab, .navlink, .cat-chip, .asset-row, .tx-row, .cal-cell, .accent-swatch, .color-opt, .icon-opt, .add-cat-chip, .month-nav button, .sheet-close, .tx-view-toggle button, .cat-opt, .preset-chip, .tpl-chip, .type-toggle button{
+.btn, .fab, .navlink, .cat-chip, .asset-row, .tx-row, .cal-cell, .accent-swatch, .color-opt, .icon-opt, .add-cat-chip, .month-nav button, .sheet-close, .tx-view-toggle button, .cat-opt, .preset-chip, .tpl-chip, .type-toggle button, .asset-filter-chip{
   transition:background-color .15s ease, border-color .15s ease, color .15s ease, transform .12s ease, outline-color .15s ease, box-shadow .15s ease;
 }
-.btn:active, .fab:active, .cat-chip:active, .asset-row:active, .tx-row:active, .cal-cell:active, .navlink:active, .accent-swatch:active, .color-opt:active, .icon-opt:active, .cat-opt:active, .preset-chip:active, .tpl-chip:active{
+.btn:active, .fab:active, .cat-chip:active, .asset-row:active, .tx-row:active, .cal-cell:active, .navlink:active, .accent-swatch:active, .color-opt:active, .icon-opt:active, .cat-opt:active, .preset-chip:active, .tpl-chip:active, .asset-filter-chip:active{
   transform:scale(0.96);
 }
 h1,h2,h3,.num-hero{
@@ -371,7 +371,13 @@ main{flex:1;min-width:0;}
 .asset-mini-row{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:13px;}
 .asset-mini-name{flex:1;min-width:0;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .asset-mini-bar{flex:1.4;height:7px;border-radius:5px;background:var(--surface-2);overflow:hidden;}
-.asset-mini-bar>i{display:block;height:100%;border-radius:5px;}
+/* these bars are rebuilt fresh via innerHTML on every render (not a
+   persisting node whose width attribute changes), so a `transition` never
+   has a "before" state to animate from — a `from{width:0}` `animation`
+   plays on first paint of the new element instead, which is what actually
+   produces motion here. */
+.asset-mini-bar>i{display:block;height:100%;border-radius:5px;animation:barGrow .5s cubic-bezier(.22,.75,.32,1);}
+@keyframes barGrow{ from{width:0;} }
 .asset-mini-amt{font-variant-numeric:tabular-nums;font-weight:700;font-size:12.5px;min-width:78px;text-align:right;}
 
 .fab{
@@ -422,9 +428,15 @@ main{flex:1;min-width:0;}
 .asset-chip .name{color:var(--ink-soft);font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;}
 .asset-chip .amt{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums;flex-shrink:0;}
 
-.tx-view-toggle{display:inline-flex;gap:3px;background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:3px;}
-.tx-view-toggle button{border:none;background:transparent;padding:7px 14px;border-radius:100px;font-size:12.5px;font-weight:700;color:var(--ink-soft);cursor:pointer;font-family:inherit;}
-.tx-view-toggle button.active{background:color-mix(in srgb, var(--accent) 14%, var(--surface));color:var(--accent);}
+.tx-view-toggle{display:inline-flex;gap:3px;background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:3px;position:relative;}
+.tvt-indicator{
+  position:absolute;top:3px;bottom:3px;left:0;border-radius:100px;
+  background:color-mix(in srgb, var(--accent) 14%, var(--surface));
+  transition:transform .25s cubic-bezier(.22,.85,.32,1), width .25s cubic-bezier(.22,.85,.32,1);
+  pointer-events:none;z-index:0;
+}
+.tx-view-toggle button{border:none;background:transparent;padding:7px 14px;border-radius:100px;font-size:12.5px;font-weight:700;color:var(--ink-soft);cursor:pointer;font-family:inherit;position:relative;z-index:1;}
+.tx-view-toggle button.active{color:var(--accent);}
 
 .cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;}
 .cal-weekdays span{text-align:center;font-size:11px;color:var(--ink-faint);font-weight:700;}
@@ -477,6 +489,9 @@ main{flex:1;min-width:0;}
 }
 .tx-select-bar .btn-danger{background:var(--expense);color:#fff;}
 .tx-select-bar .btn-danger:disabled{opacity:.4;cursor:default;}
+.tx-select-bar .btn-ghost{background:rgba(255,255,255,0.12);color:var(--bg);}
+.tx-select-bar .btn-ghost:disabled{opacity:.4;cursor:default;}
+.tx-select-bar .btn{white-space:nowrap;flex-shrink:0;}
 
 .cat-group-title{font-size:12.5px;font-weight:700;color:var(--ink-soft);margin:24px 0 12px;display:flex;align-items:center;gap:7px;text-transform:uppercase;letter-spacing:.3px;}
 .cat-group-title .ic{width:14px;height:14px;}
@@ -685,14 +700,19 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
 .ap-opt .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
 .ap-opt .ap-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
-.type-toggle{display:flex;gap:6px;}
-.type-toggle button{
-  flex:1;padding:7px;border-radius:var(--radius-sm);border:1px solid var(--border);
-  background:var(--surface-2);color:var(--ink-soft);cursor:pointer;font-family:inherit;font-weight:700;font-size:12px;
+.type-toggle{display:flex;gap:3px;position:relative;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:3px;}
+.type-toggle-indicator{
+  position:absolute;top:3px;bottom:3px;left:0;border-radius:7px;
+  transition:transform .25s cubic-bezier(.22,.85,.32,1), width .25s cubic-bezier(.22,.85,.32,1), background-color .2s ease;
+  pointer-events:none;z-index:0;
 }
-.type-toggle button.sel-expense{background:color-mix(in srgb, var(--expense) 15%, var(--surface));color:var(--expense);border-color:transparent;}
-.type-toggle button.sel-transfer{background:color-mix(in srgb, var(--accent) 15%, var(--surface));color:var(--accent);border-color:transparent;}
-.type-toggle button.sel-income{background:color-mix(in srgb, var(--income) 15%, var(--surface));color:var(--income);border-color:transparent;}
+.type-toggle button{
+  flex:1;padding:7px;border-radius:7px;border:none;position:relative;z-index:1;
+  background:transparent;color:var(--ink-soft);cursor:pointer;font-family:inherit;font-weight:700;font-size:12px;
+}
+.type-toggle button.sel-expense{color:var(--expense);}
+.type-toggle button.sel-transfer{color:var(--accent);}
+.type-toggle button.sel-income{color:var(--income);}
 .cat-pick-grid{display:flex;flex-wrap:wrap;gap:6px;}
 .cat-opt{
   display:inline-flex;align-items:center;gap:4px;
@@ -701,6 +721,12 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
 }
 .cat-opt svg{width:11px;height:11px;flex-shrink:0;}
 .cat-opt.sel{font-weight:700;}
+.asset-filter-row{display:flex;flex-wrap:wrap;gap:7px;}
+.asset-filter-chip{
+  padding:7px 13px;border-radius:100px;border:1px solid var(--border);background:var(--surface-2);
+  color:var(--ink-soft);font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;
+}
+.asset-filter-chip.sel{background:color-mix(in srgb, var(--accent) 14%, var(--surface));color:var(--accent);border-color:var(--accent);}
 .amount-presets{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;}
 .preset-chip{
   border:1px solid var(--border);background:var(--surface-2);color:var(--ink-soft);
@@ -976,6 +1002,8 @@ const state = {
   txSearchQuery: '',
   txSelectMode: false,
   selectedTxIds: new Set(),
+  assetTypeFilter: 'all',
+  txCategoryFilter: 'all',
 };
 
 /* ---------- Firebase ---------- */
@@ -1041,11 +1069,40 @@ function teardownStore(){
   Store.unsubs = [];
   state.categories = []; state.transactions = []; state.assets = []; state.templates = []; state.plannedExpenses = [];
   state.settings = { accent: ACCENT_PRESETS[0], theme: 'system' };
+  // session-only UI state (never synced to Firestore) — a filter/selection
+  // left over from the previous account would otherwise silently apply to
+  // whoever signs into this same browser tab next.
+  state.assetTypeFilter = 'all';
+  state.txCategoryFilter = 'all';
+  state.txSelectMode = false;
+  state.selectedTxIds.clear();
+  state.txSearchQuery = '';
   state.ready = false;
   seededCategories = false;
   idMaps.categories.clear(); idMaps.assets.clear(); idMaps.templates.clear();
   loadedCollections.clear();
   legacyMigrationDone = false;
+  // a logout can happen with a sheet still open (this runs unconditionally
+  // from onAuthStateChanged) — closeModal()'s own cleanup never gets a
+  // chance to run, so without this the auth screen underneath would be
+  // stuck permanently unscrollable and #modalRoot would still hold the
+  // stale sheet's markup. The three popovers (date/calculator/asset
+  // picker) are appended to document.body rather than #modalRoot, each
+  // with its own outside-click/keydown listener — those need the same
+  // explicit close, or they're left floating over the login screen with a
+  // listener that outlives the session that created it.
+  closeDatePicker();
+  closeCalculator();
+  closeAssetPicker();
+  $('#modalRoot').innerHTML = '';
+  unlockBodyScroll();
+  // dashboard/analytics count-up trackers remember the PREVIOUS render's
+  // value so a data change can animate from old to new — without this
+  // reset, the next account to sign into this tab would see its first
+  // dashboard paint animate from a number that belongs to whoever just
+  // logged out.
+  lastNetWorth = null; lastIncome = null; lastExpense = null; lastSavingsRate = null;
+  lastAnalyticsStatValue = null;
 }
 
 let loadStartedAt = null;
@@ -1413,6 +1470,7 @@ function scheduleRender(){
 // separate tick and each still pay full price, stacking up into visible
 // stutter. This waits for taps to actually stop before paying for one.
 let monthNavRenderTimer = null;
+let txSearchDebounceTimer = null;
 function debouncedScheduleRender(){
   clearTimeout(monthNavRenderTimer);
   monthNavRenderTimer = setTimeout(scheduleRender, 90);
@@ -1454,6 +1512,11 @@ function render(){
   }
   replayViewAnim(main, dir);
   justAddedTxId = null;
+  justAddedCatId = null;
+  // justAddedAssetId is NOT cleared here — the 자산 tab's type filter can
+  // hide a freshly-added asset from the very render that would otherwise
+  // consume this one-shot flag, so renderAssets() itself decides when it's
+  // actually been shown and only then clears it (see there).
 }
 // a lighter-weight replay for a single card/section updating in place
 // (not a full tab change) — same fade+rise motion as a freshly-entering
@@ -1464,6 +1527,49 @@ function flashAnim(el){
   el.style.animation = 'none';
   void el.offsetWidth;
   el.style.animation = 'rowEnter .25s cubic-bezier(.22,.75,.32,1)';
+}
+// slides the shared .tvt-indicator pill under whichever button in a
+// .tx-view-toggle is currently .active — used by all three segmented
+// toggles (목록/달력, 주별/월별, 테마) so switching options reads as one
+// pill physically moving rather than two buttons swapping color. The
+// indicator node is created once per toggle instance and persists across
+// clicks (the click handlers only toggle .active on the existing buttons,
+// never rebuild the container), so the CSS transform/width transition
+// actually has a previous value to animate from.
+function positionToggleIndicator(container){
+  if(!container) return;
+  const active = container.querySelector('button.active');
+  let ind = container.querySelector('.tvt-indicator');
+  if(!active){ if(ind) ind.style.opacity = '0'; return; }
+  if(!ind){
+    ind = document.createElement('span');
+    ind.className = 'tvt-indicator';
+    container.insertBefore(ind, container.firstChild);
+  }
+  ind.style.opacity = '1';
+  ind.style.width = active.offsetWidth+'px';
+  ind.style.transform = `translateX(${active.offsetLeft}px)`;
+}
+// same sliding-pill idea for 지출/수입/이체 (and 지출/수입) type toggles —
+// these use a per-segment semantic color instead of one fixed accent, so
+// the indicator's own background-color also tweens between expense/income/
+// accent rather than just sliding a fixed-color pill.
+function positionTypeToggleIndicator(container){
+  if(!container) return;
+  const active = container.querySelector('button.sel-expense, button.sel-income, button.sel-transfer');
+  let ind = container.querySelector('.type-toggle-indicator');
+  if(!active){ if(ind) ind.style.opacity = '0'; return; }
+  if(!ind){
+    ind = document.createElement('span');
+    ind.className = 'type-toggle-indicator';
+    container.insertBefore(ind, container.firstChild);
+  }
+  const color = active.classList.contains('sel-expense') ? 'var(--expense)'
+    : active.classList.contains('sel-income') ? 'var(--income)' : 'var(--accent)';
+  ind.style.opacity = '1';
+  ind.style.background = `color-mix(in srgb, ${color} 15%, var(--surface))`;
+  ind.style.width = active.offsetWidth+'px';
+  ind.style.transform = `translateX(${active.offsetLeft}px)`;
 }
 function replayViewAnim(el, dir){
   el.style.animation = 'none';
@@ -1536,8 +1642,19 @@ function wonCompact(n){
 // place that reads or writes one of these fields should go through
 // amountValue()/setAmountValue() rather than touching .value directly, so
 // the display never gets out of sync with the real number.
+// a leading "-" survives (everything else non-digit is stripped) — almost
+// every 금액 field only ever means a positive magnitude and rejects <=0 on
+// save regardless, but 자산 수정's amount field is the one place a real
+// negative number belongs (a 카드/대출·기타부채 liability's balance): it
+// pre-fills as e.g. "-5,000,000" for an existing debt, and previously had
+// no way to round-trip that back on save — every edit silently flipped the
+// debt positive. Keeping the sign here is what fixes that.
 function amountValue(inputEl){
-  return Number((inputEl.value||'').replace(/[^0-9]/g,'')) || 0;
+  const raw = inputEl.value || '';
+  const neg = raw.trim().startsWith('-');
+  const digits = raw.replace(/[^0-9]/g,'');
+  if(!digits) return 0;
+  return (neg?-1:1) * Number(digits);
 }
 function setAmountValue(inputEl, num){
   inputEl.value = num ? Number(num).toLocaleString('ko-KR') : '';
@@ -1546,8 +1663,9 @@ function wireAmountInput(inputEl){
   inputEl.setAttribute('inputmode','numeric');
   inputEl.addEventListener('input', ()=>{
     const cursorFromEnd = inputEl.value.length - inputEl.selectionStart;
+    const neg = inputEl.value.trim().startsWith('-');
     const digits = inputEl.value.replace(/[^0-9]/g,'');
-    inputEl.value = digits ? Number(digits).toLocaleString('ko-KR') : '';
+    inputEl.value = digits ? (neg?'-':'')+Number(digits).toLocaleString('ko-KR') : '';
     const newPos = Math.max(0, inputEl.value.length - cursorFromEnd);
     inputEl.setSelectionRange(newPos, newPos);
   });
@@ -1556,6 +1674,8 @@ function wireAmountInput(inputEl){
 let lastNetWorth = null, lastIncome = null, lastExpense = null, lastSavingsRate = null;
 let justAddedPlannedId = null;
 let justAddedTxId = null;
+let justAddedCatId = null;
+let justAddedAssetId = null;
 function animateNumber(el, from, to, duration, fmt){
   duration = duration || 500;
   fmt = fmt || won;
@@ -1874,7 +1994,7 @@ function renderTxAssetSummary(){
     .map(a=>({...a, bal: balances.get(a.id)||0}))
     .sort((a,b)=>b.bal-a.bal);
   if(list.length===0){
-    wrap.innerHTML = `<div class="settings-desc">등록된 현금 자산이 없어요</div>`;
+    wrap.innerHTML = `<div class="empty" style="padding:10px 6px"><div class="e-ic">${icon('wallet',{size:22})}</div><div>등록된 현금 자산이 없어요</div></div>`;
     return;
   }
   // each row stretches to the full width of the column (asset-chip-row is a
@@ -2030,13 +2150,29 @@ function wireTxRows(container){
       if(state.txSelectMode){
         const id = row.dataset.id;
         if(state.selectedTxIds.has(id)) state.selectedTxIds.delete(id); else state.selectedTxIds.add(id);
-        renderTxList();
+        // this same row-click path is reachable from search results too
+        // (rows there use the identical .tx-row markup) — always calling
+        // renderTxList() unconditionally silently swapped a search-results
+        // view back to the plain month list while the search input/clear
+        // button stayed visible, a real state/view desync. Re-dispatching
+        // through the same router the search box itself uses keeps
+        // whichever view is actually on screen consistent.
+        updateTxSearchView();
         updateTxSelectBar();
         return;
       }
       openTxModal(state.transactions.find(t=>t.id===row.dataset.id));
     };
   });
+}
+// bulk-recategorize only makes sense when every selected transaction is
+// the same non-transfer type — a category belongs to one type, so a mixed
+// selection has no single category list that would even apply to all of
+// them (계좌 이체 has no category at all).
+function bulkRecatEnabled(){
+  if(state.selectedTxIds.size===0) return false;
+  const types = new Set([...state.selectedTxIds].map(id=> state.transactions.find(t=>t.id===id)?.type));
+  return types.size===1 && !types.has('transfer');
 }
 // keeps the floating "N건 선택됨 · 삭제" bar in sync with the selection Set
 // without a full renderTransactions() — that would also destroy/recreate
@@ -2048,6 +2184,8 @@ function updateTxSelectBar(){
   $('#txSelectCount').textContent = `${state.selectedTxIds.size}건 선택됨`;
   const delBtn = $('#txBulkDeleteBtn');
   if(delBtn) delBtn.disabled = state.selectedTxIds.size===0;
+  const recatBtn = $('#txBulkRecatBtn');
+  if(recatBtn) recatBtn.disabled = !bulkRecatEnabled();
 }
 
 function renderTransactions(){
@@ -2081,6 +2219,7 @@ function renderTransactions(){
     <div id="txBody"></div>
     ${state.txSelectMode ? `<div class="tx-select-bar" id="txSelectBar">
       <span id="txSelectCount">${state.selectedTxIds.size}건 선택됨</span>
+      <button type="button" class="btn btn-ghost btn-sm" id="txBulkRecatBtn" ${bulkRecatEnabled()?'':'disabled title="이체가 섞여있거나 지출/수입이 섞여있으면 한 번에 바꿀 수 없어요"'}>카테고리 변경</button>
       <button type="button" class="btn btn-danger btn-sm" id="txBulkDeleteBtn" ${state.selectedTxIds.size===0?'disabled':''}>삭제</button>
     </div>` : ''}
   `;
@@ -2088,6 +2227,7 @@ function renderTransactions(){
   $('#txAddBtn').onclick = ()=> openTxModal(null);
   renderTxAssetSummary();
   renderTxCategoryChart();
+  positionToggleIndicator($('#txViewToggleRow'));
   $('#txSelectToggleBtn').onclick = ()=>{
     state.txSelectMode = !state.txSelectMode;
     state.selectedTxIds.clear();
@@ -2113,6 +2253,20 @@ function renderTransactions(){
       toast('삭제했어요', {danger:true});
     }
   });
+  if($('#txBulkRecatBtn')) $('#txBulkRecatBtn').onclick = ()=>{
+    if(!bulkRecatEnabled()) return;
+    const ids = [...state.selectedTxIds];
+    const type = state.transactions.find(t=>t.id===ids[0]).type;
+    const opts = categoriesByUsage(type).map(c=>({value:c.id, label:c.name, color:c.color}));
+    if(!opts.length){ toast('카테고리를 먼저 추가해주세요', {danger:true}); return; }
+    openAssetPicker($('#txBulkRecatBtn'), opts, null, async (categoryId)=>{
+      const results = await Promise.allSettled(ids.map(id=> updateDoc('transactions', id, {categoryId})));
+      const failCount = results.filter(r=>r.status==='rejected').length;
+      if(failCount===0){ state.txSelectMode = false; state.selectedTxIds.clear(); }
+      scheduleRender();
+      toast(failCount>0 ? `${ids.length-failCount}건 변경, ${failCount}건 실패했어요` : `${ids.length}건 카테고리를 변경했어요`, {danger: failCount>0});
+    });
+  };
   $$('.tx-view-toggle button').forEach(b=> b.onclick = ()=>{
     state.txView = b.dataset.v;
     if(state.txView==='calendar'){
@@ -2132,6 +2286,7 @@ function renderTransactions(){
     // Chart(), the most expensive part of a render) on every toggle click
     // for no reason. Only #txBody actually needs to change.
     $$('.tx-view-toggle button').forEach(x=> x.classList.toggle('active', x===b));
+    positionToggleIndicator($('#txViewToggleRow'));
     if(state.txView==='calendar') renderTxCalendar(); else renderTxList();
     // 선택 toggle button and the floating select bar live in the shell built
     // above, outside what the branch above just repainted — cheap direct
@@ -2148,8 +2303,18 @@ function renderTransactions(){
   // on every keystroke would reset the cursor position/IME composition
   // state, which is exactly the kind of input-field bug this session has
   // been careful to avoid elsewhere (the memo field's autocorrect fix).
-  $('#txSearchInput').oninput = (e)=>{ state.txSearchQuery = e.target.value; updateTxSearchView(); };
+  // a broad query against a large history can match hundreds of rows, and
+  // rebuilding up to TX_SEARCH_RENDER_CAP of them costs ~15-20ms — fine for
+  // one keystroke, but a fast typist fires this every ~80-100ms, so a short
+  // trailing debounce (the same idea as month-nav's) skips the in-between
+  // renders nobody sees instead of paying for every single one.
+  $('#txSearchInput').oninput = (e)=>{
+    state.txSearchQuery = e.target.value;
+    clearTimeout(txSearchDebounceTimer);
+    txSearchDebounceTimer = setTimeout(updateTxSearchView, 120);
+  };
   $('#txSearchClear').onclick = ()=>{
+    clearTimeout(txSearchDebounceTimer);
     state.txSearchQuery = '';
     $('#txSearchInput').value = '';
     updateTxSearchView();
@@ -2162,6 +2327,12 @@ function renderTransactions(){
 // every keystroke in the search box, so it must never touch the search
 // input element itself.
 function updateTxSearchView(){
+  // the search render is debounced (see #txSearchInput's oninput), so this
+  // can fire after the user has already navigated off the 내역 tab (or off
+  // list/calendar entirely) — #txBody won't exist in that case, since a
+  // tab switch replaces #main wholesale. Bail rather than let a downstream
+  // render function null-deref on a body element that's gone.
+  if(!$('#txBody')) return;
   const query = state.txSearchQuery || '';
   const hasQuery = query.trim().length > 0;
   const twoCol = $('#txTwoColRow');
@@ -2290,12 +2461,31 @@ function renderTemplateRow(wrapId, editMode, callbacks){
 
 function renderTxList(){
   const {y,m} = state.month;
-  const txs = txForMonth(y,m).slice().sort((a,b)=> a.date===b.date ? (b.updatedAt||0)-(a.updatedAt||0) : b.date.localeCompare(a.date));
+  const monthTxs = txForMonth(y,m).slice().sort((a,b)=> a.date===b.date ? (b.updatedAt||0)-(a.updatedAt||0) : b.date.localeCompare(a.date));
+  // only categories actually used THIS month, in the order they first show
+  // up in the (already date-sorted) list — same "don't offer empty filter
+  // options" rule as the 자산현황 type filter. Transfers have no category
+  // so they never gate/appear behind this filter.
+  const usedCatIds = [...new Set(monthTxs.filter(t=>t.type!=='transfer' && t.categoryId).map(t=>t.categoryId))];
+  const usedCats = usedCatIds.map(id=>catById(id)).filter(Boolean);
+  const filter = usedCatIds.includes(state.txCategoryFilter) ? state.txCategoryFilter : 'all';
+  state.txCategoryFilter = filter;
+  const txs = filter==='all' ? monthTxs : monthTxs.filter(t=>t.categoryId===filter);
   const body = $('#txBody');
-  body.innerHTML = `<div class="card" id="txListCard"></div>`;
+  const filterRow = usedCats.length>1 ? `<div class="asset-filter-row" id="txCatFilterRow" style="margin-bottom:10px;">
+    <button type="button" class="asset-filter-chip ${filter==='all'?'sel':''}" data-c="all">전체</button>
+    ${usedCats.map(c=>`<button type="button" class="asset-filter-chip ${filter===c.id?'sel':''}" data-c="${c.id}" style="${filter===c.id?`border-color:${c.color};color:${c.color};background:${c.color}1F;`:''}">${escapeHtml(c.name)}</button>`).join('')}
+  </div>` : '';
+  body.innerHTML = filterRow + `<div class="card" id="txListCard"></div>`;
   const card = $('#txListCard');
+  if($('#txCatFilterRow')) $$('#txCatFilterRow .asset-filter-chip').forEach(ch=> ch.onclick = ()=>{
+    state.txCategoryFilter = ch.dataset.c;
+    renderTxList();
+  });
   if(txs.length===0){
-    card.innerHTML = `<div class="empty"><div class="e-ic">${icon('inbox',{size:30})}</div><div>${state.month.m}월에 기록된 내역이 없어요<br>오른쪽 아래 + 버튼으로 추가해보세요</div></div>`;
+    card.innerHTML = filter==='all'
+      ? `<div class="empty"><div class="e-ic">${icon('inbox',{size:30})}</div><div>${state.month.m}월에 기록된 내역이 없어요<br>오른쪽 아래 + 버튼으로 추가해보세요</div></div>`
+      : `<div class="empty"><div class="e-ic">${icon('inbox',{size:30})}</div><div>해당 카테고리 내역이 없어요</div></div>`;
     return;
   }
   const groups = {};
@@ -2390,7 +2580,7 @@ function renderCategories(){
     </div>
   `;
   const buildGrid = (list, type) => list.map(c=>`
-      <div class="cat-chip" data-id="${c.id}">
+      <div class="cat-chip${c.id===justAddedCatId?' pe-row-enter':''}" data-id="${c.id}">
         <span class="cdot" style="background:${c.color}22;color:${c.color}">${icon(c.icon||'sparkle',{size:15})}</span>
         <span class="cat-chip-name">${escapeHtml(c.name)}</span>
       </div>`).join('') + `<button class="add-cat-chip" data-type="${type}">${icon('plus',{size:14})} 추가</button>`;
@@ -2403,10 +2593,17 @@ function renderCategories(){
 /* ---------- assets ---------- */
 function renderAssets(){
   const main = $('#main');
-  const assets = state.assets.filter(a=>!ASSET_TYPES_LIAB.includes(a.type));
-  const liabs = state.assets.filter(a=>ASSET_TYPES_LIAB.includes(a.type));
   const balances = computeAssetBalances();
   const nw = netWorth(balances);
+  // only offer types the user actually has, in the same fixed order used
+  // everywhere else (cash-ish assets first, liabilities last) — a filter
+  // row full of empty categories would just be clutter, not a shortcut.
+  const usedTypes = [...ASSET_TYPES_ASSET, ...ASSET_TYPES_LIAB].filter(t=> state.assets.some(a=>a.type===t));
+  const filter = usedTypes.includes(state.assetTypeFilter) ? state.assetTypeFilter : 'all';
+  state.assetTypeFilter = filter;
+  const filteredAssets = filter==='all' ? state.assets : state.assets.filter(a=>a.type===filter);
+  const assets = filteredAssets.filter(a=>!ASSET_TYPES_LIAB.includes(a.type));
+  const liabs = filteredAssets.filter(a=>ASSET_TYPES_LIAB.includes(a.type));
   main.innerHTML = `
     <div class="topbar">
       <h1 class="page-title">자산현황</h1>
@@ -2420,6 +2617,10 @@ function renderAssets(){
           <div class="num-hero">${won(nw)}</div>
         </div>
       </div>
+      ${usedTypes.length>1 ? `<div class="asset-filter-row" id="assetFilterRow">
+        <button type="button" class="asset-filter-chip ${filter==='all'?'sel':''}" data-t="all">전체</button>
+        ${usedTypes.map(t=>`<button type="button" class="asset-filter-chip ${filter===t?'sel':''}" data-t="${t}">${t}</button>`).join('')}
+      </div>` : ''}
       <div class="card">
         <div class="cat-group-title" style="margin-top:0"><span class="ic">${icon('wallet',{size:14})}</span>자산</div>
         <div id="assetListPositive"></div>
@@ -2429,15 +2630,28 @@ function renderAssets(){
     </div>
   `;
   $('#addAssetBtn').onclick = ()=> openAssetModal(null);
+  const emptyText = (isLiab)=>{
+    if(filter!=='all') return '해당 유형의 자산이 없어요';
+    return isLiab ? '등록된 부채가 없어요' : '자산을 등록해보세요';
+  };
   const rowsHtml = (list, isLiab) => list.length ? list.map(a=>`
-    <div class="asset-row" data-id="${a.id}">
+    <div class="asset-row${a.id===justAddedAssetId?' pe-row-enter':''}" data-id="${a.id}">
       <span class="asset-ic" style="background:${(a.color||'var(--accent)')}22;color:${a.color||'var(--accent)'}">${icon(a.icon||ASSET_ICONS[a.type]||'gem',{size:18})}</span>
       <div class="asset-mid"><div class="asset-name">${escapeHtml(a.name)}</div><div class="asset-type">${a.type}</div></div>
       <div class="asset-amt ${isLiab?'liab':''}">${isLiab?'-':''}${won(balances.get(a.id)||0)}</div>
-    </div>`).join('') : `<div class="empty" style="padding:20px 10px"><div class="e-ic">${icon(isLiab?'creditcard':'wallet',{size:26})}</div><div>${isLiab?'등록된 부채가 없어요':'자산을 등록해보세요'}</div></div>`;
+    </div>`).join('') : `<div class="empty" style="padding:20px 10px"><div class="e-ic">${icon(isLiab?'creditcard':'wallet',{size:26})}</div><div>${emptyText(isLiab)}</div></div>`;
   $('#assetListPositive').innerHTML = rowsHtml(assets, false);
   $('#assetListLiab').innerHTML = rowsHtml(liabs, true);
+  // one-shot — but only once it's actually had its moment on screen. A
+  // filter active at add-time can hide the new asset from THIS render, in
+  // which case the flag stays armed so switching the filter to reveal it
+  // later still plays the entrance instead of silently never firing.
+  if(!justAddedAssetId || filteredAssets.some(a=>a.id===justAddedAssetId)) justAddedAssetId = null;
   $$('.asset-row').forEach(r=> r.onclick = ()=> openAssetModal(state.assets.find(a=>a.id===r.dataset.id)));
+  if($('#assetFilterRow')) $$('#assetFilterRow .asset-filter-chip').forEach(ch=> ch.onclick = ()=>{
+    state.assetTypeFilter = ch.dataset.t;
+    scheduleRender();
+  });
   const heroEl = $('.num-hero');
   if(lastNetWorth !== null && lastNetWorth !== nw){ animateNumber(heroEl, lastNetWorth, nw); }
   lastNetWorth = nw;
@@ -2571,9 +2785,11 @@ function renderAnalytics(){
     </div>
   `;
   renderAnalyticsChart();
+  positionToggleIndicator($('#analyticsViewToggle'));
   $$('#analyticsViewToggle button').forEach(b=> b.onclick = ()=>{
     state.analyticsView = b.dataset.v;
     $$('#analyticsViewToggle button').forEach(x=> x.classList.toggle('active', x===b));
+    positionToggleIndicator($('#analyticsViewToggle'));
     renderAnalyticsChart();
     const sub = $('#catChangeSub');
     if(sub) sub.textContent = state.analyticsView==='weekly' ? '지난주 대비' : '지난달 대비';
@@ -2788,8 +3004,10 @@ function renderSettings(){
     state.settings.theme = b.dataset.v;
     applyTheme(state.settings.theme);
     saveSettings({theme:b.dataset.v});
-    renderSettings();
+    $$('#themeToggle button').forEach(x=> x.classList.toggle('active', x===b));
+    positionToggleIndicator($('#themeToggle'));
   });
+  positionToggleIndicator($('#themeToggle'));
   $('#accentCustom').oninput = (e)=>{ applyAccent(e.target.value); };
   $('#accentCustom').onchange = (e)=>{ saveSettings({accent:e.target.value}); renderSettings(); };
   $('#paydaySelect').onchange = (e)=>{
@@ -2819,14 +3037,21 @@ function renderSettings(){
 }
 
 /* ---------- modals ---------- */
+// a sheet covers the screen but the page behind it is still the real
+// scroll container (no internal scroll wrapper), so without this, a drag
+// on the overlay's backdrop rubber-bands the PAGE on mobile — a well-known
+// "feels broken" tell in an otherwise-solid modal, and it also leaves the
+// page scrolled somewhere unexpected once the sheet closes.
+function lockBodyScroll(){ document.body.style.overflow = 'hidden'; }
+function unlockBodyScroll(){ document.body.style.overflow = ''; }
 function closeModal(){
   closeDatePicker();
   closeCalculator();
   closeAssetPicker();
   const overlay = $('#modalRoot .overlay');
-  if(!overlay){ $('#modalRoot').innerHTML=''; return; }
+  if(!overlay){ $('#modalRoot').innerHTML=''; unlockBodyScroll(); return; }
   overlay.classList.add('closing');
-  setTimeout(()=>{ $('#modalRoot').innerHTML=''; }, 160);
+  setTimeout(()=>{ $('#modalRoot').innerHTML=''; unlockBodyScroll(); }, 160);
 }
 document.addEventListener('keydown', (e)=>{
   if(e.key==='Enter'){
@@ -2915,15 +3140,17 @@ function openDatePicker(inputEl){
       const cls = ['dp-cell'];
       if(ds===todayS) cls.push('today');
       if(ds===selected) cls.push('selected');
-      html += `<span class="${cls.join(' ')}" data-date="${ds}">${d}</span>`;
+      html += `<span class="${cls.join(' ')}" data-date="${ds}" tabindex="0" role="button">${d}</span>`;
     }
     pop.querySelector('.dp-grid').innerHTML = html;
+    const pick = (cell)=>{
+      inputEl.value = cell.dataset.date;
+      inputEl.dispatchEvent(new Event('change', {bubbles:true}));
+      closeDatePicker();
+    };
     $$('.dp-cell[data-date]', pop).forEach(cell=>{
-      cell.onclick = ()=>{
-        inputEl.value = cell.dataset.date;
-        inputEl.dispatchEvent(new Event('change', {bubbles:true}));
-        closeDatePicker();
-      };
+      cell.onclick = ()=> pick(cell);
+      cell.onkeydown = (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); pick(cell); } };
     });
     position();
   };
@@ -2938,6 +3165,10 @@ function openDatePicker(inputEl){
     closeDatePicker();
   };
   paint();
+  // lands keyboard focus on the selected day (or today) so someone who
+  // opened this via Enter on the readonly date field can immediately Tab/
+  // arrow through the grid instead of being stuck with focus nowhere.
+  (pop.querySelector('.dp-cell.selected') || pop.querySelector('.dp-cell.today') || pop.querySelector('.dp-cell[data-date]'))?.focus();
   closeDatePickerOutsideHandler = (e)=>{
     if(!pop.contains(e.target) && e.target!==inputEl) closeDatePicker();
   };
@@ -3083,7 +3314,7 @@ function openAssetPicker(triggerEl, options, currentValue, onPick){
   const pop = document.createElement('div');
   pop.className = 'asset-picker-pop';
   pop.innerHTML = options.map(o=>`
-    <div class="ap-opt ${o.value===currentValue?'sel':''}" data-v="${escapeHtml(o.value)}">
+    <div class="ap-opt ${o.value===currentValue?'sel':''}" data-v="${escapeHtml(o.value)}" tabindex="0" role="button">
       <span class="dot" style="background:${o.color||'transparent'}"></span>
       <span class="ap-name">${escapeHtml(o.label)}</span>
     </div>`).join('');
@@ -3096,7 +3327,9 @@ function openAssetPicker(triggerEl, options, currentValue, onPick){
   pop.style.top = Math.max(8,top)+'px';
   $$('.ap-opt', pop).forEach(el=>{
     el.onclick = ()=>{ onPick(el.dataset.v); closeAssetPicker(); };
+    el.onkeydown = (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); el.click(); } };
   });
+  pop.querySelector('.ap-opt')?.focus();
   closeAssetPickerOutsideHandler = (e)=>{
     if(!pop.contains(e.target) && e.target!==triggerEl) closeAssetPicker();
   };
@@ -3118,18 +3351,24 @@ function wireAssetTrigger(triggerId, labelId, hiddenId, buildOptions){
     label.textContent = match ? match.label : (opts[0]?.label || '');
   };
   setDisplay(hidden.value);
-  trigger.onclick = ()=>{
+  const open = ()=>{
     openAssetPicker(trigger, buildOptions(), hidden.value, (v)=>{
       setDisplay(v);
       hidden.dispatchEvent(new Event('change', {bubbles:true}));
     });
   };
+  trigger.onclick = open;
+  // trigger is a div[role=button][tabindex=0], not a real <button> — the
+  // browser only auto-activates real form controls on Enter/Space, so a
+  // keyboard user tabbing here needs this to actually open the picker.
+  trigger.onkeydown = (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); open(); } };
   return setDisplay;
 }
 
 const AMOUNT_PRESETS = [1000, 5000, 10000, 50000, 100000, 500000, 1000000];
 function openTxModal(existing, prefill){
   const root = $('#modalRoot');
+  lockBodyScroll();
   let type = existing?.type || prefill?.type || 'expense';
   let categoryId = existing?.categoryId || prefill?.categoryId || null;
   // a brand-new, from-scratch transaction (no existing/template) defaults
@@ -3190,7 +3429,7 @@ function openTxModal(existing, prefill){
         </div>
         <div class="form-group"><label class="form-label">메모</label><input class="form-input" type="text" id="txMemo" lang="ko" placeholder="선택 사항" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${existing?escapeHtml(existing.memo||''):escapeHtml(prefill?.memo||'')}"></div>
         <div class="sheet-actions">
-          ${existing?'<button class="btn btn-danger" id="txDelete">삭제</button>':''}
+          ${existing?'<button class="btn btn-danger" id="txDelete">삭제</button><button type="button" class="btn btn-ghost" id="txDuplicate" aria-label="복제" style="flex:0 0 auto;display:flex;align-items:center;justify-content:center;padding:10px 14px;">'+icon('duplicate',{size:16})+'</button>':''}
           <button class="btn btn-primary" id="txSave">저장</button>
         </div>
       </div>
@@ -3203,6 +3442,7 @@ function openTxModal(existing, prefill){
         onSelect: (tpl)=>{
           type = tpl.type;
           $$('#typeToggle button').forEach(b=>{ b.className = b.dataset.t===type ? (type==='expense'?'sel-expense':'sel-income') : ''; });
+          positionTypeToggleIndicator($('#typeToggle'));
           updateTypeVisibility();
           categoryId = tpl.categoryId;
           paintCatPick();
@@ -3294,6 +3534,7 @@ function openTxModal(existing, prefill){
   paintPresets();
   fillAssetSelect();
   updateTypeVisibility();
+  positionTypeToggleIndicator($('#typeToggle'));
   $('#txDate').onclick = ()=> openDatePicker($('#txDate'));
   $('#txCalcBtn').onclick = ()=> openCalculator($('#txCalcBtn'), $('#txAmount'));
   wireAmountInput($('#txAmount'));
@@ -3301,6 +3542,7 @@ function openTxModal(existing, prefill){
     type=b.dataset.t; categoryId=null;
     $$('#typeToggle button').forEach(x=>x.className='');
     b.className = type==='expense'?'sel-expense':type==='income'?'sel-income':'sel-transfer';
+    positionTypeToggleIndicator($('#typeToggle'));
     paintCatPick(); updateTypeVisibility();
   });
   $('#closeTx').onclick = closeModal;
@@ -3315,6 +3557,17 @@ function openTxModal(existing, prefill){
       resolve();
     });
   }));
+  if(existing) $('#txDuplicate').onclick = ()=>{
+    // reuses the same prefill codepath as the "카테고리 추가" mid-entry
+    // flow below — opening the fresh sheet directly, NOT via closeModal()
+    // first, since closeModal()'s 160ms delayed clear would otherwise wipe
+    // out whatever this opens right out from under it.
+    openTxModal(null, {
+      type: existing.type, categoryId: existing.categoryId, assetId: existing.assetId,
+      fromAssetId: existing.fromAssetId, toAssetId: existing.toAssetId,
+      amount: existing.amount, memo: existing.memo,
+    });
+  };
   guardedClick($('#txSave'), async ()=>{
     const amount = amountValue($('#txAmount'));
     const date = $('#txDate').value;
@@ -3341,6 +3594,7 @@ function openTxModal(existing, prefill){
 
 function openCategoryModal(existing, forcedType, onSaved, lockType){
   const root = $('#modalRoot');
+  lockBodyScroll();
   let type = existing?.type || forcedType || 'expense';
   let color = existing?.color || CATEGORY_PALETTE[state.categories.length % CATEGORY_PALETTE.length];
   let iconKey = existing?.icon || 'sparkle';
@@ -3376,7 +3630,14 @@ function openCategoryModal(existing, forcedType, onSaved, lockType){
     $$('#catColor .color-opt').forEach(el=> el.onclick=()=>{ color=el.dataset.c; paintColor(); });
   };
   paintIcons(); paintColor();
-  if(!lockType) $$('#catTypeToggle button').forEach(b=> b.onclick=()=>{ type=b.dataset.t; $$('#catTypeToggle button').forEach(x=>x.className=''); b.className=type==='expense'?'sel-expense':'sel-income'; paintIcons(); });
+  if(!lockType){
+    positionTypeToggleIndicator($('#catTypeToggle'));
+    $$('#catTypeToggle button').forEach(b=> b.onclick=()=>{
+      type=b.dataset.t; $$('#catTypeToggle button').forEach(x=>x.className=''); b.className=type==='expense'?'sel-expense':'sel-income';
+      positionTypeToggleIndicator($('#catTypeToggle'));
+      paintIcons();
+    });
+  }
   $('#closeCat').onclick = closeModal;
   $('#ovCat').onclick = (e)=>{ if(e.target.id==='ovCat') closeModal(); };
   if(existing) guardedClick($('#catDelete'), async ()=>{
@@ -3400,6 +3661,7 @@ function openCategoryModal(existing, forcedType, onSaved, lockType){
       // once it lands.
       const newCat = { id:newId, ...data };
       if(!state.categories.some(c=>c.id===newId)){ state.categories.push(newCat); idMaps.categories.set(newId, newCat); }
+      justAddedCatId = newId;
       scheduleRender(); toast('추가했어요');
       // when onSaved is set, it reopens another modal right away (see the
       // "카테고리 추가" chip in openTxModal) which already replaces
@@ -3412,6 +3674,7 @@ function openCategoryModal(existing, forcedType, onSaved, lockType){
 
 function openAssetModal(existing){
   const root = $('#modalRoot');
+  lockBodyScroll();
   let type = existing?.type || '현금';
   let color = existing?.color || ACCENT_PRESETS[state.assets.length % ACCENT_PRESETS.length];
   const existingBalance = existing ? (computeAssetBalances().get(existing.id)||0) : 0;
@@ -3451,7 +3714,9 @@ function openAssetModal(existing){
     const amount = amountValue($('#assetAmount'));
     const t = $('#assetType').value;
     if(!name){ toast('이름을 입력해주세요', {danger:true}); shakeSheet(); return; }
-    if(isNaN(amount) || amount<0){ toast('금액을 확인해주세요', {danger:true}); shakeSheet(); return; }
+    // a 카드/대출·기타부채 liability's balance is legitimately negative
+    // (money owed) — every other asset type still can't go negative.
+    if(isNaN(amount) || (amount<0 && !ASSET_TYPES_LIAB.includes(t))){ toast('금액을 확인해주세요', {danger:true}); shakeSheet(); return; }
     // an asset's balance is always initialAmount + every transaction's
     // effect (see computeAssetBalances) — there's no separate live total to
     // overwrite. This field still shows/edits the CURRENT balance, matching
@@ -3470,13 +3735,14 @@ function openAssetModal(existing){
       initialAmount = amount;
     }
     const data = { name, type:t, color, icon: ASSET_ICONS[t], initialAmount };
-    if(existing) await updateDoc('assets', existing.id, data); else await addDoc('assets', data);
+    if(existing) await updateDoc('assets', existing.id, data); else justAddedAssetId = await addDoc('assets', data);
     closeModal(); scheduleRender(); toast(existing?'수정했어요':'추가했어요');
   });
 }
 
 function openPlannedExpenseModal(existing){
   const root = $('#modalRoot');
+  lockBodyScroll();
   root.innerHTML = `
     <div class="overlay" id="ovPlanned">
       <div class="sheet">
@@ -3514,6 +3780,7 @@ function openPlannedExpenseModal(existing){
 
 function openTemplateModal(existing){
   const root = $('#modalRoot');
+  lockBodyScroll();
   let type = existing?.type || 'expense';
   let categoryId = existing?.categoryId || null;
   root.innerHTML = `
@@ -3571,7 +3838,14 @@ function openTemplateModal(existing){
   paintCatPick();
   fillAssetSelect();
   wireAmountInput($('#tplAmount'));
-  $$('#tplTypeToggle button').forEach(b=> b.onclick = ()=>{ type=b.dataset.t; categoryId=null; $$('#tplTypeToggle button').forEach(x=>x.className=''); b.className = type==='expense'?'sel-expense':'sel-income'; paintCatPick(); });
+  positionTypeToggleIndicator($('#tplTypeToggle'));
+  $$('#tplTypeToggle button').forEach(b=> b.onclick = ()=>{
+    type=b.dataset.t; categoryId=null;
+    $$('#tplTypeToggle button').forEach(x=>x.className='');
+    b.className = type==='expense'?'sel-expense':'sel-income';
+    positionTypeToggleIndicator($('#tplTypeToggle'));
+    paintCatPick();
+  });
   $('#closeTpl').onclick = closeModal;
   $('#ovTpl').onclick = (e)=>{ if(e.target.id==='ovTpl') closeModal(); };
   if(existing) guardedClick($('#tplDelete'), async ()=>{
