@@ -228,27 +228,25 @@ main{flex:1;min-width:0;}
 .section-gap{display:flex;flex-direction:column;gap:14px;}
 
 .hero{
-  display:flex;align-items:center;gap:18px;
-  background:linear-gradient(135deg, color-mix(in srgb, var(--accent) 7%, var(--surface)), var(--surface) 65%);
-  position:relative;overflow:hidden;
+  display:flex;flex-direction:column;
 }
-.hero::after{
-  content:'';position:absolute;top:-40%;right:-15%;width:220px;height:220px;border-radius:50%;
-  background:radial-gradient(circle, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%);
-  pointer-events:none;
-}
+.hero-top{display:flex;align-items:center;gap:16px;}
 .hero-badge{
-  width:48px;height:48px;border-radius:14px;flex-shrink:0;
-  background:linear-gradient(150deg, color-mix(in srgb, var(--accent) 22%, var(--surface)), color-mix(in srgb, var(--accent) 10%, var(--surface)));
+  width:44px;height:44px;border-radius:13px;flex-shrink:0;
+  background:color-mix(in srgb, var(--accent) 12%, var(--surface));
   color:var(--accent);
   display:flex;align-items:center;justify-content:center;
-  box-shadow:0 4px 14px -6px color-mix(in srgb, var(--accent) 45%, transparent);
-  position:relative;z-index:1;
 }
-.hero-badge svg{width:24px;height:24px;}
-.hero-label{font-size:13px;color:var(--ink-soft);font-weight:500;position:relative;z-index:1;}
-.num-hero{font-size:33px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-0.6px;position:relative;z-index:1;}
-.hero-sub{font-size:12.5px;color:var(--ink-faint);margin-top:2px;position:relative;z-index:1;}
+.hero-badge svg{width:22px;height:22px;}
+.hero-label{font-size:13px;color:var(--ink-soft);font-weight:500;}
+.num-hero{font-size:33px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-0.6px;}
+.hero-sub{font-size:12.5px;color:var(--ink-faint);margin-top:2px;}
+.hero-main{flex:1;min-width:0;}
+.hero-foot{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.hero-foot-item{font-size:11.5px;color:var(--ink-faint);white-space:nowrap;flex-shrink:0;}
+.hero-foot-item b{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums;margin-left:4px;}
+.hero-foot-bar{flex:1;height:5px;border-radius:3px;background:var(--surface-2);overflow:hidden;position:relative;}
+.hero-foot-bar > i{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:3px;transition:width .5s cubic-bezier(.22,.75,.32,1);}
 
 .daily-budget-card{padding:16px 18px;}
 .daily-budget-top{
@@ -287,9 +285,10 @@ main{flex:1;min-width:0;}
 .tiles{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:12px;
+  gap:1px;background:var(--border);
+  border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden;
 }
-.tile{display:flex;flex-direction:column;gap:10px;padding:16px;min-width:0;}
+.tile{display:flex;flex-direction:column;gap:10px;padding:16px;min-width:0;background:var(--surface);}
 .tile-label{font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:8px;font-weight:500;}
 .tile-label .ic{
   width:26px;height:26px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
@@ -728,6 +727,8 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
 }
 .asset-filter-chip.sel{background:color-mix(in srgb, var(--accent) 14%, var(--surface));color:var(--accent);border-color:var(--accent);}
 .amount-presets{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;}
+.memo-suggest{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;}
+.memo-suggest:empty{margin-top:0;}
 .preset-chip{
   border:1px solid var(--border);background:var(--surface-2);color:var(--ink-soft);
   border-radius:100px;padding:10px 13px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;
@@ -768,6 +769,11 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
 @keyframes toastOut{ from{opacity:1; transform:translate(-50%,0);} to{opacity:0; transform:translate(-50%,8px);} }
 .toast .t-dot{width:6px;height:6px;border-radius:50%;background:var(--income);flex-shrink:0;}
 .toast.danger .t-dot{background:var(--expense);}
+.toast .t-undo{
+  border:none;background:none;color:var(--accent);font-weight:800;font-size:13px;
+  cursor:pointer;font-family:inherit;flex-shrink:0;padding:0;margin-left:2px;
+  text-decoration:underline;text-underline-offset:2px;
+}
 /* when a modal sheet is open, anchor the toast above it instead of at the
    viewport bottom — otherwise it lands right on top of the sheet's inputs */
 .toast.in-modal{bottom:auto;top:18px;}
@@ -1067,6 +1073,14 @@ function userCol(uid, name){ return userDoc(uid).collection(name); }
 function teardownStore(){
   Store.unsubs.forEach(u=>u());
   Store.unsubs = [];
+  // a delete with its 실행 취소 window still open when logout happens was
+  // still a real, intended delete (the user just hasn't had the timer run
+  // out yet) — cancelling the timer without also doing the delete would
+  // silently UNDO it instead (the item's already gone from local state,
+  // which is about to be wiped and re-fetched fresh, so the Firestore doc
+  // needs to actually go too, not just have its timer dropped).
+  pendingDeletes.forEach((_, id)=> flushPendingDelete(id));
+  pendingDeletes.clear();
   state.categories = []; state.transactions = []; state.assets = []; state.templates = []; state.plannedExpenses = [];
   state.settings = { accent: ACCENT_PRESETS[0], theme: 'system' };
   // session-only UI state (never synced to Firestore) — a filter/selection
@@ -1298,6 +1312,27 @@ function categoriesByUsage(type){
     .sort((a,b)=> (counts[b.c.id]||0) - (counts[a.c.id]||0) || a.i-b.i)
     .map(x=>x.c);
 }
+// recent distinct memos for a category, most-recent-first, each paired with
+// the amount it was last entered with — powers the 거래 추가 모달's memo
+// autocomplete chips so a recurring line item (같은 메모로 반복되는 지출) takes
+// one tap instead of retyping the memo and amount every time.
+function recentMemosForCategory(categoryId, limit){
+  limit = limit || 5;
+  if(!categoryId) return [];
+  const seen = new Set();
+  const out = [];
+  const txs = state.transactions
+    .filter(t=> t.categoryId===categoryId && t.memo && t.memo.trim())
+    .sort((a,b)=> a.date===b.date ? (b.updatedAt||0)-(a.updatedAt||0) : b.date.localeCompare(a.date));
+  for(const t of txs){
+    const key = t.memo.trim();
+    if(seen.has(key)) continue;
+    seen.add(key);
+    out.push({ memo:key, amount:Number(t.amount||0) });
+    if(out.length>=limit) break;
+  }
+  return out;
+}
 // one-line spending insight comparing this month's expenses to last month's
 function computeSpendInsight(){
   const {y,m} = state.month;
@@ -1401,6 +1436,22 @@ function netWorth(balances){
   let assetsSum = 0, liabSum = 0;
   state.assets.forEach(a=>{
     const bal = balances.get(a.id) || 0;
+    if(ASSET_TYPES_LIAB.includes(a.type)) liabSum += bal; else assetsSum += bal;
+  });
+  return assetsSum - liabSum;
+}
+// net worth as of a past cutoff date (inclusive), reusing the same
+// per-asset delta lists `computeAssetBalances` builds — since a balance is
+// never stored, just derived as initialAmount + every delta up to now,
+// "balance as of a past date" is the same sum with a date filter on it, no
+// separate historical ledger needed.
+function netWorthAsOf(cutoffDate, byAsset){
+  byAsset = byAsset || computeAssetDeltaLists();
+  let assetsSum = 0, liabSum = 0;
+  state.assets.forEach(a=>{
+    const list = byAsset.get(a.id) || [];
+    const init = resolveInitialAmount(a, list);
+    const bal = init + list.reduce((s,d)=> d.t.date<=cutoffDate ? s+d.delta : s, 0);
     if(ASSET_TYPES_LIAB.includes(a.type)) liabSum += bal; else assetsSum += bal;
   });
   return assetsSum - liabSum;
@@ -1587,13 +1638,111 @@ function toast(msg, opts){
   const el = document.createElement('div');
   const modalOpen = !!document.querySelector('#modalRoot .overlay');
   el.className = 'toast' + (opts.danger ? ' danger' : '') + (modalOpen ? ' in-modal' : '');
-  el.innerHTML = `<span class="t-dot"></span><span>${escapeHtml(msg)}</span>`;
+  el.innerHTML = `<span class="t-dot"></span><span>${escapeHtml(msg)}</span>${opts.undo ? `<button type="button" class="t-undo">실행 취소</button>` : ''}`;
   document.body.appendChild(el);
+  const dismiss = ()=>{ el.classList.add('out'); setTimeout(()=> el.remove(), 200); };
+  if(opts.undo) el.querySelector('.t-undo').onclick = ()=>{ clearTimeout(toastTimer); opts.undo(); dismiss(); };
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>{
-    el.classList.add('out');
-    setTimeout(()=> el.remove(), 200);
-  }, 1700);
+  // an undoable action gets a longer window — long enough to actually
+  // notice and tap 실행 취소, not the quick fyi-only flash a plain toast is.
+  toastTimer = setTimeout(dismiss, opts.undo ? 4000 : 1700);
+}
+// soft-delete: the item disappears from state (and the screen) right away,
+// but the real deleteDoc() is deferred a few seconds behind a "실행 취소"
+// toast — undo just puts it back locally and the deferred delete never
+// fires, so nothing is ever actually lost to a fat-fingered tap. Every
+// delete flow in the app (single or bulk, across every collection) routes
+// through this instead of calling deleteDoc directly.
+const pendingDeletes = new Map(); // id -> {key, timer}, for undo to cancel or logout to flush
+// the most recent undo action, so Ctrl/Cmd+Z can trigger it directly
+// without having to find and tap the toast's own 실행 취소 button — cleared
+// whenever it's used, superseded by a newer delete, or its window expires
+// (matching the toast's own 4s timeout, since acting on it after the real
+// deleteDoc() already fired would resurrect a row locally with nothing
+// behind it in Firestore).
+let lastUndo = null;
+// runs a still-pending delete immediately (used when logout can't wait for
+// the timer) instead of letting it fire later against whatever account
+// happens to be signed in by then.
+function flushPendingDelete(id){
+  const entry = pendingDeletes.get(id);
+  if(!entry) return;
+  clearTimeout(entry.timer);
+  pendingDeletes.delete(id);
+  deleteDoc(entry.key, id).catch(err=> console.error(err));
+}
+function deleteWithUndo(key, item, message){
+  const id = item.id;
+  const idx = state[key].findIndex(x=>x.id===id);
+  if(idx===-1) return;
+  state[key].splice(idx, 1);
+  if(idMaps[key]) idMaps[key].delete(id);
+  scheduleRender();
+  const timer = setTimeout(()=>{
+    pendingDeletes.delete(id);
+    if(lastUndo===undo) lastUndo = null;
+    deleteDoc(key, id).catch(err=> console.error(err));
+  }, 4000);
+  pendingDeletes.set(id, {key, timer});
+  const undo = ()=>{
+    clearTimeout(timer);
+    pendingDeletes.delete(id);
+    lastUndo = null;
+    const restoreIdx = Math.min(idx, state[key].length);
+    state[key].splice(restoreIdx, 0, item);
+    if(idMaps[key]) idMaps[key].set(id, item);
+    // reuses the same one-shot "just added" entrance animation a brand-new
+    // item gets — a restored row sliding back in reads as the direct
+    // opposite of the exit animation it just played, instead of just
+    // popping back into place.
+    if(key==='transactions') justAddedTxId = id;
+    else if(key==='categories') justAddedCatId = id;
+    else if(key==='assets') justAddedAssetId = id;
+    else if(key==='plannedExpenses') justAddedPlannedId = id;
+    scheduleRender();
+    toast('취소했어요');
+  };
+  lastUndo = undo;
+  toast(message || '삭제했어요', {danger:true, undo});
+}
+// same idea for a batch (bulk-select delete) — one toast, one undo that
+// restores every item in the selection together.
+function deleteManyWithUndo(key, items, message){
+  const removed = items.map(item=>{
+    const idx = state[key].findIndex(x=>x.id===item.id);
+    return idx===-1 ? null : {item, idx};
+  }).filter(Boolean);
+  if(!removed.length) return;
+  // remove highest-index-first so earlier indices in the same pass stay valid
+  removed.slice().sort((a,b)=>b.idx-a.idx).forEach(({item})=>{
+    const idx = state[key].findIndex(x=>x.id===item.id);
+    if(idx!==-1) state[key].splice(idx,1);
+    if(idMaps[key]) idMaps[key].delete(item.id);
+  });
+  scheduleRender();
+  const timer = setTimeout(()=>{
+    removed.forEach(({item})=> pendingDeletes.delete(item.id));
+    if(lastUndo===undo) lastUndo = null;
+    Promise.allSettled(removed.map(({item})=> deleteDoc(key, item.id)))
+      .then(results=> results.forEach(r=>{ if(r.status==='rejected') console.error(r.reason); }));
+  }, 4000);
+  removed.forEach(({item})=> pendingDeletes.set(item.id, {key, timer}));
+  const undo = ()=>{
+    clearTimeout(timer);
+    lastUndo = null;
+    // restore in original index order (ascending) so they land back close
+    // to where they were instead of all piling up at one end
+    removed.slice().sort((a,b)=>a.idx-b.idx).forEach(({item, idx})=>{
+      pendingDeletes.delete(item.id);
+      const restoreIdx = Math.min(idx, state[key].length);
+      state[key].splice(restoreIdx, 0, item);
+      if(idMaps[key]) idMaps[key].set(item.id, item);
+    });
+    scheduleRender();
+    toast('취소했어요');
+  };
+  lastUndo = undo;
+  toast(message || `${removed.length}건 삭제했어요`, {danger:true, undo});
 }
 
 // wraps an async click handler so a fat-finger double-tap (common on mobile)
@@ -1741,11 +1890,17 @@ function renderDashboard(){
     </div>
     <div class="section-gap">
       <div class="card hero">
-        <div class="hero-badge">${icon('wallet',{size:24})}</div>
-        <div>
-          <div class="hero-label">순자산</div>
-          <div class="num-hero">${won(nw)}</div>
-          <div class="hero-sub">자산 ${won(assetsSum)} · 부채 ${won(liabSum)}</div>
+        <div class="hero-top">
+          <div class="hero-badge">${icon('wallet',{size:22})}</div>
+          <div class="hero-main">
+            <div class="hero-label">순자산</div>
+            <div class="num-hero">${won(nw)}</div>
+          </div>
+        </div>
+        <div class="hero-foot">
+          <span class="hero-foot-item">자산<b>${won(assetsSum)}</b></span>
+          <div class="hero-foot-bar"><i style="width:${(assetsSum+liabSum)>0 ? Math.round((assetsSum/(assetsSum+liabSum))*100) : 100}%"></i></div>
+          <span class="hero-foot-item">부채<b>${won(liabSum)}</b></span>
         </div>
       </div>
       ${dailyBudget ? `<div class="card daily-budget-card">
@@ -1765,15 +1920,15 @@ function renderDashboard(){
       </div>` : ''}
       ${insight ? `<div class="insight-row"><div class="insight-chip">${insight}</div></div>` : ''}
       <div class="tiles">
-        <div class="card tile">
+        <div class="tile">
           <div class="tile-label"><span class="ic" style="color:var(--income)">${icon('arrowDownCircle',{size:16})}</span>이번 달 수입</div>
           <div class="tile-num income" id="incomeTileNum">${won(income)}</div>
         </div>
-        <div class="card tile">
+        <div class="tile">
           <div class="tile-label"><span class="ic" style="color:var(--expense)">${icon('arrowUpCircle',{size:16})}</span>이번 달 지출</div>
           <div class="tile-num expense" id="expenseTileNum">${won(expense)}</div>
         </div>
-        <div class="card tile">
+        <div class="tile">
           <div class="tile-label"><span class="ic">${icon('target',{size:16})}</span>저축률</div>
           <div class="tile-num" id="savingsTileNum" style="color:${savingsRate>=0?'var(--income)':'var(--expense)'}">${savingsRate}%</div>
           <div class="tile-bar"><i style="width:${Math.max(0,Math.min(100,savingsRate))}%;background:var(--income)"></i></div>
@@ -1795,18 +1950,24 @@ function renderDashboard(){
           <canvas id="trendCanvas"></canvas>
         </div>
       </div>
+      <div class="card">
+        <h3>최근 6개월 순자산 추이</h3>
+        <div style="position:relative;height:180px;">
+          <canvas id="netWorthTrendCanvas"></canvas>
+        </div>
+      </div>
     </div>
   `;
   wireMonthNav();
   renderDonut(txs, expense);
   renderAssetMini(balances);
   renderTrend();
+  renderNetWorthTrend();
   if(dailyBudget){
     $('#addPlannedExpenseBtn').onclick = ()=> openPlannedExpenseModal();
     $$('.pe-del', main).forEach(btn=> guardedClick(btn, ()=> new Promise(resolve=>{
-      animateRowExit(btn.closest('.planned-expense-row'), async ()=>{
-        await deleteDoc('plannedExpenses', btn.dataset.del);
-        toast('삭제했어요', {danger:true});
+      animateRowExit(btn.closest('.planned-expense-row'), ()=>{
+        deleteWithUndo('plannedExpenses', state.plannedExpenses.find(p=>p.id===btn.dataset.del));
         resolve();
       });
     })));
@@ -1847,6 +2008,9 @@ function renderDonut(txs, expenseTotal){
         <span class="legend-amt">${won(e.amt)}</span>
       </div>`;
   }).join('');
+  // legend rows stay one-per-real-category (nothing hidden), but a row
+  // whose category got folded into the chart's 기타 slice highlights that
+  // shared slice, not a slice of its own.
   if(typeof Chart === 'undefined'){
     $('#donutWrap').insertAdjacentHTML('beforeend', `<div class="empty" style="padding:14px"><div>차트를 불러오는 중이에요…</div></div>`);
     ensureChartJs().then(()=>{ if(state.tab==='dashboard') scheduleRender(); });
@@ -1862,6 +2026,25 @@ function renderDonut(txs, expenseTotal){
   // pure waste.
   const inkColor = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#1B1F2A';
   const softColor = getComputedStyle(document.documentElement).getPropertyValue('--ink-soft').trim() || '#6B7280';
+  const faintColor = getComputedStyle(document.documentElement).getPropertyValue('--ink-faint').trim() || '#9CA3AF';
+
+  // categories beyond the top 5 get folded into one 기타 slice for the CHART
+  // only — a dozen slivers crammed around the ring is unreadable no matter
+  // how distinct the colors are. The legend below stays fully itemized
+  // (every real category, its own name/%/amount), so no data is hidden —
+  // only the pie drawing is decluttered.
+  const CHART_MAX_SLICES = 6;
+  let groups;
+  if(entries.length <= CHART_MAX_SLICES){
+    groups = entries.map((e,i)=>({name:e.cat.name, color:e.cat.color, amt:e.amt, entryIdx:[i]}));
+  } else {
+    const topCount = CHART_MAX_SLICES-1;
+    groups = entries.slice(0,topCount).map((e,i)=>({name:e.cat.name, color:e.cat.color, amt:e.amt, entryIdx:[i]}));
+    const restIdx = entries.map((_,i)=>i).slice(topCount);
+    groups.push({ name:'기타', color:faintColor, amt: restIdx.reduce((s,i)=>s+entries[i].amt,0), entryIdx: restIdx });
+  }
+  const entryToGroup = [];
+  groups.forEach((g,gi)=> g.entryIdx.forEach(ei=> entryToGroup[ei]=gi));
 
   // real content (name + % + amount) drawn INSIDE the donut hole, never on
   // the slices themselves — so it never gets cramped or spills past a thin
@@ -1875,18 +2058,18 @@ function renderDonut(txs, expenseTotal){
       c.save();
       c.textAlign = 'center';
       c.textBaseline = 'middle';
-      if(activeDonutIndex !== null && entries[activeDonutIndex]){
-        const e = entries[activeDonutIndex];
-        const pct = expenseTotal>0 ? Math.round((e.amt/expenseTotal)*100) : 0;
+      if(activeDonutIndex !== null && groups[activeDonutIndex]){
+        const g = groups[activeDonutIndex];
+        const pct = expenseTotal>0 ? Math.round((g.amt/expenseTotal)*100) : 0;
         c.font = "600 11px 'Pretendard Variable','Pretendard',sans-serif";
         c.fillStyle = softColor;
-        c.fillText(e.cat.name, cx, cy-16);
+        c.fillText(g.name, cx, cy-16);
         c.font = "800 19px 'Pretendard Variable','Pretendard',sans-serif";
-        c.fillStyle = e.cat.color;
+        c.fillStyle = g.color;
         c.fillText(pct+'%', cx, cy+5);
         c.font = "600 10.5px 'Pretendard Variable','Pretendard',sans-serif";
         c.fillStyle = softColor;
-        c.fillText(won(e.amt), cx, cy+24);
+        c.fillText(won(g.amt), cx, cy+24);
       } else {
         c.font = "600 11px 'Pretendard Variable','Pretendard',sans-serif";
         c.fillStyle = softColor;
@@ -1901,7 +2084,7 @@ function renderDonut(txs, expenseTotal){
 
   chartDonut = new Chart(ctx, {
     type:'doughnut',
-    data:{ labels: entries.map(e=>e.cat.name), datasets:[{ data: entries.map(e=>e.amt), backgroundColor: entries.map(e=>e.cat.color), borderColor: getComputedStyle(document.body).getPropertyValue('--surface') || '#fff', borderWidth:3, hoverOffset:8 }] },
+    data:{ labels: groups.map(g=>g.name), datasets:[{ data: groups.map(g=>g.amt), backgroundColor: groups.map(g=>g.color), borderColor: getComputedStyle(document.body).getPropertyValue('--surface') || '#fff', borderWidth:3, hoverOffset:8 }] },
     options:{ responsive:true, maintainAspectRatio:false, cutout:'72%', animation:{duration:350},
       onClick:(evt, elements)=> setActiveDonutSlice(elements.length ? elements[0].index : null),
       // the center label already shows name/%/amount for the tapped slice,
@@ -1915,9 +2098,9 @@ function renderDonut(txs, expenseTotal){
   function setActiveDonutSlice(i){
     activeDonutIndex = i;
     $$('.legend-row', legend).forEach(row=>{
-      const rowIdx = Number(row.dataset.idx);
-      row.classList.toggle('active', rowIdx===i);
-      row.classList.toggle('dim', i!==null && rowIdx!==i);
+      const rowGroup = entryToGroup[Number(row.dataset.idx)];
+      row.classList.toggle('active', rowGroup===i);
+      row.classList.toggle('dim', i!==null && rowGroup!==i);
     });
     // shrinks the chart to the left and turns the legend into a compact
     // reference list on the right, instead of the default full-width
@@ -1938,15 +2121,15 @@ function renderDonut(txs, expenseTotal){
   function paintDonutTxList(i){
     const listWrap = $('#donutTxList');
     if(i===null){ listWrap.innerHTML = ''; return; }
-    const e = entries[i];
-    const catTxs = txs.filter(t=>t.type==='expense' && t.categoryId===e.cat.id)
+    const catIds = new Set(groups[i].entryIdx.map(ei=>entries[ei].cat.id));
+    const catTxs = txs.filter(t=>t.type==='expense' && catIds.has(t.categoryId))
       .sort((a,b)=> a.date===b.date ? (b.updatedAt||0)-(a.updatedAt||0) : b.date.localeCompare(a.date));
     listWrap.innerHTML = `<div class="donut-tx-list-inner">${catTxs.map(txRowHtml).join('')}</div>`;
     wireTxRows(listWrap);
   }
   $$('.legend-row', legend).forEach(row=>{
     row.onclick = ()=>{
-      const i = Number(row.dataset.idx);
+      const i = entryToGroup[Number(row.dataset.idx)];
       setActiveDonutSlice(row.classList.contains('active') ? null : i);
     };
   });
@@ -2028,18 +2211,16 @@ function renderTxCategoryChart(){
   }
   wrap.innerHTML = `<div style="display:flex;align-items:center;gap:10px;">
     <div style="position:relative;height:96px;width:96px;flex-shrink:0;"><canvas id="txCatCanvas"></canvas></div>
-    <div class="asset-chip-row" style="flex:1;min-width:0;" id="txCatLegend"></div>
+    <div class="asset-chip-row" style="flex:1;min-width:0;max-height:96px;overflow-y:auto;" id="txCatLegend"></div>
   </div>`;
-  const legendList = entries.slice(0,4);
-  const restCount = entries.length - legendList.length;
-  $('#txCatLegend').innerHTML = legendList.map(e=>{
+  $('#txCatLegend').innerHTML = entries.map(e=>{
     const pct = total>0 ? Math.round((e.amt/total)*100) : 0;
     return `<span class="asset-chip">
       <span class="dot" style="background:${e.cat.color}"></span>
       <span class="name">${escapeHtml(e.cat.name)}</span>
       <span class="amt">${pct}%</span>
     </span>`;
-  }).join('') + (restCount>0 ? `<span class="asset-chip"><span class="name" style="color:var(--ink-faint)">외 ${restCount}개</span></span>` : '');
+  }).join('');
   if(typeof Chart === 'undefined'){
     wrap.insertAdjacentHTML('beforeend', `<div class="empty" style="padding:14px"><div>차트를 불러오는 중이에요…</div></div>`);
     ensureChartJs().then(()=>{ if(state.tab==='transactions') scheduleRender(); });
@@ -2049,6 +2230,21 @@ function renderTxCategoryChart(){
   if(chartTxCat) chartTxCat.destroy();
   const inkColor = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#1B1F2A';
   const surfaceColor = getComputedStyle(document.body).getPropertyValue('--surface') || '#fff';
+  const faintColor = getComputedStyle(document.documentElement).getPropertyValue('--ink-faint').trim() || '#9CA3AF';
+  // same top-5+기타 grouping as the dashboard donut — this canvas is under
+  // 100px, so a dozen slivers is even less legible here. The text legend
+  // beside it (built above from the full `entries`) still lists every
+  // category, so nothing is hidden, only the drawing is simplified.
+  const CHART_MAX_SLICES = 6;
+  let chartGroups;
+  if(entries.length <= CHART_MAX_SLICES){
+    chartGroups = entries.map(e=>({name:e.cat.name, amt:e.amt, color:e.cat.color}));
+  } else {
+    const topCount = CHART_MAX_SLICES-1;
+    chartGroups = entries.slice(0,topCount).map(e=>({name:e.cat.name, amt:e.amt, color:e.cat.color}));
+    const restAmt = entries.slice(topCount).reduce((s,e)=>s+e.amt,0);
+    chartGroups.push({name:'기타', amt:restAmt, color:faintColor});
+  }
   const centerPlugin = {
     id:'txCatCenter',
     afterDatasetsDraw(chart){
@@ -2064,7 +2260,7 @@ function renderTxCategoryChart(){
   };
   chartTxCat = new Chart(ctx, {
     type:'doughnut',
-    data:{ labels: entries.map(e=>e.cat.name), datasets:[{ data: entries.map(e=>e.amt), backgroundColor: entries.map(e=>e.cat.color), borderColor: surfaceColor, borderWidth:2 }] },
+    data:{ labels: chartGroups.map(g=>g.name), datasets:[{ data: chartGroups.map(g=>g.amt), backgroundColor: chartGroups.map(g=>g.color), borderColor: surfaceColor, borderWidth:2 }] },
     options:{ responsive:true, maintainAspectRatio:false, cutout:'68%', animation:{duration:350}, plugins:{ legend:{display:false}, tooltip:{enabled:false} } },
     plugins:[centerPlugin]
   });
@@ -2102,6 +2298,45 @@ function renderTrend(){
       scales:{ y:{ ticks:{ color:inkSoft, callback:v=>won(v) }, grid:{ color:border } }, x:{ ticks:{ color:inkSoft }, grid:{ display:false } } },
       plugins:{ legend:{ position:'top', align:'end', labels:{ color:inkSoft, boxWidth:10, boxHeight:10, usePointStyle:true, pointStyle:'circle' } },
         tooltip:{ callbacks:{ label: c => ` ${c.dataset.label}: ${won(c.parsed.y)}` } } } }
+  });
+}
+
+let chartNetWorth = null;
+function renderNetWorthTrend(){
+  const canvas = $('#netWorthTrendCanvas');
+  if(!canvas) return;
+  const labels=[], data=[];
+  const base = new Date(state.month.y, state.month.m-1, 1);
+  const byAsset = computeAssetDeltaLists();
+  for(let i=5;i>=0;i--){
+    const d = new Date(base.getFullYear(), base.getMonth()-i, 1);
+    labels.push(`${d.getMonth()+1}월`);
+    // last day of that month, as YYYY-MM-DD — "net worth as it stood at
+    // month-end" is the figure people actually track month over month, not
+    // a mid-month snapshot that depends on which day happens to land first.
+    const monthEnd = new Date(d.getFullYear(), d.getMonth()+1, 0);
+    const cutoff = `${monthEnd.getFullYear()}-${String(monthEnd.getMonth()+1).padStart(2,'0')}-${String(monthEnd.getDate()).padStart(2,'0')}`;
+    data.push(netWorthAsOf(cutoff, byAsset));
+  }
+  if(typeof Chart === 'undefined'){
+    canvas.closest('div').insertAdjacentHTML('beforeend', `<div class="empty" style="padding:14px"><div>차트를 불러오는 중이에요…</div></div>`);
+    ensureChartJs().then(()=>{ if(state.tab==='dashboard') scheduleRender(); });
+    return;
+  }
+  const ctx = canvas.getContext('2d');
+  const inkSoft = getComputedStyle(document.documentElement).getPropertyValue('--ink-soft').trim() || '#6B7280';
+  const border = getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || '#E5E7EB';
+  const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#6C4FD9';
+  if(chartNetWorth) chartNetWorth.destroy();
+  chartNetWorth = new Chart(ctx, {
+    type:'line',
+    data:{ labels, datasets:[
+      { label:'순자산', data, borderColor: accent, backgroundColor: accent+'1F', fill:true, tension:0.3, pointRadius:3, pointBackgroundColor: accent, borderWidth:2.5 },
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, animation:{duration:350},
+      scales:{ y:{ ticks:{ color:inkSoft, callback:v=>wonCompact(v) }, grid:{ color:border } }, x:{ ticks:{ color:inkSoft }, grid:{ display:false } } },
+      plugins:{ legend:{ display:false },
+        tooltip:{ callbacks:{ label: c => ` 순자산: ${won(c.parsed.y)}` } } } }
   });
 }
 
@@ -2233,26 +2468,16 @@ function renderTransactions(){
     state.selectedTxIds.clear();
     scheduleRender();
   };
-  if($('#txBulkDeleteBtn')) guardedClick($('#txBulkDeleteBtn'), async ()=>{
-    const ids = [...state.selectedTxIds];
-    if(!ids.length) return;
-    if(!confirm(`선택한 ${ids.length}건을 삭제할까요?`)) return;
-    // allSettled rather than all — if one delete fails partway through a
-    // batch, the ones that DID succeed must still drop out of the
-    // selection Set and off the screen instead of lingering as "selected"
-    // ghosts of transactions that no longer exist.
-    const results = await Promise.allSettled(ids.map(id=> deleteDoc('transactions', id)));
-    results.forEach((r,i)=>{ if(r.status==='fulfilled') state.selectedTxIds.delete(ids[i]); });
-    const failCount = results.filter(r=>r.status==='rejected').length;
-    if(failCount===0){ state.txSelectMode = false; }
-    scheduleRender();
-    if(failCount>0){
-      results.forEach(r=>{ if(r.status==='rejected') console.error(r.reason); });
-      toast(`${ids.length-failCount}건 삭제, ${failCount}건 실패했어요`, {danger:true});
-    } else {
-      toast('삭제했어요', {danger:true});
-    }
-  });
+  if($('#txBulkDeleteBtn')) $('#txBulkDeleteBtn').onclick = ()=>{
+    const items = [...state.selectedTxIds].map(id=> state.transactions.find(t=>t.id===id)).filter(Boolean);
+    if(!items.length) return;
+    // no confirm() dialog needed here anymore — 실행 취소 in the toast IS
+    // the safety net, and it's a lower-friction one than an interrupting
+    // "정말 삭제할까요?" popup for something already reversible.
+    state.txSelectMode = false;
+    state.selectedTxIds.clear();
+    deleteManyWithUndo('transactions', items, `${items.length}건 삭제했어요`);
+  };
   if($('#txBulkRecatBtn')) $('#txBulkRecatBtn').onclick = ()=>{
     if(!bulkRecatEnabled()) return;
     const ids = [...state.selectedTxIds];
@@ -2447,9 +2672,8 @@ function renderTemplateRow(wrapId, editMode, callbacks){
     guardedClick(del, (e)=>{
       e.stopPropagation();
       return new Promise(resolve=>{
-        animateRowExit(del.closest('.tpl-chip'), async ()=>{
-          await deleteDoc('templates', del.dataset.del);
-          toast('삭제했어요', {danger:true});
+        animateRowExit(del.closest('.tpl-chip'), ()=>{
+          deleteWithUndo('templates', state.templates.find(t=>t.id===del.dataset.del));
           if(callbacks.onDeleted) callbacks.onDeleted();
           resolve();
         }, 'width');
@@ -2614,6 +2838,11 @@ function renderAssets(){
   const main = $('#main');
   const balances = computeAssetBalances();
   const nw = netWorth(balances);
+  let assetsSumAll = 0, liabSumAll = 0;
+  state.assets.forEach(a=>{
+    const bal = balances.get(a.id) || 0;
+    if(ASSET_TYPES_LIAB.includes(a.type)) liabSumAll += bal; else assetsSumAll += bal;
+  });
   // only offer types the user actually has, in the same fixed order used
   // everywhere else (cash-ish assets first, liabilities last) — a filter
   // row full of empty categories would just be clutter, not a shortcut.
@@ -2630,10 +2859,17 @@ function renderAssets(){
     </div>
     <div class="section-gap">
       <div class="card hero">
-        <div class="hero-badge">${icon('wallet',{size:24})}</div>
-        <div>
-          <div class="hero-label">순자산</div>
-          <div class="num-hero">${won(nw)}</div>
+        <div class="hero-top">
+          <div class="hero-badge">${icon('wallet',{size:22})}</div>
+          <div class="hero-main">
+            <div class="hero-label">순자산</div>
+            <div class="num-hero">${won(nw)}</div>
+          </div>
+        </div>
+        <div class="hero-foot">
+          <span class="hero-foot-item">자산<b>${won(assetsSumAll)}</b></span>
+          <div class="hero-foot-bar"><i style="width:${(assetsSumAll+liabSumAll)>0 ? Math.round((assetsSumAll/(assetsSumAll+liabSumAll))*100) : 100}%"></i></div>
+          <span class="hero-foot-item">부채<b>${won(liabSumAll)}</b></span>
         </div>
       </div>
       ${usedTypes.length>1 ? `<div class="asset-filter-row" id="assetFilterRow">
@@ -2757,6 +2993,28 @@ function computeWeekdayPattern(){
   });
   return sums;
 }
+// 평일 vs 주말 평균 — a raw sum always skews weekday-heavy since there are
+// more weekday calendar days than weekend ones, so this divides each side
+// by how many of that day-type actually occurred across the whole
+// transaction history, giving a fair per-day average instead.
+function computeWeekdayWeekendAvg(){
+  const dates = state.transactions.map(t=>t.date).filter(Boolean).sort();
+  if(dates.length===0) return null;
+  const sums = computeWeekdayPattern();
+  const start = new Date(dates[0]+'T00:00:00');
+  const end = new Date(dates[dates.length-1]+'T00:00:00');
+  let weekdayDays=0, weekendDays=0;
+  for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
+    const dow = d.getDay();
+    if(dow===0 || dow===6) weekendDays++; else weekdayDays++;
+  }
+  const weekdaySum = sums[1]+sums[2]+sums[3]+sums[4]+sums[5];
+  const weekendSum = sums[0]+sums[6];
+  return {
+    weekdayAvg: weekdayDays>0 ? weekdaySum/weekdayDays : 0,
+    weekendAvg: weekendDays>0 ? weekendSum/weekendDays : 0,
+  };
+}
 // average of (income − expense) over the last 6 months that actually have
 // any recorded activity — used only as a starting suggestion for the goal
 // calculator's 월 저축액 field, which the user can freely override.
@@ -2775,7 +3033,10 @@ function computeAvgMonthlySavings(){
 function renderAnalytics(){
   const main = $('#main');
   main.innerHTML = `
-    <div class="topbar"><h1 class="page-title">분석</h1></div>
+    <div class="topbar">
+      <h1 class="page-title">분석</h1>
+      <button class="btn btn-ghost btn-sm" id="openReportBtn">${icon('file',{size:14})}결산 리포트</button>
+    </div>
     <div class="section-gap">
       <div class="card">
         <div class="analytics-stat-row" id="analyticsStatRow"></div>
@@ -2792,7 +3053,8 @@ function renderAnalytics(){
       <div class="card">
         <h3>요일별 지출 패턴</h3>
         <div class="settings-desc" id="analyticsWeekdaySummary" style="margin:2px 0 14px;"></div>
-        <div id="analyticsWeekdayWrap"></div>
+        <div id="analyticsWeekdayCompare"></div>
+        <div id="analyticsWeekdayWrap" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);"></div>
       </div>
       <div class="card">
         <h3>저축 목표 계산기</h3>
@@ -2803,6 +3065,7 @@ function renderAnalytics(){
       </div>
     </div>
   `;
+  $('#openReportBtn').onclick = openReportModal;
   renderAnalyticsChart();
   positionToggleIndicator($('#analyticsViewToggle'));
   $$('#analyticsViewToggle button').forEach(b=> b.onclick = ()=>{
@@ -2838,12 +3101,14 @@ function renderAnalytics(){
     const targetDate = new Date(); targetDate.setMonth(targetDate.getMonth()+monthsNeeded);
     const progressPct = target>0 ? Math.min(100, Math.max(0, Math.round(current/target*100))) : 0;
     wrap.innerHTML = `
-      <div class="hero" style="margin-top:12px;padding:16px;border:1px solid var(--border);">
-        <div class="hero-badge">${icon('target',{size:22})}</div>
-        <div>
-          <div class="hero-label">목표까지 예상 기간</div>
-          <div class="num-hero" style="font-size:23px;">${periodStr}</div>
-          <div class="hero-sub">${targetDate.getFullYear()}년 ${targetDate.getMonth()+1}월경 달성 예상 · 매달 ${won(monthly)}</div>
+      <div class="hero" style="margin-top:12px;padding:16px;border:1px solid var(--border);border-radius:var(--radius-lg);">
+        <div class="hero-top">
+          <div class="hero-badge">${icon('target',{size:22})}</div>
+          <div class="hero-main">
+            <div class="hero-label">목표까지 예상 기간</div>
+            <div class="num-hero" style="font-size:23px;">${periodStr}</div>
+            <div class="hero-sub">${targetDate.getFullYear()}년 ${targetDate.getMonth()+1}월경 달성 예상 · 매달 ${won(monthly)}</div>
+          </div>
         </div>
       </div>
       <div class="goal-progress-wrap">
@@ -2941,12 +3206,14 @@ function renderCategoryChanges(){
 }
 function renderWeekdayPattern(){
   const wrap = $('#analyticsWeekdayWrap');
+  const compareWrap = $('#analyticsWeekdayCompare');
   const sums = computeWeekdayPattern();
   const labels = ['일','월','화','수','목','금','토'];
   const max = Math.max(...sums, 1);
   if(sums.every(s=>s===0)){
     wrap.innerHTML = `<div class="empty" style="padding:16px 6px"><div class="e-ic">${icon('chart',{size:22})}</div><div>지출 내역이 아직 없어요</div></div>`;
     if($('#analyticsWeekdaySummary')) $('#analyticsWeekdaySummary').textContent = '';
+    if(compareWrap) compareWrap.innerHTML = '';
     return;
   }
   const peakIdx = sums.indexOf(max);
@@ -2960,6 +3227,149 @@ function renderWeekdayPattern(){
       <span class="asset-mini-amt"${isPeak?' style="color:var(--accent);"':''}>${wonCompact(sums[i])}</span>
     </div>`;
   }).join('');
+  if(compareWrap){
+    const avg = computeWeekdayWeekendAvg();
+    if(!avg || (avg.weekdayAvg===0 && avg.weekendAvg===0)){
+      compareWrap.innerHTML = '';
+    } else {
+      const cmpMax = Math.max(avg.weekdayAvg, avg.weekendAvg, 1);
+      const weekendHigher = avg.weekendAvg > avg.weekdayAvg;
+      compareWrap.innerHTML = `
+        <div class="asset-mini-row">
+          <span class="asset-mini-name" style="flex:0 0 52px;${!weekendHigher?'color:var(--accent);font-weight:800;':''}">평일 평균</span>
+          <span class="asset-mini-bar"><i style="width:${Math.max(4,(avg.weekdayAvg/cmpMax)*100)}%;background:${!weekendHigher?'var(--accent)':'var(--ink-faint)'}"></i></span>
+          <span class="asset-mini-amt"${!weekendHigher?' style="color:var(--accent);"':''}>${wonCompact(avg.weekdayAvg)}/일</span>
+        </div>
+        <div class="asset-mini-row">
+          <span class="asset-mini-name" style="flex:0 0 52px;${weekendHigher?'color:var(--accent);font-weight:800;':''}">주말 평균</span>
+          <span class="asset-mini-bar"><i style="width:${Math.max(4,(avg.weekendAvg/cmpMax)*100)}%;background:${weekendHigher?'var(--accent)':'var(--ink-faint)'}"></i></span>
+          <span class="asset-mini-amt"${weekendHigher?' style="color:var(--accent);"':''}>${wonCompact(avg.weekendAvg)}/일</span>
+        </div>`;
+    }
+  }
+}
+
+/* ---------- 결산 리포트 (연간/분기) ---------- */
+function txsInRange(startDate, endDate){
+  return state.transactions.filter(t=> t.date && t.date>=startDate && t.date<=endDate);
+}
+function dateStr(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+const reportState = { mode:'year', year: new Date().getFullYear(), quarter: Math.floor(new Date().getMonth()/3)+1 };
+function openReportModal(){
+  const root = $('#modalRoot');
+  lockBodyScroll();
+  root.innerHTML = `
+    <div class="overlay" id="ovReport">
+      <div class="sheet">
+        <div class="sheet-head">
+          <div class="sheet-title">결산 리포트</div>
+          <button class="sheet-close" id="closeReport" aria-label="닫기">${icon('close',{size:18})}</button>
+        </div>
+        <div class="tx-view-toggle" id="reportModeToggle" style="margin-bottom:14px;">
+          <button type="button" data-v="year">연간</button>
+          <button type="button" data-v="quarter">분기</button>
+        </div>
+        <div class="month-nav" id="reportPeriodNav" style="margin-bottom:16px;"></div>
+        <div id="reportBody"></div>
+      </div>
+    </div>`;
+  $$('#reportModeToggle button').forEach(b=> b.classList.toggle('active', b.dataset.v===reportState.mode));
+  positionToggleIndicator($('#reportModeToggle'));
+  $$('#reportModeToggle button').forEach(b=> b.onclick=()=>{
+    reportState.mode = b.dataset.v;
+    $$('#reportModeToggle button').forEach(x=> x.classList.toggle('active', x===b));
+    positionToggleIndicator($('#reportModeToggle'));
+    paintPeriodNav(); paintReportBody();
+  });
+  const shiftPeriod = (dir)=>{
+    if(reportState.mode==='year'){ reportState.year += dir; }
+    else {
+      reportState.quarter += dir;
+      if(reportState.quarter<1){ reportState.quarter=4; reportState.year--; }
+      else if(reportState.quarter>4){ reportState.quarter=1; reportState.year++; }
+    }
+  };
+  const paintPeriodNav = ()=>{
+    const nav = $('#reportPeriodNav');
+    const label = reportState.mode==='year' ? `${reportState.year}년` : `${reportState.year}년 ${reportState.quarter}분기`;
+    nav.innerHTML = `<button id="reportPrev" aria-label="이전 기간">${icon('chevronLeft',{size:15})}</button><span class="month-label">${label}</span><button id="reportNext" aria-label="다음 기간">${icon('chevronRight',{size:15})}</button>`;
+    $('#reportPrev').onclick = ()=>{ shiftPeriod(-1); paintPeriodNav(); paintReportBody(); };
+    $('#reportNext').onclick = ()=>{ shiftPeriod(1); paintPeriodNav(); paintReportBody(); };
+  };
+  const paintReportBody = ()=>{ $('#reportBody').innerHTML = buildReportHtml(); };
+  paintPeriodNav();
+  paintReportBody();
+  $('#closeReport').onclick = closeModal;
+  $('#ovReport').onclick = (e)=>{ if(e.target.id==='ovReport') closeModal(); };
+}
+function buildReportHtml(){
+  const { mode, year, quarter } = reportState;
+  const months = mode==='year'
+    ? Array.from({length:12}, (_,i)=>({y:year, m:i+1}))
+    : Array.from({length:3}, (_,i)=>({y:year, m:(quarter-1)*3+i+1}));
+  const start = `${months[0].y}-${String(months[0].m).padStart(2,'0')}-01`;
+  const lastM = months[months.length-1];
+  const endD = new Date(lastM.y, lastM.m, 0);
+  const end = dateStr(endD);
+  const periodTxs = txsInRange(start,end).filter(t=>t.type!=='transfer');
+  const totalIncome = sumBy(periodTxs,'income');
+  const totalExpense = sumBy(periodTxs,'expense');
+  const savings = totalIncome - totalExpense;
+  const savingsRate = totalIncome>0 ? Math.round(savings/totalIncome*100) : 0;
+  const beforeStart = new Date(months[0].y, months[0].m-1, 1); beforeStart.setDate(beforeStart.getDate()-1);
+  const byAsset = computeAssetDeltaLists();
+  const nwStart = netWorthAsOf(dateStr(beforeStart), byAsset);
+  const nwEnd = netWorthAsOf(end, byAsset);
+  const nwChange = nwEnd - nwStart;
+  const catSums = {};
+  periodTxs.filter(t=>t.type==='expense').forEach(t=>{ catSums[t.categoryId] = (catSums[t.categoryId]||0) + Number(t.amount||0); });
+  const topCats = Object.entries(catSums).map(([cid,amt])=>({cat:catById(cid), amt})).filter(e=>e.cat)
+    .sort((a,b)=>b.amt-a.amt).slice(0,5);
+  const monthlyRows = months.map(({y,m})=>{
+    const txs = txForMonth(y,m);
+    return { y, m, net: sumBy(txs,'income') - sumBy(txs,'expense') };
+  });
+  const maxAbsNet = Math.max(...monthlyRows.map(r=>Math.abs(r.net)), 1);
+  if(periodTxs.length===0){
+    return `<div class="empty" style="padding:24px 6px"><div class="e-ic">${icon('chart',{size:26})}</div><div>이 기간엔 기록이 없어요</div></div>`;
+  }
+  return `
+    <div class="tiles" style="margin-bottom:16px;">
+      <div class="tile"><div class="tile-label"><span class="ic" style="color:var(--income)">${icon('arrowDownCircle',{size:16})}</span>수입</div><div class="tile-num income">${won(totalIncome)}</div></div>
+      <div class="tile"><div class="tile-label"><span class="ic" style="color:var(--expense)">${icon('arrowUpCircle',{size:16})}</span>지출</div><div class="tile-num expense">${won(totalExpense)}</div></div>
+      <div class="tile"><div class="tile-label"><span class="ic">${icon('target',{size:16})}</span>저축률</div><div class="tile-num" style="color:${savingsRate>=0?'var(--income)':'var(--expense)'}">${savingsRate}%</div></div>
+    </div>
+    <div class="card" style="margin-bottom:14px;">
+      <h3>순자산 변화</h3>
+      <div class="hero-foot" style="margin-top:0;padding-top:0;border-top:none;">
+        <span class="hero-foot-item">기간 시작<b>${won(nwStart)}</b></span>
+        <div class="hero-foot-bar"><i style="width:${(Math.abs(nwStart)+Math.abs(nwEnd))>0 ? Math.min(100,Math.round(Math.abs(nwEnd)/(Math.abs(nwStart)+Math.abs(nwEnd))*100)) : 50}%;background:${nwChange>=0?'var(--income)':'var(--expense)'}"></i></div>
+        <span class="hero-foot-item">기간 종료<b>${won(nwEnd)}</b></span>
+      </div>
+      <div class="settings-desc" style="margin-top:10px;color:${nwChange>=0?'var(--income)':'var(--expense)'}">${nwChange>=0?'▲':'▼'} ${won(Math.abs(nwChange))} ${nwChange>=0?'늘었어요':'줄었어요'}</div>
+    </div>
+    <div class="card" style="margin-bottom:14px;">
+      <h3>카테고리 TOP5</h3>
+      ${topCats.length ? topCats.map(e=>{
+        const pct = totalExpense>0 ? Math.round(e.amt/totalExpense*100) : 0;
+        return `<div class="legend-row" style="cursor:default;">
+          <span class="swatch" style="background:${e.cat.color}"></span>
+          <span class="legend-name">${escapeHtml(e.cat.name)}</span>
+          <span class="legend-pct">${pct}%</span>
+          <span class="legend-amt">${won(e.amt)}</span>
+        </div>`;
+      }).join('') : `<div class="settings-desc">지출 내역이 없어요</div>`}
+    </div>
+    <div class="card">
+      <h3>월별 저축</h3>
+      ${monthlyRows.map(r=>`
+        <div class="asset-mini-row">
+          <span class="asset-mini-name" style="flex:0 0 36px;">${r.m}월</span>
+          <span class="asset-mini-bar"><i style="width:${Math.max(4,(Math.abs(r.net)/maxAbsNet)*100)}%;background:${r.net>=0?'var(--income)':'var(--expense)'}"></i></span>
+          <span class="asset-mini-amt" style="color:${r.net>=0?'var(--income)':'var(--expense)'}">${won(r.net)}</span>
+        </div>`).join('')}
+    </div>
+  `;
 }
 
 /* ---------- settings ---------- */
@@ -3073,6 +3483,16 @@ function closeModal(){
   setTimeout(()=>{ $('#modalRoot').innerHTML=''; unlockBodyScroll(); }, 160);
 }
 document.addEventListener('keydown', (e)=>{
+  // Ctrl/Cmd+Z re-does whatever the last 실행 취소 toast offered — skipped
+  // while actually typing in a field so it doesn't fight the browser's own
+  // native text-undo there, which is what a user reaching for Ctrl+Z mid
+  // sentence actually means.
+  if((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase()==='z'){
+    const tag = e.target.tagName;
+    if(tag==='INPUT' || tag==='TEXTAREA' || e.target.isContentEditable) return;
+    if(lastUndo){ e.preventDefault(); lastUndo(); }
+    return;
+  }
   if(e.key==='Enter'){
     // Enter submits whichever sheet is open — but only when it's a plain
     // text field being typed into, not a button (native Enter already
@@ -3090,16 +3510,38 @@ document.addEventListener('keydown', (e)=>{
     if(saveBtn){ e.preventDefault(); saveBtn.click(); }
     return;
   }
-  if(e.key!=='Escape') return;
-  // a popover (date/calculator/asset picker) sits on top of the sheet, not
-  // inside it — Escape should back out of just that first, the same way an
-  // outside click does, rather than jumping straight to closing the whole
-  // 거래 추가 sheet underneath it.
-  if(document.querySelector('.date-picker-pop, .calc-pop, .asset-picker-pop')){
-    closeDatePicker(); closeCalculator(); closeAssetPicker();
+  if(e.key==='Escape'){
+    // a popover (date/calculator/asset picker) sits on top of the sheet,
+    // not inside it — Escape should back out of just that first, the same
+    // way an outside click does, rather than jumping straight to closing
+    // the whole 거래 추가 sheet underneath it.
+    if(document.querySelector('.date-picker-pop, .calc-pop, .asset-picker-pop')){
+      closeDatePicker(); closeCalculator(); closeAssetPicker();
+      return;
+    }
+    if($('#modalRoot .overlay')) closeModal();
     return;
   }
-  if($('#modalRoot .overlay')) closeModal();
+  // desktop-only single-key shortcuts (n for a new transaction, / to jump
+  // into search) — both need the same "isn't actually typing anywhere"
+  // guard as Ctrl+Z above, since these letters/symbols are otherwise
+  // ordinary characters someone could be typing into a memo field.
+  if(document.querySelector('#modalRoot .overlay')) return;
+  const tag = e.target.tagName;
+  const typing = tag==='INPUT' || tag==='TEXTAREA' || e.target.isContentEditable;
+  if(typing) return;
+  if(e.key==='n' || e.key==='N'){
+    e.preventDefault();
+    openTxModal(null);
+    return;
+  }
+  if(e.key==='/'){
+    if(state.tab==='transactions' && state.txView==='list'){
+      const input = $('#txSearchInput');
+      if(input){ e.preventDefault(); input.focus(); }
+    }
+    return;
+  }
 });
 function shakeSheet(){
   const sheet = $('#modalRoot .sheet');
@@ -3446,7 +3888,11 @@ function openTxModal(existing, prefill){
             <input type="hidden" id="txToAsset" value="${existing?.toAssetId||prefill?.toAssetId||''}">
           </div>
         </div>
-        <div class="form-group"><label class="form-label">메모</label><input class="form-input" type="text" id="txMemo" lang="ko" placeholder="선택 사항" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${existing?escapeHtml(existing.memo||''):escapeHtml(prefill?.memo||'')}"></div>
+        <div class="form-group">
+          <label class="form-label">메모</label>
+          <input class="form-input" type="text" id="txMemo" lang="ko" placeholder="선택 사항" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${existing?escapeHtml(existing.memo||''):escapeHtml(prefill?.memo||'')}">
+          <div class="memo-suggest" id="txMemoSuggest"></div>
+        </div>
         <div class="sheet-actions">
           ${existing?'<button class="btn btn-danger" id="txDelete">삭제</button><button type="button" class="btn btn-ghost" id="txDuplicate" aria-label="복제" style="flex:0 0 auto;display:flex;align-items:center;justify-content:center;padding:10px 14px;">'+icon('duplicate',{size:16})+'</button>':''}
           <button class="btn btn-primary" id="txSave">저장</button>
@@ -3490,7 +3936,7 @@ function openTxModal(existing, prefill){
     `).join('');
     const addChip = `<span class="cat-opt" id="txAddCatOpt" tabindex="0" role="button" style="border-style:dashed;color:var(--ink-faint)">${icon('plus',{size:14})}<span>카테고리 추가</span></span>`;
     $('#txCatPick').innerHTML = (opts.length ? optsHtml : `<div class="empty" style="padding:14px 6px;width:100%"><div>카테고리를 먼저 추가해주세요</div></div>`) + addChip;
-    $$('#txCatPick .cat-opt[data-id]').forEach(el=> el.onclick=()=>{ categoryId=el.dataset.id; paintCatPick(); });
+    $$('#txCatPick .cat-opt[data-id]').forEach(el=> el.onclick=()=>{ categoryId=el.dataset.id; paintCatPick(); paintMemoSuggest(); });
     // chips are <span>s, not real <button>s (so the selected one can carry
     // its category's own color as inline background rather than a fixed
     // button style) — tabindex+role above puts them in tab order, this
@@ -3523,6 +3969,22 @@ function openTxModal(existing, prefill){
     });
     $('#txAmountClear').onclick = ()=>{ $('#txAmount').value=''; };
   };
+  // only for a brand-new transaction, and only while the memo field is
+  // still empty — editing an existing tx already has its own memo, and a
+  // user who's already typed something doesn't need their own text
+  // competing with suggestions underneath it.
+  const paintMemoSuggest = ()=>{
+    const wrap = $('#txMemoSuggest');
+    if(!wrap) return;
+    if(existing || type==='transfer' || !categoryId || $('#txMemo').value.trim()){ wrap.innerHTML=''; return; }
+    const sugg = recentMemosForCategory(categoryId);
+    wrap.innerHTML = sugg.map(s=>`<button type="button" class="preset-chip" data-m="${escapeHtml(s.memo)}" data-a="${s.amount}">${escapeHtml(s.memo)}</button>`).join('');
+    $$('#txMemoSuggest .preset-chip').forEach(b=> b.onclick=()=>{
+      $('#txMemo').value = b.dataset.m;
+      if(!amountValue($('#txAmount'))) setAmountValue($('#txAmount'), Number(b.dataset.a));
+      wrap.innerHTML = '';
+    });
+  };
   const fillAssetSelect = ()=>{
     const balances = computeAssetBalances();
     const assets = sortAssetsForPicker(state.assets.filter(a=>!ASSET_TYPES_LIAB.includes(a.type)), balances);
@@ -3551,18 +4013,20 @@ function openTxModal(existing, prefill){
   };
   paintCatPick();
   paintPresets();
+  paintMemoSuggest();
   fillAssetSelect();
   updateTypeVisibility();
   positionTypeToggleIndicator($('#typeToggle'));
   $('#txDate').onclick = ()=> openDatePicker($('#txDate'));
   $('#txCalcBtn').onclick = ()=> openCalculator($('#txCalcBtn'), $('#txAmount'));
   wireAmountInput($('#txAmount'));
+  $('#txMemo').addEventListener('input', paintMemoSuggest);
   $$('#typeToggle button').forEach(b=> b.onclick = ()=>{
     type=b.dataset.t; categoryId=null;
     $$('#typeToggle button').forEach(x=>x.className='');
     b.className = type==='expense'?'sel-expense':type==='income'?'sel-income':'sel-transfer';
     positionTypeToggleIndicator($('#typeToggle'));
-    paintCatPick(); updateTypeVisibility();
+    paintCatPick(); updateTypeVisibility(); paintMemoSuggest();
   });
   $('#closeTx').onclick = closeModal;
   $('#ovTx').onclick = (e)=>{ if(e.target.id==='ovTx') closeModal(); };
@@ -3570,9 +4034,9 @@ function openTxModal(existing, prefill){
     // the row lives in the list underneath this modal — animate it out
     // there while the modal's own close animation plays on top, so both
     // finish together instead of the row just snapping away afterward.
-    animateRowExit(document.querySelector(`.tx-row[data-id="${existing.id}"]`), async ()=>{
-      await deleteDoc('transactions', existing.id);
-      closeModal(); scheduleRender(); toast('삭제했어요', {danger:true});
+    animateRowExit(document.querySelector(`.tx-row[data-id="${existing.id}"]`), ()=>{
+      closeModal();
+      deleteWithUndo('transactions', existing);
       resolve();
     });
   }));
@@ -3662,7 +4126,8 @@ function openCategoryModal(existing, forcedType, onSaved, lockType){
   if(existing) guardedClick($('#catDelete'), async ()=>{
     const inUse = state.transactions.some(t=>t.categoryId===existing.id);
     if(inUse && !confirm('이 카테고리를 사용하는 내역이 있어요. 삭제할까요?')) return;
-    await deleteDoc('categories', existing.id); closeModal(); scheduleRender(); toast('삭제했어요', {danger:true});
+    closeModal();
+    deleteWithUndo('categories', existing);
   });
   guardedClick($('#catSave'), async ()=>{
     const name = $('#catName').value.trim();
@@ -3726,7 +4191,8 @@ function openAssetModal(existing){
   if(existing) guardedClick($('#assetDelete'), async ()=>{
     const inUse = state.transactions.some(t=>t.assetId===existing.id || t.fromAssetId===existing.id || t.toAssetId===existing.id);
     if(inUse && !confirm('이 자산과 연결된 내역이 있어요. 삭제할까요?')) return;
-    await deleteDoc('assets', existing.id); closeModal(); scheduleRender(); toast('삭제했어요', {danger:true});
+    closeModal();
+    deleteWithUndo('assets', existing);
   });
   guardedClick($('#assetSave'), async ()=>{
     const name = $('#assetName').value.trim();
@@ -3783,7 +4249,8 @@ function openPlannedExpenseModal(existing){
   $('#closePlanned').onclick = closeModal;
   $('#ovPlanned').onclick = (e)=>{ if(e.target.id==='ovPlanned') closeModal(); };
   if(existing) guardedClick($('#plannedDelete'), async ()=>{
-    await deleteDoc('plannedExpenses', existing.id); closeModal(); toast('삭제했어요', {danger:true});
+    closeModal();
+    deleteWithUndo('plannedExpenses', existing);
   });
   guardedClick($('#plannedSave'), async ()=>{
     const amount = amountValue($('#plannedAmount'));
@@ -3868,7 +4335,8 @@ function openTemplateModal(existing){
   $('#closeTpl').onclick = closeModal;
   $('#ovTpl').onclick = (e)=>{ if(e.target.id==='ovTpl') closeModal(); };
   if(existing) guardedClick($('#tplDelete'), async ()=>{
-    await deleteDoc('templates', existing.id); closeModal(); scheduleRender(); toast('삭제했어요', {danger:true});
+    closeModal();
+    deleteWithUndo('templates', existing);
   });
   guardedClick($('#tplSave'), async ()=>{
     const name = $('#tplName').value.trim();

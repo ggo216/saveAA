@@ -1,0 +1,337 @@
+<title>가계부 리디자인 시안</title>
+<style>
+  :root{
+    --page-bg:#EDEDE8;
+    --page-ink:#1B1C1F;
+    --page-soft:#68676D;
+    --page-card:#FFFFFF;
+    --page-border:#DEDDD6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    background:var(--page-bg);
+    color:var(--page-ink);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    padding:56px 20px 96px;
+  }
+  .wrap{max-width:1180px;margin:0 auto;}
+
+  /* ---------- intro ---------- */
+  .intro{max-width:640px;margin:0 auto 64px;text-align:center;}
+  .intro .eyebrow{
+    font-size:11.5px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;
+    color:var(--page-soft);margin-bottom:14px;
+  }
+  .intro h1{
+    font-size:clamp(28px,4vw,38px);font-weight:700;letter-spacing:-0.02em;
+    margin:0 0 14px;text-wrap:balance;
+  }
+  .intro p{font-size:15px;line-height:1.65;color:var(--page-soft);margin:0;text-wrap:balance;}
+
+  /* ---------- direction section ---------- */
+  .directions{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start;}
+  @media (max-width:860px){ .directions{grid-template-columns:1fr;} }
+
+  .direction{display:flex;flex-direction:column;gap:20px;}
+  .dir-head{padding:0 4px;}
+  .dir-label{font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--page-soft);margin-bottom:6px;}
+  .dir-title{font-size:22px;font-weight:700;letter-spacing:-0.01em;margin:0 0 8px;}
+  .dir-desc{font-size:13.5px;line-height:1.6;color:var(--page-soft);margin:0 0 14px;}
+  .swatches{display:flex;gap:7px;flex-wrap:wrap;}
+  .sw{width:26px;height:26px;border-radius:50%;border:1px solid rgba(0,0,0,0.08);flex-shrink:0;}
+
+  /* ---------- phone frame ---------- */
+  .phone{
+    width:100%;max-width:380px;margin:0 auto;border-radius:34px;
+    box-shadow:0 30px 60px -24px rgba(20,20,25,0.35), 0 2px 8px rgba(20,20,25,0.08);
+    overflow:hidden;
+  }
+  .phone-inner{padding:22px 18px 26px;min-height:640px;}
+
+  /* ============================================================
+     DIRECTION A — 장부 (Ledger): warm paper, hairline rules,
+     tabular/mono numerals, one confident indigo accent.
+     ============================================================ */
+  .ledger{
+    --bg:#FAFAF8; --surface:#FFFFFF; --ink:#17181C; --soft:#6B6E76; --faint:#9C9C9C;
+    --border:#E3E1DB; --accent:#33369E; --income:#1B7A5B; --expense:#AE3A44;
+    background:var(--bg); color:var(--ink);
+    font-family:'Inter',sans-serif;
+  }
+  .ledger .num{font-family:'IBM Plex Mono',ui-monospace,monospace; font-variant-numeric:tabular-nums;}
+  .ledger .l-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
+  .ledger .l-brand{font-size:13px;font-weight:700;letter-spacing:0.02em;}
+  .ledger .l-date{font-size:11px;color:var(--soft);font-variant-numeric:tabular-nums;}
+  .ledger .l-hero{border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:20px 0 22px;margin-bottom:22px;}
+  .ledger .l-hero-label{font-size:10.5px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--soft);margin-bottom:10px;}
+  .ledger .l-hero-num{font-size:34px;font-weight:600;letter-spacing:-0.01em;line-height:1;}
+  .ledger .l-hero-sub{font-size:12px;color:var(--soft);margin-top:8px;}
+  .ledger .l-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--border);border-radius:2px;margin-bottom:26px;}
+  .ledger .l-tile{padding:13px 10px;border-right:1px solid var(--border);}
+  .ledger .l-tile:last-child{border-right:none;}
+  .ledger .l-tile-label{font-size:9.5px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--faint);margin-bottom:6px;}
+  .ledger .l-tile-num{font-size:14px;font-weight:600;}
+  .ledger .l-tile-num.income{color:var(--income);} .ledger .l-tile-num.expense{color:var(--expense);}
+  .ledger .l-section-label{
+    display:flex;align-items:baseline;justify-content:space-between;
+    font-size:10.5px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--faint);
+    margin-bottom:4px;
+  }
+  .ledger .l-row{display:flex;align-items:center;gap:12px;padding:12px 2px;border-bottom:1px solid var(--border);}
+  .ledger .l-row:last-child{border-bottom:none;}
+  .ledger .l-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+  .ledger .l-row-mid{flex:1;min-width:0;}
+  .ledger .l-row-cat{font-size:13px;font-weight:600;}
+  .ledger .l-row-memo{font-size:11px;color:var(--soft);margin-top:1px;}
+  .ledger .l-row-date{font-size:10.5px;color:var(--faint);flex-shrink:0;width:34px;}
+  .ledger .l-row-amt{font-size:13px;font-weight:600;flex-shrink:0;}
+  .ledger .l-fab{
+    margin-top:20px;width:100%;padding:13px;text-align:center;
+    border:1px solid var(--ink);color:var(--ink);font-size:12.5px;font-weight:700;letter-spacing:0.03em;
+    border-radius:2px;
+  }
+
+  /* ============================================================
+     DIRECTION B — 볼트 (Vault): near-black, brass accent used only
+     where it matters, a serif numeral for the one hero figure.
+     ============================================================ */
+  .vault{
+    --bg:#14151A; --surface:#1C1E24; --ink:#F1F1EF; --soft:#9A9CA3; --faint:#6E7078;
+    --border:#2B2D34; --accent:#C9A15A; --income:#4FAE8A; --expense:#D6707A;
+    background:var(--bg); color:var(--ink);
+    font-family:'Inter',sans-serif;
+  }
+  .vault .v-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+  .vault .v-brand{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--soft);}
+  .vault .v-brand-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);}
+  .vault .v-avatar{width:28px;height:28px;border-radius:50%;background:var(--surface);border:1px solid var(--border);}
+  .vault .v-hero{
+    background:var(--surface);border:1px solid var(--border);border-radius:20px;
+    padding:24px 22px;margin-bottom:16px;
+  }
+  .vault .v-hero-label{font-size:11.5px;color:var(--soft);margin-bottom:10px;}
+  .vault .v-hero-num{font-family:'Fraunces',Georgia,serif;font-size:36px;font-weight:500;letter-spacing:-0.01em;color:var(--ink);font-variant-numeric:tabular-nums;}
+  .vault .v-hero-num .won{color:var(--accent);font-size:0.55em;margin-right:2px;vertical-align:2px;}
+  .vault .v-hero-sub{display:flex;gap:14px;margin-top:14px;font-size:11.5px;color:var(--soft);}
+  .vault .v-hero-sub b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums;}
+  .vault .v-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:20px;}
+  .vault .v-tile{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:13px 12px;}
+  .vault .v-tile-label{font-size:10px;color:var(--faint);margin-bottom:7px;}
+  .vault .v-tile-num{font-size:14.5px;font-weight:600;font-variant-numeric:tabular-nums;}
+  .vault .v-tile-num.income{color:var(--income);} .vault .v-tile-num.expense{color:var(--expense);}
+  .vault .v-section-label{font-size:12.5px;font-weight:600;color:var(--soft);margin-bottom:10px;padding:0 2px;}
+  .vault .v-list{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+  .vault .v-row{display:flex;align-items:center;gap:11px;padding:13px 14px;border-bottom:1px solid var(--border);}
+  .vault .v-row:last-child{border-bottom:none;}
+  .vault .v-ic{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+  .vault .v-row-mid{flex:1;min-width:0;}
+  .vault .v-row-cat{font-size:13px;font-weight:600;}
+  .vault .v-row-memo{font-size:11px;color:var(--faint);margin-top:2px;}
+  .vault .v-row-amt{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;flex-shrink:0;}
+  .vault .v-fab{
+    margin-top:18px;width:100%;padding:14px;text-align:center;
+    background:var(--accent);color:#1B1508;font-size:12.5px;font-weight:700;letter-spacing:0.02em;
+    border-radius:100px;
+  }
+
+  /* ---------- footer note ---------- */
+  .footnote{max-width:640px;margin:64px auto 0;text-align:center;}
+  .footnote p{font-size:13.5px;line-height:1.7;color:var(--page-soft);margin:0;}
+  .footnote .pills{display:flex;gap:8px;justify-content:center;margin-top:18px;flex-wrap:wrap;}
+  .footnote .pill{
+    font-size:12px;font-weight:600;padding:8px 16px;border-radius:100px;
+    background:var(--page-card);border:1px solid var(--page-border);color:var(--page-ink);
+  }
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap">
+
+<div class="wrap">
+
+  <div class="intro">
+    <div class="eyebrow">가계부 · 디자인 시안</div>
+    <h1>두 가지 방향성을 제안드려요</h1>
+    <p>지금 쓰시는 실제 데이터 형태(홈 화면 · 거래 내역)를 그대로 가져와, 톤이 뚜렷하게 다른 두 방향으로 다시 그려봤어요. 한쪽을 고르셔도 되고, 요소를 섞어서 가져가셔도 좋아요.</p>
+  </div>
+
+  <div class="directions">
+
+    <!-- ============ DIRECTION A ============ -->
+    <div class="direction">
+      <div class="dir-head">
+        <div class="dir-label">방향 A</div>
+        <h2 class="dir-title">장부 — 정갈한 실무형</h2>
+        <p class="dir-desc">종이 장부처럼 얇은 선으로 영역을 나누고, 숫자는 고정폭 서체로 가지런히. 그림자·둥근 알약 버튼을 걷어내고, 잉크 하나·인디고 하나로만 말합니다. "믿을 수 있는 회계 도구"의 인상.</p>
+        <div class="swatches">
+          <div class="sw" style="background:#FAFAF8;border-color:#ccc;" title="배경"></div>
+          <div class="sw" style="background:#17181C;" title="잉크"></div>
+          <div class="sw" style="background:#33369E;" title="포인트"></div>
+          <div class="sw" style="background:#1B7A5B;" title="수입"></div>
+          <div class="sw" style="background:#AE3A44;" title="지출"></div>
+        </div>
+      </div>
+
+      <div class="phone">
+        <div class="phone-inner ledger">
+          <div class="l-top">
+            <div class="l-brand">가계부</div>
+            <div class="l-date">2026. 09. 22</div>
+          </div>
+
+          <div class="l-hero">
+            <div class="l-hero-label">순자산</div>
+            <div class="l-hero-num num">₩6,850,000</div>
+            <div class="l-hero-sub">자산 ₩7,150,000 · 부채 ₩300,000</div>
+          </div>
+
+          <div class="l-tiles">
+            <div class="l-tile">
+              <div class="l-tile-label">수입</div>
+              <div class="l-tile-num income num">₩3,200,000</div>
+            </div>
+            <div class="l-tile">
+              <div class="l-tile-label">지출</div>
+              <div class="l-tile-num expense num">₩1,840,500</div>
+            </div>
+            <div class="l-tile">
+              <div class="l-tile-label">저축률</div>
+              <div class="l-tile-num num">42%</div>
+            </div>
+          </div>
+
+          <div class="l-section-label"><span>9월 22일 (화)</span></div>
+          <div class="l-row">
+            <span class="l-dot" style="background:#AE3A44"></span>
+            <div class="l-row-mid">
+              <div class="l-row-cat">식비</div>
+              <div class="l-row-memo">지갑 · 점심 김치찌개</div>
+            </div>
+            <div class="l-row-amt num" style="color:#AE3A44">-9,500</div>
+          </div>
+          <div class="l-row">
+            <span class="l-dot" style="background:#AE3A44"></span>
+            <div class="l-row-mid">
+              <div class="l-row-cat">교통</div>
+              <div class="l-row-memo">체크카드</div>
+            </div>
+            <div class="l-row-amt num" style="color:#AE3A44">-1,550</div>
+          </div>
+          <div class="l-row">
+            <span class="l-dot" style="background:#1B7A5B"></span>
+            <div class="l-row-mid">
+              <div class="l-row-cat">부수입</div>
+              <div class="l-row-memo">중고거래</div>
+            </div>
+            <div class="l-row-amt num" style="color:#1B7A5B">+35,000</div>
+          </div>
+          <div class="l-row">
+            <span class="l-dot" style="background:#AE3A44"></span>
+            <div class="l-row-mid">
+              <div class="l-row-cat">쇼핑</div>
+              <div class="l-row-memo">신용카드 · 텀블러</div>
+            </div>
+            <div class="l-row-amt num" style="color:#AE3A44">-18,900</div>
+          </div>
+
+          <div class="l-fab">+ 거래 추가</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ DIRECTION B ============ -->
+    <div class="direction">
+      <div class="dir-head">
+        <div class="dir-label">방향 B</div>
+        <h2 class="dir-title">볼트 — 차분한 프리미엄</h2>
+        <p class="dir-desc">짙은 잉크 배경에 브라스 톤 포인트 하나만 남기고, 순자산 숫자에만 세리프를 얹어 무게감을 줍니다. 나머지는 전부 절제. "내 자산을 조용히 관리해주는 금고"의 인상.</p>
+        <div class="swatches">
+          <div class="sw" style="background:#14151A;border-color:#333;" title="배경"></div>
+          <div class="sw" style="background:#F1F1EF;border-color:#999;" title="잉크"></div>
+          <div class="sw" style="background:#C9A15A;" title="포인트"></div>
+          <div class="sw" style="background:#4FAE8A;" title="수입"></div>
+          <div class="sw" style="background:#D6707A;" title="지출"></div>
+        </div>
+      </div>
+
+      <div class="phone">
+        <div class="phone-inner vault">
+          <div class="v-top">
+            <div class="v-brand"><span class="v-brand-dot"></span>가계부</div>
+            <div class="v-avatar"></div>
+          </div>
+
+          <div class="v-hero">
+            <div class="v-hero-label">순자산</div>
+            <div class="v-hero-num"><span class="won">₩</span>6,850,000</div>
+            <div class="v-hero-sub"><span>자산 <b>₩7,150,000</b></span><span>부채 <b>₩300,000</b></span></div>
+          </div>
+
+          <div class="v-tiles">
+            <div class="v-tile">
+              <div class="v-tile-label">수입</div>
+              <div class="v-tile-num income">₩3,200,000</div>
+            </div>
+            <div class="v-tile">
+              <div class="v-tile-label">지출</div>
+              <div class="v-tile-num expense">₩1,840,500</div>
+            </div>
+            <div class="v-tile">
+              <div class="v-tile-label">저축률</div>
+              <div class="v-tile-num" style="color:#C9A15A">42%</div>
+            </div>
+          </div>
+
+          <div class="v-section-label">9월 22일 (화)</div>
+          <div class="v-list">
+            <div class="v-row">
+              <span class="v-ic" style="background:rgba(214,112,122,0.14);color:#D6707A;">🍚</span>
+              <div class="v-row-mid">
+                <div class="v-row-cat">식비</div>
+                <div class="v-row-memo">지갑 · 점심 김치찌개</div>
+              </div>
+              <div class="v-row-amt" style="color:#D6707A">-9,500</div>
+            </div>
+            <div class="v-row">
+              <span class="v-ic" style="background:rgba(214,112,122,0.14);color:#D6707A;">🚌</span>
+              <div class="v-row-mid">
+                <div class="v-row-cat">교통</div>
+                <div class="v-row-memo">체크카드</div>
+              </div>
+              <div class="v-row-amt" style="color:#D6707A">-1,550</div>
+            </div>
+            <div class="v-row">
+              <span class="v-ic" style="background:rgba(79,174,138,0.14);color:#4FAE8A;">💰</span>
+              <div class="v-row-mid">
+                <div class="v-row-cat">부수입</div>
+                <div class="v-row-memo">중고거래</div>
+              </div>
+              <div class="v-row-amt" style="color:#4FAE8A">+35,000</div>
+            </div>
+            <div class="v-row">
+              <span class="v-ic" style="background:rgba(214,112,122,0.14);color:#D6707A;">🛍️</span>
+              <div class="v-row-mid">
+                <div class="v-row-cat">쇼핑</div>
+                <div class="v-row-memo">신용카드 · 텀블러</div>
+              </div>
+              <div class="v-row-amt" style="color:#D6707A">-18,900</div>
+            </div>
+          </div>
+
+          <div class="v-fab">+ 거래 추가</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footnote">
+    <p>둘 다 지금 앱의 보라색 포인트보다 절제된 방향이에요. 마음에 드는 쪽, 혹은 "A의 레이아웃 + B의 색감"처럼 섞은 조합을 알려주시면 실제 앱(index.html) 전체에 그대로 반영해서 라이브로 확인시켜드릴게요.</p>
+    <div class="pills">
+      <span class="pill">A — 장부 스타일로</span>
+      <span class="pill">B — 볼트 스타일로</span>
+      <span class="pill">둘을 섞어서</span>
+    </div>
+  </div>
+
+</div>
