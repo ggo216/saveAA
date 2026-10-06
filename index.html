@@ -130,7 +130,11 @@ svg{display:block;}
 .app{
   max-width:clamp(1080px, 82vw, 1480px);
   margin:0 auto;
-  padding: 20px 20px 100px;
+  /* top padding leaves headroom for the fixed #settingsTopBtn (36px tall,
+     anchored 14px from the viewport edge) so it never overlaps a topbar's
+     own right-aligned button (자산 추가, 결산 리포트, 친구, …) instead of
+     touching every render function's topbar markup to route around it. */
+  padding: 64px 20px 100px;
   display:flex;
   gap:24px;
 }
@@ -138,7 +142,7 @@ svg{display:block;}
   width:190px;
   flex-shrink:0;
   position:sticky;
-  top:20px;
+  top:64px;
   align-self:flex-start;
   display:flex;
   flex-direction:column;
@@ -394,6 +398,18 @@ main{flex:1;min-width:0;}
 .fab svg{width:24px;height:24px;}
 #txAddBtn{display:none;}
 
+.settings-fab{
+  position:fixed;top:calc(16px + env(safe-area-inset-top,0px));right:16px;
+  width:36px;height:36px;border-radius:50%;
+  background:var(--surface);border:1px solid var(--border);color:var(--ink-soft);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;box-shadow:var(--shadow);z-index:40;
+  transition:color .15s ease, border-color .15s ease, transform .15s ease;
+}
+.settings-fab svg{width:17px;height:17px;}
+.settings-fab:hover{color:var(--ink);transform:rotate(25deg);}
+.settings-fab.active{color:var(--accent);border-color:var(--accent);}
+
 .tpl-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;}
 .tpl-head h3{font-size:12.5px;}
 .tpl-edit-toggle{
@@ -450,6 +466,28 @@ main{flex:1;min-width:0;}
 .cal-cell.today .cal-date{color:var(--accent);font-weight:800;}
 .cal-cell.selected{background:color-mix(in srgb, var(--accent) 15%, var(--surface));border-color:var(--accent);}
 .cal-date{font-size:11.5px;color:var(--ink-soft);font-weight:600;}
+.cal-event-dots{display:flex;flex-wrap:wrap;gap:2.5px;margin-top:auto;}
+.cal-event-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.cal-event-more{font-size:9px;color:var(--ink-faint);font-weight:700;}
+
+.cal-event-row{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--border);cursor:pointer;}
+.cal-event-row:last-child{border-bottom:none;}
+.cal-event-row.readonly{cursor:default;}
+.cal-event-dotbig{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.cal-event-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;}
+.cal-event-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);font-weight:700;font-size:13.5px;}
+.cal-event-sub{font-size:11.5px;color:var(--ink-faint);}
+
+.friend-code-box{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;}
+.friend-code-text{flex:1;font-size:18px;font-weight:800;letter-spacing:0.08em;font-variant-numeric:tabular-nums;}
+.friend-row{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--border);}
+.friend-row:last-child{border-bottom:none;}
+.friend-row-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.friend-row-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;font-size:13px;color:var(--ink);}
+.friend-req-badge{
+  position:absolute;top:-5px;right:-5px;min-width:16px;height:16px;padding:0 4px;border-radius:9px;
+  background:var(--expense);color:#fff;font-size:10px;font-weight:800;line-height:16px;text-align:center;
+}
 .cal-amt{font-size:10.5px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2;white-space:nowrap;}
 .cal-amt.income{color:var(--income);}
 .cal-amt.expense{color:var(--expense);}
@@ -810,7 +848,7 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
   .two-col.two-col-tx{grid-template-columns:1fr;}
 }
 @media (max-width:720px){
-  .app{flex-direction:column;padding:16px 14px 152px;gap:14px;}
+  .app{flex-direction:column;padding:60px 14px 152px;gap:14px;}
   .rail{
     position:fixed;bottom:0;left:0;right:0;top:auto;width:auto;
     flex-direction:row;justify-content:space-around;
@@ -860,12 +898,13 @@ input[type=color]::-webkit-color-swatch{border:none;border-radius:50%;}
     <button class="navlink" data-tab="categories"><span class="ic" data-icon="tag"></span><span>카테고리</span></button>
     <button class="navlink" data-tab="assets"><span class="ic" data-icon="wallet"></span><span>자산</span></button>
     <button class="navlink" data-tab="analytics"><span class="ic" data-icon="chart"></span><span>분석</span></button>
-    <button class="navlink" data-tab="settings"><span class="ic" data-icon="settings"></span><span>설정</span></button>
+    <button class="navlink" data-tab="calendar"><span class="ic" data-icon="calendar"></span><span>캘린더</span></button>
   </nav>
   <main id="main"></main>
 </div>
 
 <button class="fab" id="fab" title="거래 추가" aria-label="거래 추가"></button>
+<button class="settings-fab" id="settingsTopBtn" title="설정" aria-label="설정"></button>
 <div id="modalRoot"></div>
 
 <script>
@@ -918,6 +957,7 @@ const ICONS = {
   search: '<g transform="translate(0.5,0.5)"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="19" y1="19" x2="15.3" y2="15.3"/></g>',
   calendar: '<g transform="translate(0,0.5)"><rect x="4" y="5" width="16" height="15" rx="2"/><line x1="4" y1="10" x2="20" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></g>',
   check: '<polyline points="5,13 10,18 19,7"/>',
+  users: '<g transform="translate(0,1)"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c0-3.3 2.5-5.5 5.5-5.5s5.5 2.2 5.5 5.5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.3 13.8c2.1.4 3.7 2.1 3.9 4.7"/></g>',
 };
 function icon(name, opts){
   opts = opts || {};
@@ -978,7 +1018,7 @@ const ASSET_TYPES_LIAB = ['카드/대출','기타부채'];
 // left-to-right order of both the bottom nav and mobile swipe — shared so a
 // swipe and a nav-bar tap animate the exact same "which way did we move"
 // direction instead of drifting out of sync with two separate lists.
-const TAB_ORDER = ['dashboard','transactions','categories','assets','analytics','settings'];
+const TAB_ORDER = ['dashboard','transactions','categories','assets','analytics','calendar'];
 
 const DEFAULT_CATEGORIES = [
   {name:'식비',type:'expense',icon:'bowl'}, {name:'카페/간식',type:'expense',icon:'coffee'},
@@ -1010,6 +1050,13 @@ const state = {
   selectedTxIds: new Set(),
   assetTypeFilter: 'all',
   txCategoryFilter: 'all',
+  events: [],
+  friends: [],
+  friendRequests: [], // incoming
+  sentRequests: [], // outgoing
+  friendEvents: {}, // friendUid -> events[]
+  calMonth: (()=>{ const d=new Date(); return {y:d.getFullYear(), m:d.getMonth()+1}; })(),
+  calSelectedDay: null,
 };
 
 /* ---------- Firebase ---------- */
@@ -1081,7 +1128,10 @@ function teardownStore(){
   // needs to actually go too, not just have its timer dropped).
   pendingDeletes.forEach((_, id)=> flushPendingDelete(id));
   pendingDeletes.clear();
+  friendEventUnsubs.forEach(u=>u());
+  friendEventUnsubs.clear();
   state.categories = []; state.transactions = []; state.assets = []; state.templates = []; state.plannedExpenses = [];
+  state.events = []; state.friends = []; state.friendRequests = []; state.sentRequests = []; state.friendEvents = {};
   state.settings = { accent: ACCENT_PRESETS[0], theme: 'system' };
   // session-only UI state (never synced to Firestore) — a filter/selection
   // left over from the previous account would otherwise silently apply to
@@ -1119,6 +1169,31 @@ function teardownStore(){
   lastAnalyticsStatValue = null;
 }
 
+// a friend's events live under THEIR OWN users/{friendUid}/events, not ours
+// — we only know which uids to listen to once state.friends has loaded, and
+// that list can change at runtime (accept/unfriend) without a full
+// logout, so these listeners are opened/closed dynamically rather than
+// once at login like the other collections.
+let friendEventUnsubs = new Map(); // friendUid -> unsub
+function syncFriendEventListeners(){
+  const currentFriendUids = new Set(state.friends.map(f=>f.id));
+  for(const [fid, unsub] of friendEventUnsubs){
+    if(!currentFriendUids.has(fid)){
+      unsub();
+      friendEventUnsubs.delete(fid);
+      delete state.friendEvents[fid];
+    }
+  }
+  currentFriendUids.forEach(fid=>{
+    if(friendEventUnsubs.has(fid)) return;
+    const unsub = userCol(fid,'events').onSnapshot(snap=>{
+      state.friendEvents[fid] = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      scheduleRender();
+    }, err=> console.error(err));
+    friendEventUnsubs.set(fid, unsub);
+  });
+}
+
 let loadStartedAt = null;
 function initStoreForUser(uid){
   currentUid = uid;
@@ -1128,11 +1203,21 @@ function initStoreForUser(uid){
   wireCollection(userCol(uid,'assets'), 'assets');
   wireCollection(userCol(uid,'templates'), 'templates');
   wireCollection(userCol(uid,'plannedExpenses'), 'plannedExpenses');
+  wireCollection(userCol(uid,'events'), 'events');
+  wireCollection(userCol(uid,'friendRequests'), 'friendRequests');
+  wireCollection(userCol(uid,'sentRequests'), 'sentRequests');
+  const unsubFriends = userCol(uid,'friends').onSnapshot(snap=>{
+    state.friends = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    syncFriendEventListeners();
+    scheduleRender();
+  }, err=> console.error(err));
+  Store.unsubs.push(unsubFriends);
   const unsub = userDoc(uid).onSnapshot(snap=>{
     if(snap.exists && snap.data().accent){ state.settings.accent = snap.data().accent; }
     if(snap.exists && snap.data().payday){ state.settings.payday = snap.data().payday; }
     if(snap.exists && snap.data().budgetAssetIds){ state.settings.budgetAssetIds = snap.data().budgetAssetIds; }
     if(snap.exists && snap.data().theme){ state.settings.theme = snap.data().theme; }
+    if(snap.exists && snap.data().code){ state.settings.code = snap.data().code; }
     applyAccent(state.settings.accent);
     applyTheme(state.settings.theme);
     state.ready = true;
@@ -1215,6 +1300,79 @@ async function saveSettings(patch){
   await userDoc(currentUid).set(patch, {merge:true});
 }
 
+/* ---------- friends (캘린더 공유) ----------
+   friend code lookup (userCodes/{code} -> {uid,name}) is a top-level
+   collection outside users/{uid} so one user's client can resolve someone
+   else's code without needing read access to their private data — see the
+   Firestore rules this feature needs, given to the user separately, since
+   this file can't change server-side rules itself. */
+function genFriendCode(){
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O, 1/I — easy to read aloud
+  let s=''; for(let i=0;i<8;i++) s += chars[Math.floor(Math.random()*chars.length)];
+  return s;
+}
+async function ensureFriendCode(){
+  if(state.settings.code) return state.settings.code;
+  let code, attempts=0;
+  do{
+    code = genFriendCode();
+    const existing = await fbDb.collection('userCodes').doc(code).get();
+    if(!existing.exists) break;
+    attempts++;
+  } while(attempts<5);
+  const name = fbAuth.currentUser?.displayName || '사용자';
+  await fbDb.collection('userCodes').doc(code).set({ uid: currentUid, name });
+  await userDoc(currentUid).set({ code }, {merge:true});
+  state.settings.code = code;
+  return code;
+}
+async function sendFriendRequestByCode(rawCode){
+  const code = (rawCode||'').trim().toUpperCase();
+  if(!code) throw new Error('코드를 입력해주세요');
+  const codeDoc = await fbDb.collection('userCodes').doc(code).get();
+  if(!codeDoc.exists) throw new Error('존재하지 않는 코드예요');
+  const targetUid = codeDoc.data().uid;
+  const targetName = codeDoc.data().name || '친구';
+  if(targetUid === currentUid) throw new Error('내 코드는 추가할 수 없어요');
+  if(state.friends.some(f=>f.id===targetUid)) throw new Error('이미 친구예요');
+  if(state.sentRequests.some(r=>r.id===targetUid)) throw new Error('이미 요청을 보냈어요');
+  const myName = fbAuth.currentUser?.displayName || '사용자';
+  const batch = fbDb.batch();
+  batch.set(userCol(targetUid,'friendRequests').doc(currentUid), { fromUid: currentUid, fromName: myName, createdAt: Date.now() });
+  batch.set(userCol(currentUid,'sentRequests').doc(targetUid), { toUid: targetUid, toName: targetName, createdAt: Date.now() });
+  await batch.commit();
+}
+async function acceptFriendRequest(fromUid, fromName){
+  const myName = fbAuth.currentUser?.displayName || '사용자';
+  const batch = fbDb.batch();
+  batch.set(userCol(currentUid,'friends').doc(fromUid), { uid:fromUid, name:fromName, since:Date.now() });
+  batch.set(userCol(fromUid,'friends').doc(currentUid), { uid:currentUid, name:myName, since:Date.now() });
+  batch.delete(userCol(currentUid,'friendRequests').doc(fromUid));
+  await batch.commit();
+}
+async function declineFriendRequest(fromUid){
+  await userCol(currentUid,'friendRequests').doc(fromUid).delete();
+}
+async function cancelSentRequest(toUid){
+  const batch = fbDb.batch();
+  batch.delete(userCol(currentUid,'sentRequests').doc(toUid));
+  batch.delete(userCol(toUid,'friendRequests').doc(currentUid));
+  await batch.commit();
+}
+async function removeFriend(friendUid){
+  const batch = fbDb.batch();
+  batch.delete(userCol(currentUid,'friends').doc(friendUid));
+  batch.delete(userCol(friendUid,'friends').doc(currentUid));
+  await batch.commit();
+}
+// deterministic per-friend color so the same friend always shows the same
+// dot color across sessions, without needing to store a color anywhere.
+function friendColor(friendUid){
+  let h = 0;
+  for(let i=0;i<friendUid.length;i++) h = (h*31 + friendUid.charCodeAt(i)) >>> 0;
+  return CATEGORY_PALETTE[h % CATEGORY_PALETTE.length];
+}
+
 function updateSyncIndicator(){
   const el = $('#syncIndicator');
   if(!el) return;
@@ -1226,7 +1384,8 @@ function updateSyncIndicator(){
 function showAuthScreen(show){
   $('#authScreen').style.display = show ? 'flex' : 'none';
   $('.app').style.display = show ? 'none' : 'flex';
-  if(show) $('#fab').style.display = 'none';
+  if(show){ $('#fab').style.display = 'none'; $('#settingsTopBtn').style.display = 'none'; }
+  else { $('#settingsTopBtn').style.display = 'flex'; }
 }
 fbAuth.onAuthStateChanged(async user=>{
   teardownStore();
@@ -1503,6 +1662,7 @@ function paintStaticIcons(){
   $('#brandMark').innerHTML = icon('wallet', {size:19, color:'#fff'});
   $('#fab').innerHTML = icon('plus', {size:24, color:'#fff'});
   $('#authMark').innerHTML = icon('wallet', {size:26, color:'#fff'});
+  $('#settingsTopBtn').innerHTML = icon('settings', {size:18});
 }
 
 /* ---------- render root ---------- */
@@ -1543,7 +1703,7 @@ function render(){
     replayViewAnim(main);
     return;
   }
-  const fns = { dashboard: renderDashboard, transactions: renderTransactions, categories: renderCategories, assets: renderAssets, analytics: renderAnalytics, settings: renderSettings };
+  const fns = { dashboard: renderDashboard, transactions: renderTransactions, categories: renderCategories, assets: renderAssets, analytics: renderAnalytics, calendar: renderCalendar, settings: renderSettings };
   // each fn immediately does its own full main.innerHTML = `...` — clearing
   // here first was a redundant extra reflow before that replace.
   fns[state.tab]();
@@ -1556,6 +1716,7 @@ function render(){
   // this class lets a min-width media query hide it without touching the
   // per-tab display logic above (which still governs mobile + dashboard).
   $('#fab').classList.toggle('tab-tx', state.tab==='transactions');
+  $('#settingsTopBtn').classList.toggle('active', state.tab==='settings');
   let dir = null;
   if(prevTab && prevTab!==state.tab){
     const pi = TAB_ORDER.indexOf(prevTab), ni = TAB_ORDER.indexOf(state.tab);
@@ -3372,6 +3533,273 @@ function buildReportHtml(){
   `;
 }
 
+/* ---------- 캘린더 (일정 + 친구 공유) ---------- */
+// merges my own events with every friend's events for one month, each
+// tagged with who it belongs to and which color dot it should draw —
+// friends' events are read-only here (write access to users/{uid}/events
+// is owner-only; the whole point of asking a friend is to SEE their plans).
+function eventsInMonth(y,m){
+  const mk = monthKey(y,m);
+  const byDay = {};
+  const push = (e, isOwn, ownerUid, ownerName, color)=>{
+    if(!e.date || !e.date.startsWith(mk)) return;
+    (byDay[e.date] ||= []).push({...e, isOwn, ownerUid, ownerName, color});
+  };
+  state.events.forEach(e=> push(e, true, currentUid, '나', 'var(--accent)'));
+  state.friends.forEach(f=>{
+    (state.friendEvents[f.id]||[]).forEach(e=> push(e, false, f.id, f.name||'친구', friendColor(f.id)));
+  });
+  Object.values(byDay).forEach(list=> list.sort((a,b)=> (a.time||'99:99').localeCompare(b.time||'99:99')));
+  return byDay;
+}
+function renderCalendar(){
+  const main = $('#main');
+  const {y,m} = state.calMonth;
+  const byDay = eventsInMonth(y,m);
+  const firstWeekday = new Date(y, m-1, 1).getDay();
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const today = todayStr();
+  let cells = '';
+  for(let i=0;i<firstWeekday;i++) cells += `<div class="cal-cell empty"></div>`;
+  for(let day=1; day<=daysInMonth; day++){
+    const dateStr = `${y}-${pad2(m)}-${pad2(day)}`;
+    const evs = byDay[dateStr] || [];
+    const cls = ['cal-cell'];
+    if(dateStr===today) cls.push('today');
+    if(dateStr===state.calSelectedDay) cls.push('selected');
+    const shown = evs.slice(0,4);
+    const restN = evs.length - shown.length;
+    cells += `<div class="${cls.join(' ')}" data-date="${dateStr}">
+      <span class="cal-date">${day}</span>
+      ${evs.length ? `<div class="cal-event-dots">${shown.map(e=>`<span class="cal-event-dot" style="background:${e.color}"></span>`).join('')}${restN>0?`<span class="cal-event-more">+${restN}</span>`:''}</div>` : ''}
+    </div>`;
+  }
+  const totalCells = firstWeekday + daysInMonth;
+  const trailing = (7 - (totalCells % 7)) % 7;
+  for(let i=0;i<trailing;i++) cells += `<div class="cal-cell empty"></div>`;
+  const pendingCount = state.friendRequests.length;
+  main.innerHTML = `
+    <div class="topbar">
+      <h1 class="page-title">캘린더</h1>
+      <button class="btn btn-ghost btn-sm" id="openFriendsBtn" style="position:relative;">${icon('users',{size:14})}친구${pendingCount?`<span class="friend-req-badge">${pendingCount}</span>`:''}</button>
+    </div>
+    <div class="section-gap">
+      <div class="card">
+        <div class="month-nav" style="margin-bottom:12px;">
+          <button id="calPrevMonth" aria-label="이전 달">${icon('chevronLeft',{size:15})}</button>
+          <span class="month-label">${y}년 ${m}월</span>
+          <button id="calNextMonth" aria-label="다음 달">${icon('chevronRight',{size:15})}</button>
+        </div>
+        <div class="cal-weekdays">${'일월화수목금토'.split('').map(w=>`<span>${w}</span>`).join('')}</div>
+        <div class="cal-grid">${cells}</div>
+      </div>
+      <div class="card" id="calDayDetail"></div>
+    </div>
+  `;
+  $('#openFriendsBtn').onclick = openFriendModal;
+  $('#calPrevMonth').onclick = ()=>{ state.calMonth.m--; if(state.calMonth.m<1){state.calMonth.m=12; state.calMonth.y--;} state.calSelectedDay=null; scheduleRender(); };
+  $('#calNextMonth').onclick = ()=>{ state.calMonth.m++; if(state.calMonth.m>12){state.calMonth.m=1; state.calMonth.y++;} state.calSelectedDay=null; scheduleRender(); };
+  $$('.cal-cell[data-date]').forEach(cell=>{
+    cell.onclick = ()=>{
+      const wasSelected = state.calSelectedDay===cell.dataset.date;
+      state.calSelectedDay = wasSelected ? null : cell.dataset.date;
+      scheduleRender();
+    };
+  });
+  paintCalDayDetail(byDay);
+}
+function paintCalDayDetail(byDay){
+  const wrap = $('#calDayDetail');
+  if(!wrap) return;
+  if(!state.calSelectedDay){
+    wrap.innerHTML = `<div class="empty" style="padding:24px 10px"><div class="e-ic">${icon('calendar',{size:26})}</div><div>날짜를 선택하면 그날의 일정을 볼 수 있어요</div></div>`;
+    return;
+  }
+  const d = new Date(state.calSelectedDay+'T00:00:00');
+  const label = `${d.getMonth()+1}월 ${d.getDate()}일 (${'일월화수목금토'[d.getDay()]})`;
+  const evs = byDay[state.calSelectedDay] || [];
+  wrap.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <h3 style="margin:0;">${label}</h3>
+      <button class="btn btn-primary btn-sm" id="calAddEventBtn">${icon('plus',{size:13})}일정</button>
+    </div>
+    ${evs.length ? evs.map(e=>`
+      <div class="cal-event-row${e.isOwn?'':' readonly'}" data-id="${e.id}" data-own="${e.isOwn?'1':'0'}">
+        <span class="cal-event-dotbig" style="background:${e.color}"></span>
+        <div class="cal-event-mid">
+          <div class="cal-event-title">${escapeHtml(e.title||'제목 없음')}</div>
+          <div class="cal-event-sub">${e.time?e.time+' · ':''}${e.isOwn?'나':escapeHtml(e.ownerName)}${e.memo?' · '+escapeHtml(e.memo):''}</div>
+        </div>
+      </div>`).join('') : `<div class="settings-desc" style="padding:6px 2px;">이 날은 일정이 없어요</div>`}
+  `;
+  $('#calAddEventBtn').onclick = ()=> openEventModal(null, state.calSelectedDay);
+  $$('.cal-event-row[data-own="1"]', wrap).forEach(row=>{
+    row.onclick = ()=> openEventModal(state.events.find(ev=>ev.id===row.dataset.id));
+  });
+}
+function openEventModal(existing, prefillDate){
+  const root = $('#modalRoot');
+  lockBodyScroll();
+  const hasTime = !!(existing?.time);
+  root.innerHTML = `
+    <div class="overlay" id="ovEvent">
+      <div class="sheet">
+        <div class="sheet-head">
+          <div class="sheet-title">${existing?'일정 수정':'일정 추가'}</div>
+          <button class="sheet-close" id="closeEvent" aria-label="닫기">${icon('close',{size:18})}</button>
+        </div>
+        <div class="form-group"><label class="form-label">제목</label><input class="form-input" type="text" id="evTitle" placeholder="일정 제목" value="${existing?escapeHtml(existing.title||''):''}"></div>
+        <div class="form-group"><label class="form-label">날짜</label><input class="form-input" type="text" id="evDate" readonly value="${existing?.date || prefillDate || todayStr()}"></div>
+        <div class="form-group">
+          <label class="form-label" style="display:flex;align-items:center;justify-content:space-between;">
+            <span>시간</span>
+            <span style="display:flex;align-items:center;gap:6px;font-weight:500;font-size:12px;color:var(--ink-soft);">
+              <input type="checkbox" id="evHasTime" ${hasTime?'checked':''}> 시간 지정
+            </span>
+          </label>
+          <input class="form-input" type="time" id="evTime" value="${existing?.time||''}" style="${hasTime?'':'display:none'}">
+        </div>
+        <div class="form-group"><label class="form-label">메모</label><input class="form-input" type="text" id="evMemo" placeholder="선택 사항" value="${existing?escapeHtml(existing.memo||''):''}"></div>
+        <div class="sheet-actions">
+          ${existing?'<button class="btn btn-danger" id="evDelete">삭제</button>':''}
+          <button class="btn btn-primary" id="evSave">저장</button>
+        </div>
+      </div>
+    </div>`;
+  $('#evDate').onclick = ()=> openDatePicker($('#evDate'));
+  $('#evHasTime').onchange = ()=>{ $('#evTime').style.display = $('#evHasTime').checked ? '' : 'none'; };
+  $('#closeEvent').onclick = closeModal;
+  $('#ovEvent').onclick = (e)=>{ if(e.target.id==='ovEvent') closeModal(); };
+  if(existing) guardedClick($('#evDelete'), ()=> new Promise(resolve=>{
+    closeModal();
+    deleteWithUndo('events', existing);
+    resolve();
+  }));
+  guardedClick($('#evSave'), async ()=>{
+    const title = $('#evTitle').value.trim();
+    if(!title){ toast('제목을 입력해주세요'); return; }
+    const data = {
+      title,
+      date: $('#evDate').value,
+      time: $('#evHasTime').checked ? ($('#evTime').value || null) : null,
+      memo: $('#evMemo').value.trim() || null,
+    };
+    if(existing) await updateDoc('events', existing.id, data);
+    else await addDoc('events', data);
+    closeModal();
+  });
+}
+function openFriendModal(){
+  const root = $('#modalRoot');
+  lockBodyScroll();
+  root.innerHTML = `
+    <div class="overlay" id="ovFriend">
+      <div class="sheet">
+        <div class="sheet-head">
+          <div class="sheet-title">친구</div>
+          <button class="sheet-close" id="closeFriend" aria-label="닫기">${icon('close',{size:18})}</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">내 코드</label>
+          <div class="friend-code-box">
+            <span class="friend-code-text" id="myFriendCode">불러오는 중…</span>
+            <button type="button" class="btn btn-ghost btn-sm" id="copyFriendCode">복사</button>
+          </div>
+          <div class="settings-desc" style="margin-top:6px;">이 코드를 친구에게 공유하면 서로의 캘린더 일정을 볼 수 있어요</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">친구 코드 입력</label>
+          <div class="amount-row">
+            <input class="form-input" type="text" id="friendCodeInput" placeholder="8자리 코드" style="text-transform:uppercase;letter-spacing:0.06em;">
+            <button type="button" class="btn btn-primary" id="sendFriendReqBtn" style="flex-shrink:0;">요청</button>
+          </div>
+        </div>
+        <div id="friendReqIncoming"></div>
+        <div id="friendReqSent"></div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">친구 목록</label>
+          <div id="friendListWrap"></div>
+        </div>
+      </div>
+    </div>`;
+  $('#closeFriend').onclick = closeModal;
+  $('#ovFriend').onclick = (e)=>{ if(e.target.id==='ovFriend') closeModal(); };
+  ensureFriendCode().then(code=>{ const el=$('#myFriendCode'); if(el) el.textContent = code; })
+    .catch(err=>{ console.error(err); const el=$('#myFriendCode'); if(el) el.textContent = '불러오기 실패'; });
+  $('#copyFriendCode').onclick = async ()=>{
+    const code = $('#myFriendCode').textContent;
+    if(!code || code==='불러오는 중…') return;
+    try{ await navigator.clipboard.writeText(code); toast('코드를 복사했어요'); }
+    catch(e){ toast('복사에 실패했어요', {danger:true}); }
+  };
+  guardedClick($('#sendFriendReqBtn'), async ()=>{
+    const input = $('#friendCodeInput');
+    try{
+      await sendFriendRequestByCode(input.value);
+      input.value = '';
+      toast('친구 요청을 보냈어요');
+    } catch(err){
+      toast(err.message || '요청에 실패했어요', {danger:true});
+    }
+  });
+  paintFriendLists();
+}
+function paintFriendLists(){
+  const incWrap = $('#friendReqIncoming');
+  const sentWrap = $('#friendReqSent');
+  const listWrap = $('#friendListWrap');
+  if(!incWrap || !listWrap) return;
+  if(state.friendRequests.length){
+    incWrap.innerHTML = `<div class="form-group"><label class="form-label">받은 요청</label>${state.friendRequests.map(r=>`
+      <div class="friend-row">
+        <span class="friend-row-name">${escapeHtml(r.fromName||'알 수 없음')}</span>
+        <button type="button" class="btn btn-primary btn-sm" data-accept="${r.id}">수락</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-decline="${r.id}">거절</button>
+      </div>`).join('')}</div>`;
+    $$('#friendReqIncoming [data-accept]').forEach(b=> guardedClick(b, async ()=>{
+      const req = state.friendRequests.find(r=>r.id===b.dataset.accept);
+      if(!req) return;
+      await acceptFriendRequest(req.id, req.fromName);
+      toast('친구가 됐어요');
+      paintFriendLists();
+    }));
+    $$('#friendReqIncoming [data-decline]').forEach(b=> guardedClick(b, async ()=>{
+      await declineFriendRequest(b.dataset.decline);
+      paintFriendLists();
+    }));
+  } else {
+    incWrap.innerHTML = '';
+  }
+  const sentPending = state.sentRequests.filter(r=> !state.friends.some(f=>f.id===r.id));
+  if(sentPending.length){
+    sentWrap.innerHTML = `<div class="form-group"><label class="form-label">보낸 요청</label>${sentPending.map(r=>`
+      <div class="friend-row">
+        <span class="friend-row-name">${escapeHtml(r.toName||'알 수 없음')}</span>
+        <button type="button" class="btn btn-ghost btn-sm" data-cancel="${r.id}">취소</button>
+      </div>`).join('')}</div>`;
+    $$('#friendReqSent [data-cancel]').forEach(b=> guardedClick(b, async ()=>{
+      await cancelSentRequest(b.dataset.cancel);
+      paintFriendLists();
+    }));
+  } else {
+    sentWrap.innerHTML = '';
+  }
+  if(state.friends.length){
+    listWrap.innerHTML = state.friends.map(f=>`
+      <div class="friend-row">
+        <span class="friend-row-dot" style="background:${friendColor(f.id)}"></span>
+        <span class="friend-row-name">${escapeHtml(f.name||'친구')}</span>
+        <button type="button" class="btn btn-ghost btn-sm" data-remove="${f.id}">삭제</button>
+      </div>`).join('');
+    $$('#friendListWrap [data-remove]').forEach(b=> guardedClick(b, async ()=>{
+      await removeFriend(b.dataset.remove);
+      paintFriendLists();
+    }));
+  } else {
+    listWrap.innerHTML = `<div class="settings-desc" style="padding:6px 2px;">아직 친구가 없어요</div>`;
+  }
+}
+
 /* ---------- settings ---------- */
 function renderSettings(){
   const main = $('#main');
@@ -3473,6 +3901,19 @@ function renderSettings(){
 // page scrolled somewhere unexpected once the sheet closes.
 function lockBodyScroll(){ document.body.style.overflow = 'hidden'; }
 function unlockBodyScroll(){ document.body.style.overflow = ''; }
+// dragging to select text inside a sheet's input and releasing the mouse
+// over the dimmed backdrop makes the browser fire `click` on the backdrop
+// (the common ancestor of mousedown/mouseup targets), which every sheet's
+// "click backdrop to close" handler read as an outside tap. A click only
+// counts as a backdrop click if the press also began on the backdrop.
+let overlayPressTarget = null;
+document.addEventListener('mousedown', e=>{ overlayPressTarget = e.target; }, true);
+document.addEventListener('touchstart', e=>{ overlayPressTarget = e.target; }, {capture:true, passive:true});
+document.addEventListener('click', e=>{
+  if(e.target.classList && e.target.classList.contains('overlay') && overlayPressTarget && overlayPressTarget!==e.target){
+    e.stopPropagation();
+  }
+}, true);
 function closeModal(){
   closeDatePicker();
   closeCalculator();
@@ -4430,6 +4871,7 @@ function openTemplateModal(existing){
 paintStaticIcons();
 wireAuthUI();
 $$('.navlink').forEach(b=> b.onclick = ()=>{ state.tab = b.dataset.tab; scheduleRender(); });
+$('#settingsTopBtn').onclick = ()=>{ state.tab = 'settings'; scheduleRender(); };
 $('#fab').onclick = ()=> openTxModal(null);
 applyAccent(state.settings.accent);
 applyTheme(state.settings.theme);
